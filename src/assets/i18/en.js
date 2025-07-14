@@ -874,6 +874,11 @@ const en_us = {
       wechatId: 'Wechat ID',
       toExamine: 'To examine',
       finance: 'Finance',
+    },
+    inventory: {
+      totalStock: 'Total Stock',
+      locationStock: 'Stock By Location',
+      customerStock: 'Stock By Customer'
     }
   },
   navigate: {
@@ -918,6 +923,9 @@ const en_us = {
     batchWeighing: "Batch Weighing",
     printingTheWaybill: "Printing The Waybill",
     exceptionManagement: "Exception Management",
+    inventory: "Inventory",
+    inventoryStatistics: "Stock Statistics",
+    stockAdjustment: "Stock Adjustment",
     customerManagement: "Customer Management",
     customer: "Customer",
   },
@@ -979,6 +987,8 @@ const en_us = {
     takeDelivery: 'Take delivery',
     packingList: 'Packing list',
     operationType: 'Operation type',
+    increase: 'Increase',
+    decrease: 'Decrease',
     operationSuccessful: 'Operation successful',
     editSuccessful: 'Edit successful',
     operationFailed: 'Operation failed',
