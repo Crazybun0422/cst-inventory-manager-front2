@@ -1,0 +1,12 @@
+.el-descriptions {
+  .el-descriptions__body {
+    color: var(--custom-font-color);
+    background-color: var(--custom-background-color7);
+    .el-descriptions-row {
+      .el-descriptions-item__label.is-bordered-label {
+        color: var(--custom-font-color2);
+        background-color: var(--custom-background-color7);
+      }
+    }
+  }
+}

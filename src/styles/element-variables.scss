@@ -1,0 +1,50 @@
+$--color-primary: var(--custom-color-primary);
+$--color-success: var(--custom-color-success);
+$--color-warning: var(--custom-color-warning);
+$--color-danger: var(--custom-color-danger);
+$--color-info: var(--custom-color-info);
+$--color-text-primary: var(--custom-font-color2) !default;
+$--color-text-regular: var(--custom-font-color);
+
+$--color-white: var(--custom-background-color7) !default;
+$--color-black: var(--custom-font-color) !default;
+
+/* Border
+-------------------------- */
+$--border-color-base: var(--custom-border-color2) !default;
+$--border-radius-base: 8px !default;
+$--border-color-lighter: var(--custom-table-heard-border-color) !default;
+
+/* Select
+-------------------------- */
+
+$--select-option-hover-background: var(--custom-border-color2) !default;
+$--select-dropdown-background: var(--custom-background-color7) !default;
+$--select-option-disabled-background: var(--custom-background-color7) !default;
+$--select-dropdown-border: solid 1px var(--custom-background-color6) !default;
+
+/* Checkbox
+-------------------------- */
+
+$--checkbox-disabled-input-fill: #e9e9e9 !default;
+
+/* Menu
+--------------------------*/
+$--menu-item-hover-fill: var(--cusom-hover-background-color);
+/* Card
+-------------------------- */
+$--card-border-color: var(--custom-background-color7);
+/* Background
+-------------------------- */
+$--background-color-base: var(--custom-color-background);
+
+/* Icon
+-------------------------- */
+$--icon-color: var(--custom-icon-color);
+
+@function mix($color1, $color2, $p: 50%) {
+  @return color-mix(in srgb, $color1 $p, $color2);
+}
+/* icon font path, required */
+$--font-path: '~element-ui/lib/theme-chalk/fonts';
+@import '~element-ui/packages/theme-chalk/src/index';

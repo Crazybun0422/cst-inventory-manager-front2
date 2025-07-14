@@ -1,0 +1,48 @@
+.el-button {
+  // color: var(--custom-font-color) !important;
+  // background-color: var(--custom-background-color6) !important;
+  // border: 1px solid var(--custom-background-color6) !important;
+}
+// 按钮禁用时的样式
+.el-button.is-disabled {
+  color: var(--custom-disable-font-color) !important;
+  background-color: var(--custom-disabled-background-color) !important;
+}
+
+// 下拉选项中按钮禁用的样式
+.el-dropdown-menu__item .el-button.is-disabled {
+  color: var(--custom-disable-font-color) !important;
+  background-color: var(--custom-background-color7) !important;
+}
+
+// .el-button,
+// .el-button--small {
+//   color: var(--custom-color-primary) !important;
+//   background-color: var(--custom-background-color6) !important;
+//   border: 0 !important;
+// }
+
+// .el-button--default {
+//   color: var(--custom-font-color) !important;
+//   background-color: var(--custom-background-color6) !important;
+//   border: 1px solid var(--custom-background-color6) !important;
+// }
+
+// .el-button--primary {
+//   color: var(--custom-font-color3) !important;
+//   background-color: var(--custom-color-primary) !important;
+//   i {
+//     color: var(--custom-font-color3);
+//   }
+// }
+
+// .el-button--text {
+//   color: var(--custom-color-primary) !important;
+//   background-color: var(--custom-background-color) !important;
+//   padding-left: 10px;
+//   padding-right: 10px;
+// }
+
+// .el-button--text:hover {
+//   background-color: var(--custom-background-color7) !important;
+// }

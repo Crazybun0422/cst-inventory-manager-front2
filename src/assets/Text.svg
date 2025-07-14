@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 定义渐变 -->
+  <defs>
+    <linearGradient id="subtleGradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF7F50"/>    <!-- 珊瑚橙 -->
+      <stop offset="50%" stop-color="#87CEFA"/>   <!-- 浅天蓝 -->
+      <stop offset="100%" stop-color="#32CD32"/>  <!-- 酸橙绿 -->
+    </linearGradient>
+  </defs>
+  <!-- 使用 Wing Dropship 字体的文字，填充渐变色 -->
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
+        style="font-family: 'Wing Dropship', sans-serif; font-size:72px;"
+        fill="url(#subtleGradient)">
+    Wing Dropship
+  </text>
+</svg>

@@ -1,0 +1,31 @@
+.el-card {
+  background-color: var(--custom-background-color7) !important;
+  border-radius: 16px !important;
+  font-family: 'NunitoSans', sans-serif;
+
+  .el-card__header {
+
+    // 修改卡片标题按钮样式 相当于去除背景
+    .el-button {
+      background-color: var(--custom-background-color7) !important;
+    }
+  }
+
+  .el-card__body {
+    padding: 12px;
+    background-color: var(--custom-background-color7);
+
+    .el-form-item__content .el-input__inner {
+      border: 1px solid var(--custom-border-color2);
+    }
+
+    .el-descriptions {
+      color: var(--custom-font-color);
+    }
+
+    .el-descriptions__table {
+      color: var(--custom-font-color2);
+      background-color: var(--custom-background-color7);
+    }
+  }
+}

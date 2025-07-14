@@ -1,0 +1,176 @@
+@font-face {
+  font-family: 'NunitoSans';
+  src: url('@/assets/fonts/NunitoSans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'RethinkSans-SemiBold';
+  src: url('@/assets/fonts/RethinkSans-SemiBold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+html,
+body,
+#app,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: #e2e7ec;
+  font-family: 'NunitoSans', sans-serif;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: var(--custom-font-color4);
+
+  cursor: pointer;
+}
+
+// a标签禁用样式
+a[disabled] {
+  cursor: not-allowed;
+  color: var(--custom-disable-font-color);
+}
+
+// 自定义样式
+.base-color {
+  color: var(--custom-color-primary);
+}
+
+.global-drawer-class {}
+
+.mb-24 {
+  margin-bottom: 24px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mr-12 {
+  margin-right: 12px;
+}
+
+.mr-24 {
+  margin-right: 24px;
+}
+
+.mr-14 {
+  margin-bottom: 14px;
+}
+
+// ::-webkit-scrollbar-thumb {
+//   border-radius: 5px;
+//   box-shadow: inset 0 0 5px #eee;
+//   background: rgba(0, 0, 0, 0.2);
+// }
+
+// ::-webkit-scrollbar-track {
+//   border-radius: 0;
+//   background: #fff;
+// }
+
+// 样式统一
+::-webkit-scrollbar {
+  // 整体样式
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--custom-background-color);
+}
+
+::view-transition-new(root),
+::view-transition-old(root) {
+  animation: none;
+}
+
+::-webkit-scrollbar-corner {
+  // 滑动条右下角白色矩形隐藏
+  background: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar-thumb {
+  // 滑动滑块条样式
+  border-radius: 10px;
+  box-shadow: inset 0 0 5px #eee;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-track {
+  // 轨道的样式
+  box-shadow: inset 0 0 5px var(--custom-background-color);
+  border-radius: 0;
+  background-color: var(--custom-background-color);
+}
+
+// 弹窗
+.global-modal-class {
+  .el-dialog__header {
+    padding: 4px 15px;
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .el-dialog__title {
+      color: var(--custom-font-color);
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 14px;
+    }
+  }
+
+  .el-dialog__headerbtn {
+    top: 16px;
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .el-dialog__footer {
+    // border-top: 1px solid var(--custom-border-color);
+    padding: 10px 15px;
+  }
+}
+
+.el-drawer__wrapper {
+  .el-drawer__body {
+    padding: 0 20px 20px;
+  }
+}
+
+// 用于解决英文单词换行问题
+.text-container {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: keep-all;
+}
+
+@import '~@/assets/css/container.scss';
+@import '~@/assets/css/tabs.scss';
+@import '~@/assets/css/input.scss';
+@import '~@/assets/css/card.scss';
+@import '~@/assets/css/table.scss';
+@import '~@/assets/css/button.scss';
+@import '~@/assets/css/select.scss';
+@import '~@/assets/css/drawer.scss';
+@import '~@/assets/css/descriptions.scss';
+@import '~@/assets/css/dialog.scss';
+@import '~@/assets/css/collapse.scss';
+@import '~@/assets/css/upload.scss';

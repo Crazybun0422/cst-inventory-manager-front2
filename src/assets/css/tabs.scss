@@ -1,0 +1,8 @@
+.el-main {
+  .el-tabs__item {
+    color: var(--custom-color-gray);
+  }
+  .el-tabs__item.is-active {
+    color: var(--custom-color-primary);
+  }
+}

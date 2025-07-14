@@ -1,0 +1,28 @@
+.cst-input-style {
+  background-color: var(--custom-background-color6);
+  color: var(--custom-font-color);
+  font-family: 'NunitoSans', sans-serif;
+}
+
+.el-input {
+  .el-input__inner {
+    @extend .cst-input-style;
+  }
+}
+
+.el-form-item__content {
+
+  .el-input__inner,
+  .el-range-input {
+    @extend .cst-input-style;
+    border: 1px solid var(--custom-border-color);
+  }
+
+  .el-textarea {
+
+    .el-input__count,
+    .el-textarea__inner {
+      @extend .cst-input-style;
+    }
+  }
+}

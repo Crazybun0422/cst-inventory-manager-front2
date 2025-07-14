@@ -1,0 +1,107 @@
+{
+  "id": "4387947",
+  "name": "cst-inventory-manager-front",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-cst-inventory-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "7817664",
+      "name": "停止",
+      "font_class": "tingzhi",
+      "unicode": "e669",
+      "unicode_decimal": 58985
+    },
+    {
+      "icon_id": "11104067",
+      "name": "开始",
+      "font_class": "kaishi",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "26666131",
+      "name": "开始",
+      "font_class": "kaishi1",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "27152698",
+      "name": "暂停,停止",
+      "font_class": "ZanTing",
+      "unicode": "e61b",
+      "unicode_decimal": 58907
+    },
+    {
+      "icon_id": "27239543",
+      "name": "shopify",
+      "font_class": "shopify1",
+      "unicode": "e73e",
+      "unicode_decimal": 59198
+    },
+    {
+      "icon_id": "26807298",
+      "name": "shopify",
+      "font_class": "shopify",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
+      "icon_id": "887807",
+      "name": "返回",
+      "font_class": "fanhui",
+      "unicode": "e616",
+      "unicode_decimal": 58902
+    },
+    {
+      "icon_id": "599914",
+      "name": "QQ",
+      "font_class": "qq",
+      "unicode": "e66a",
+      "unicode_decimal": 58986
+    },
+    {
+      "icon_id": "1231051",
+      "name": "facebook",
+      "font_class": "facebook",
+      "unicode": "e603",
+      "unicode_decimal": 58883
+    },
+    {
+      "icon_id": "1330569",
+      "name": "微信",
+      "font_class": "weixin",
+      "unicode": "e73b",
+      "unicode_decimal": 59195
+    },
+    {
+      "icon_id": "10905645",
+      "name": "支付宝",
+      "font_class": "zhifubao",
+      "unicode": "e636",
+      "unicode_decimal": 58934
+    },
+    {
+      "icon_id": "11983544",
+      "name": "google",
+      "font_class": "google",
+      "unicode": "ea0c",
+      "unicode_decimal": 59916
+    },
+    {
+      "icon_id": "10139936",
+      "name": "view",
+      "font_class": "view",
+      "unicode": "e69e",
+      "unicode_decimal": 59038
+    },
+    {
+      "icon_id": "10139980",
+      "name": "view-off",
+      "font_class": "view-off",
+      "unicode": "e6a4",
+      "unicode_decimal": 59044
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+:root.darkTheme {
+  /* Colors
+-------------------------- */
+  --custom-color-primary: #c6c7f8;
+  --custom-color-success: #4aa785;
+  --custom-color-warning: #ffc555;
+  --custom-color-danger: #ff4747;
+  --custom-color-info: #797979;
+  --custom-font-color: #ffffff;
+  --custom-font-color2: #868686;
+  --custom-font-color3: #000000;
+  --custom-font-color4: #95a4fc; // 应用于 链接文字颜色
+  --custom-disable-font-color: #cbcbcb;
+
+  // 在白色主题中 黑色 直接使用作为背景色    黑色主题中用法相反 作为边框色  背景色使用白色
+  --custom-color-black: #000000;
+  --custom-color-black2: #333333;
+  --custom-color-black3: #999999;
+  --custom-color-black4: #cccccc;
+  --custom-color-black5: #e6e6e6;
+  --custom-color-black6: #f2f2f2;
+
+  // 在白色主题中 白色 直接使用作为边框色代表颜色 背景色使用白色    黑色主题中用法相反
+  --custom-color-white: #000000;
+  --custom-color-white2: #333333;
+  --custom-color-white3: #999999;
+  --custom-color-white4: #cccccc;
+  --custom-color-white5: #e6e6e6;
+  --custom-color-white6: #f2f2f2;
+
+  // 公用灰色
+  --custom-color-gray: #999999;
+  --custom-color-gray2: #cccccc;
+  --custom-color-gray3: #e6e6e6;
+  --custom-color-gray4: #f2f2f2;
+  --custom-color-gray5: #f7f9fb;
+
+  /* Background
+-------------------------- */
+  --custom-disabled-background-color: #f3f3f3;
+  --custom-background-color: #1c1c1c;
+  --custom-background-color2: #ffffff;
+  --custom-background-color3: #e5ecf6;
+  --custom-background-color4: #e3f5ff;
+  --custom-background-color5: #f2f6fb;
+
+  // input类框背景色
+  --custom-background-color6: #3f3f3f;
+
+  // card背景色
+  --custom-background-color7: #353535;
+  --custom--background-image-url: url('@/assets/images/backgroundImage1.png'); /* 暗色主题的背景图片 */
+
+  // tabl样式
+  --custom-table-heard-border-color: #5d5d5d; // 表头边框颜色
+
+  /* Border
+-------------------------- */
+  --custom-border-color: #d9d9d9;
+  --custom-border-color2: #525252;
+  --custom-border-color3: #3f3f3f;
+
+  /* Icon
+-------------------------- */
+  --custom-icon-color: #fff;
+
+  /* Hover的颜色
+-------------------------- */
+  --cusom-hover-background-color: #3f3f3f;
+
+  /* Switch
+-------------------------- */
+  --cusom-switch-background-svg: url('@/assets/svg/Moon.svg');
+}

@@ -1,0 +1,74 @@
+:root.defaultTheme {
+  /* Colors
+-------------------------- */
+  --custom-color-primary: #000000;
+  --custom-color-success: #4aa785;
+  --custom-color-warning: #ffc555;
+  --custom-color-danger: #ff4747;
+  --custom-color-info: #797979;
+  --custom-font-color: #000000;
+  --custom-font-color2: #949597; // 应用于 card body中的文字颜色
+  --custom-font-color3: #ffffff; // 应用于 主按钮中的文字颜色
+  --custom-font-color4: #95a4fc; // 应用于 链接文字颜色
+  --custom-disable-font-color: #d5d5d5;
+
+  // 在白色主题中 黑色 直接使用作为背景色    黑色主题中用法相反 作为边框色  背景色使用白色
+  --custom-color-black: #000000;
+  --custom-color-black2: #333333;
+  --custom-color-black3: #999999;
+  --custom-color-black4: #cccccc;
+  --custom-color-black5: #e6e6e6;
+  --custom-color-black6: #f2f2f2;
+
+  // 在白色主题中 白色 直接使用作为边框色代表颜色 背景色使用白色    黑色主题中用法相反
+  --custom-color-white: #000000;
+  --custom-color-white2: #333333;
+  --custom-color-white3: #999999;
+  --custom-color-white4: #cccccc;
+  --custom-color-white5: #e6e6e6;
+  --custom-color-white6: #f2f2f2;
+
+  // 公用灰色
+  --custom-color-gray: #999999;
+  --custom-color-gray2: #cccccc;
+  --custom-color-gray3: #e6e6e6;
+  --custom-color-gray4: #f2f2f2;
+  --custom-color-gray5: #f7f9fb;
+
+  /* Background
+  -------------------------- */
+  --custom-disabled-background-color: #ffffff;
+  --custom-background-color: #ffffff;
+  --custom-background-color2: #f7f9fb;
+  --custom-background-color3: #e5ecf6;
+  --custom-background-color4: #e3f5ff;
+  --custom-background-color5: #f2f6fb;
+
+  // input类框背景色
+  --custom-background-color6: #f2f2f2;
+
+  // card背景色
+  --custom-background-color7: #f7f9fb;
+  --custom--background-image-url: url('@/assets/images/backgroundImage2.png'); /* 暗色主题的背景图片 */
+
+  // tabl样式
+  --custom-table-heard-border-color: #c6c7c9; // 表头边框颜色
+
+  /* Border
+-------------------------- */
+  --custom-border-color: #d9d9d9;
+  --custom-border-color2: #dfe1e2;
+  --custom-border-color3: #e6e6e6; // table 换页按钮边框
+
+  /* Icon
+-------------------------- */
+  --custom-icon-color: #000000;
+
+  /* Hover的颜色
+-------------------------- */
+  --cusom-hover-background-color: #f2f2f2;
+
+  /* Switch
+-------------------------- */
+  --cusom-switch-background-svg: url('@/assets/svg/Sun.svg');
+}

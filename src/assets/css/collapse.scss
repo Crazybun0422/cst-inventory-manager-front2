@@ -1,0 +1,12 @@
+.el-collapse {
+  .el-collapse-item__header {
+    background-color: var(--custom-background-color) !important;
+    color: var(--custom-font-color);
+  }
+  .el-dialog__body {
+    color: var(--custom-font-color);
+  }
+  .el-collapse-item__wrap {
+    background-color: var(--custom-background-color) !important;
+  }
+}
