@@ -877,6 +877,11 @@ const zh_cn = {
       wechatId: '微信ID',
       toExamine: '审核',
       finance: '财务',
+    },
+    inventory: {
+      totalStock: '总库存',
+      locationStock: '库位库存',
+      customerStock: '分仓库存'
     }
   },
   navigate: {
@@ -921,6 +926,9 @@ const zh_cn = {
     batchWeighing: "批量称重",
     printingTheWaybill: "打印运单",
     exceptionManagement: "异常管理",
+    inventory: "库内",
+    inventoryStatistics: "库存统计",
+    stockAdjustment: "库存更改",
     customerManagement: "客户管理",
     customer: "客户",
   },
@@ -983,6 +991,8 @@ const zh_cn = {
     takeDelivery: '收货',
     packingList: '箱单',
     operationType: '操作类型',
+    increase: '增加',
+    decrease: '减少',
     operationSuccessful: '操作成功',
     editSuccessful: '编辑成功',
     operationFailed: '操作失败',
