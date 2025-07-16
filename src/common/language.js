@@ -4,17 +4,17 @@ import zhCnLang from 'element-ui/lib/locale/lang/zh-CN'
 import locale from 'element-ui/lib/locale'
 export function getLanguage () {
   // const localLanguage = getCookie('language_type') || 'en_us' zh_cn
-  let localLanguage = 'en_us'
+  let localLanguage = 'zh_cn'
   try {
     localLanguage = getCookie('language_type')
     if (!localLanguage) {
-      locale.use(enLang)
-      return 'en_us'
+      locale.use(zhCnLang)
+      return 'zh_cn'
     }
 
   } catch (e) {
-    locale.use(enLang)
-    return 'en_us'
+    locale.use(zhCnLang)
+    return 'zh_cn'
   }
   if (localLanguage === 'zh_cn') {
     locale.use(zhCnLang)

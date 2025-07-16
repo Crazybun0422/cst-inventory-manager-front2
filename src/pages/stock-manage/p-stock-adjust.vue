@@ -56,11 +56,14 @@ export default {
   computed: {
     roleType() {
       return this.$getRoleType(this.$route.path)
+    },
+    provider_uuid () {
+      return this.$store.state.shopProviderUuid.shopInfo.provider_uuid
     }
   },
   methods: {
     async fetchStorage() {
-      const res = await getStorageDefinition('', this.roleType)
+      const res = await getStorageDefinition(this.provider_uuid, this.roleType)
       if (this.$isRequestSuccessful(res.code)) {
         this.storageOptions = res.data.map(item => ({ label: item.name, value: item.storage_define_uuid }))
       }
