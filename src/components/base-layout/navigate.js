@@ -108,30 +108,30 @@ export const navigationDataProvider = [
                 role: ['Provider', 'Operator'],
               },
             ]
-          }
-        ]
-      },
-      {
-        title: 'navigate.inventory',
-        name: 'p-inventory',
-        path: '/p-inventory',
-        icon: 'el-icon-s-data',
-        role: ['Provider', 'Operator'],
-        notRouter: true,
-        children: [
-          {
-            title: 'navigate.inventoryStatistics',
-            name: 'p-stock-statistics',
-            path: '/p/stock-statistics',
-            component: 'stock-manage/p-stock-statistics.vue',
-            role: ['Provider', 'Operator']
           },
           {
-            title: 'navigate.stockAdjustment',
-            name: 'p-stock-adjust',
-            path: '/p/stock-adjust',
-            component: 'stock-manage/p-stock-adjust.vue',
-            role: ['Provider', 'Operator']
+            title: 'navigate.inventory',
+            name: 'p-inventory',
+            path: '/p-inventory',
+            icon: 'el-icon-s-data',
+            role: ['Provider', 'Operator'],
+            notRouter: true,
+            children: [
+              {
+                title: 'navigate.inventoryStatistics',
+                name: 'p-stock-statistics',
+                path: '/p/stock-statistics',
+                component: 'stock-manage/p-stock-statistics.vue',
+                role: ['Provider', 'Operator']
+              },
+              {
+                title: 'navigate.stockAdjustment',
+                name: 'p-stock-adjust',
+                path: '/p/stock-adjust',
+                component: 'stock-manage/p-stock-adjust.vue',
+                role: ['Provider', 'Operator']
+              }
+            ]
           }
         ]
       },

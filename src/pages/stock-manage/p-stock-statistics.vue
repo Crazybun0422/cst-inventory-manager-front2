@@ -49,7 +49,7 @@
 <script>
 import PageHead from '@/components/page-head.vue'
 import SearchCard from '@/components/search-card.vue'
-import { getStorage } from '@/common/common-func'
+import { getStorageDefinition } from '@/common/common-func'
 
 export default {
   name: 'p-stock-statistics',
@@ -70,9 +70,9 @@ export default {
   },
   methods: {
     async fetchStorage() {
-      const res = await getStorage('', this.roleType)
+      const res = await getStorageDefinition('', this.roleType)
       if (this.$isRequestSuccessful(res.code)) {
-        this.storageOptions = res.data.map(item => ({ label: item.name, value: item.storage_uuid }))
+        this.storageOptions = res.data.map(item => ({ label: item.name, value: item.storage_define_uuid }))
       }
     },
     async fetchData() {
