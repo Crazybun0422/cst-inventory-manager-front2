@@ -109,31 +109,32 @@ export const navigationDataProvider = [
               },
             ]
           },
-        ]
-      },
-      {
-        title: 'navigate.inventory',
-        name: 'p-inventory',
-        path: '/p-inventory',
-        role: ['Provider', 'Operator'],
-        notRouter: true,
-        children: [
           {
-            title: 'navigate.inventoryStatistics',
-            name: 'p-stock-statistics',
-            path: '/p/stock-statistics',
-            component: 'stock-manage/p-stock-statistics.vue',
-            role: ['Provider', 'Operator']
+            title: 'navigate.inventory',
+            name: 'p-inventory',
+            path: '/p-inventory',
+            role: ['Provider', 'Operator'],
+            notRouter: true,
+            children: [
+              {
+                title: 'navigate.inventoryStatistics',
+                name: 'p-stock-statistics',
+                path: '/p/stock-statistics',
+                component: 'stock-manage/p-stock-statistics.vue',
+                role: ['Provider', 'Operator']
+              },
+              {
+                title: 'navigate.stockAdjustment',
+                name: 'p-stock-adjust',
+                path: '/p/stock-adjust',
+                component: 'stock-manage/p-stock-adjust.vue',
+                role: ['Provider', 'Operator']
+              }
+            ]
           },
-          {
-            title: 'navigate.stockAdjustment',
-            name: 'p-stock-adjust',
-            path: '/p/stock-adjust',
-            component: 'stock-manage/p-stock-adjust.vue',
-            role: ['Provider', 'Operator']
-          }
         ]
       },
+
       {
         title: 'navigate.productManagement',
         name: 'p-product',
@@ -164,9 +165,9 @@ export const navigationDataProvider = [
             title: 'navigate.order',
             name: 'p-sub-order',
             path: '/p/order',
-          component: 'order-manage/p-order.vue',
-          role: ['Provider', 'Operator'],
-        }]
+            component: 'order-manage/p-order.vue',
+            role: ['Provider', 'Operator'],
+          }]
       },
     ]
   },
