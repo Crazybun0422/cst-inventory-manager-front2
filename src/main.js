@@ -93,7 +93,8 @@ async function init() {
     i18n,
     created() {
       this.setTheme();
-      this.$i18n.locale = data.locale;
+      const userLanguage = this.$store.state.user.defaultLanguage || data.locale;
+      this.$i18n.locale = userLanguage;
       changeFavicon(data.homepage_icon);
       document.title = this.$i18n.locale === "en_us" ? data.homepage_title_en : data.homepage_title;
     },
