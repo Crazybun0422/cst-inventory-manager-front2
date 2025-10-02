@@ -6,7 +6,7 @@
 !-->
 <template>
   <div class="signup">
-    <WorldFlightBackground :lang="$i18n.locale" />
+    <WorldFlightBackground :lang="$i18n.locale" :flight-count="4" :feather-density="24" :feather-scale="1.15" />
     <div class="lang-switch">
       <a-switch size="small" :checked="isEnglish" @change="toggleLanguage" checkedChildren="EN" unCheckedChildren="中" />
     </div>

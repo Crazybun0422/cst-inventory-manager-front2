@@ -13,7 +13,10 @@ export default {
     lang: { type: String, default: 'en_us' },
     fixed: { type: Boolean, default: true },
     mapSrc: { type: String, default: require('../assets/world-dark-4k.webp') },
-    boxSrc: { type: String, default: require('../assets/d.png') }
+    boxSrc: { type: String, default: require('../assets/d.png') },
+    flightCount: { type: Number, default: 4 },
+    featherDensity: { type: Number, default: 16 },
+    featherScale: { type: Number, default: 1.0 }
   },
   data() {
     return {
@@ -182,9 +185,10 @@ export default {
       }
     },
     _initFlights() {
-      const FLIGHT_NUM = 10;
       const SPEED_MIN = 0.0016, SPEED_MAX = 0.0032;
       const BOX_SIZE = 32;
+      const density = Math.max(6, Math.min(36, Number(this.featherDensity) || 16));
+      const featherScale = Math.max(0.5, Math.min(2.0, Number(this.featherScale) || 1.0));
 
       const bezier = (A, B, curviness = 0.5) => {
         const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
@@ -203,6 +207,7 @@ export default {
         return { x, y, ang: Math.atan2(dy, dx) };
       };
       const drawWing = (ctx, side = 1, phase = 0) => {
+        // Simple three-line wing without feathers
         ctx.save();
         ctx.strokeStyle = '#FFC86A';
         ctx.lineWidth = 2;
@@ -260,7 +265,8 @@ export default {
         ctx.restore();
       };
 
-      this.flights = Array.from({ length: 10 }, () => new Flight());
+      const count = Math.max(1, Math.min(8, Number(this.flightCount) || 4));
+      this.flights = Array.from({ length: count }, () => new Flight());
     },
     _reprojectAll() {
       this._reprojectCities();
