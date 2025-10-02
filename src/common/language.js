@@ -3,18 +3,18 @@ import enLang from 'element-ui/lib/locale/lang/en'
 import zhCnLang from 'element-ui/lib/locale/lang/zh-CN'
 import locale from 'element-ui/lib/locale'
 export function getLanguage () {
-  // const localLanguage = getCookie('language_type') || 'en_us' zh_cn
-  let localLanguage = 'zh_cn'
+  // Default to English if no cookie
+  let localLanguage = 'en_us'
   try {
-    localLanguage = getCookie('language_type')
-    if (!localLanguage) {
-      locale.use(zhCnLang)
-      return 'zh_cn'
+    const cookieLang = getCookie('language_type')
+    if (!cookieLang) {
+      locale.use(enLang)
+      return 'en_us'
     }
-
+    localLanguage = cookieLang
   } catch (e) {
-    locale.use(zhCnLang)
-    return 'zh_cn'
+    locale.use(enLang)
+    return 'en_us'
   }
   if (localLanguage === 'zh_cn') {
     locale.use(zhCnLang)
@@ -28,7 +28,7 @@ export function setLanguge (lan) {
   try {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
-    document.cookie = `language_type=${lan}; expires=${expiryDate.toUTCString()}; path=/`;  // 添加 SameSite=None; Secure   将会只允许https请求
+    document.cookie = `language_type=${lan}; expires=${expiryDate.toUTCString()}; path=/`;
   } catch (e) {
   }
 }

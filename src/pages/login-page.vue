@@ -6,6 +6,10 @@
 !-->
 <template>
   <div class="login">
+    <!-- Language Switch (top-right) -->
+    <div class="lang-switch">
+      <a-switch size="small" :checked="isEnglish" @change="toggleLanguage" checkedChildren="EN" unCheckedChildren="中" />
+    </div>
     <el-container class="login-container">
       <el-main>
         <div class="logo-image">
@@ -46,14 +50,14 @@
     </el-container>
     <!-- 备案号及隐私政策区域 -->
     <div class="footer">
-      <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
-
-      <span class="separator">|</span>
-      <!-- <div>Wing Dropship</div>
-      <span class="trademark">®</span>
-      <div>All rights reserved</div>
-      <span class="separator">|</span>
-      <a href="/private-policy" target="_blank">Private-Policy</a> -->
+      <template v-if="isERP">
+        <span class="brand">{{ brandName }}</span>
+        <span class="separator">|</span>
+        <a :href="policyPath" @click.prevent="$router.push(policyPath)">{{$t('footer.pp')}}</a>
+      </template>
+      <template v-else>
+        <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
+      </template>
     </div>
   </div>
 </template>
@@ -64,6 +68,7 @@ import LanguageSelect from '@/components/language-select.vue'
 import ForgetPassword from "@/pages/login/components/forget-password.vue"
 import ThirdPartLogin from "@/pages/login/components/third-part-login.vue"
 import SigninForm from "@/pages/login/components/signin-form.vue"
+import { setLanguge } from '@/common/language'
 
 export default {
   name: 'login-page',
@@ -87,6 +92,11 @@ export default {
     jumpUrl() {
       this.$router.push('/signup')
     },
+    toggleLanguage(checked) {
+      const lang = checked ? 'en_us' : 'zh_cn'
+      this.$i18n.locale = lang
+      setLanguge(lang)
+    },
   },
   computed: {
     canSubmit() {
@@ -97,6 +107,18 @@ export default {
     currentPathName() {
       return this.$route.name
     },
+    isEnglish() {
+      return this.$i18n.locale === 'en_us'
+    },
+    isERP() {
+      return this.$store.state.init?.mainFunction === 'Business ERP'
+    },
+    brandName() {
+      return this.$i18n.locale === 'en_us' ? this.$store.state.init?.titleEnus : this.$store.state.init?.titleZhcn
+    },
+    policyPath() {
+      return this.config.privatePolicy
+    }
   },
   mounted() { },
 }
@@ -115,6 +137,14 @@ export default {
   /* 自动调整背景大小以适应容器 */
   background-position: center;
   /* 居中背景图片 */
+}
+
+/* Language switch - fixed top-right for clear access */
+.lang-switch {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
 .login-form {

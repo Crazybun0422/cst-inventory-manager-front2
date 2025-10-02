@@ -5,9 +5,13 @@
 * @date 2023-05-14 18:33:11
 !-->
 <template>
-  <el-container class="login-container">
-    <el-main>
-      <div class="signup-main">
+  <div class="signup">
+    <div class="lang-switch">
+      <a-switch size="small" :checked="isEnglish" @change="toggleLanguage" checkedChildren="EN" unCheckedChildren="中" />
+    </div>
+    <el-container class="login-container">
+      <el-main>
+        <div class="signup-main">
         <!-- <div class="signup-left-img">
           <img style="width: 230px" src="@/assets/logo-black.svg" alt />
         </div> -->
@@ -36,11 +40,13 @@
         </SignupForm>
       </div>
     </el-main>
-  </el-container>
+    </el-container>
+  </div>
 </template>
 
 <script>
 import SignupForm from '@/pages/login/components/signup-form.vue'
+import { setLanguge } from '@/common/language'
 import { toLoginPage, register, getCsrfTokenFromServer, getAesKey } from '@/common/common-func'
 export default {
   name: "signup-page",
@@ -50,6 +56,11 @@ export default {
     return {
       loading: false,
     };
+  },
+  computed: {
+    isEnglish () {
+      return this.$i18n.locale === 'en_us'
+    }
   },
   methods: {
     // TODO: 使用promise优化下面的接口
@@ -90,6 +101,11 @@ export default {
     toLogin () {
       const loginPath = toLoginPage(this.roleType)
       this.$router.push(loginPath);
+    },
+    toggleLanguage(checked) {
+      const lang = checked ? 'en_us' : 'zh_cn'
+      this.$i18n.locale = lang
+      setLanguge(lang)
     },
   }
 };
@@ -138,5 +154,13 @@ export default {
 }
 .to-login-message {
   color: var(--custom-font-color2);
+}
+
+/* Language switch - fixed top-right for clear access */
+.lang-switch {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 </style>
