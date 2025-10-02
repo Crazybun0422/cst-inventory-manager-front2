@@ -6,6 +6,7 @@
 !-->
 <template>
   <div class="signup">
+    <WorldFlightBackground :lang="$i18n.locale" />
     <div class="lang-switch">
       <a-switch size="small" :checked="isEnglish" @change="toggleLanguage" checkedChildren="EN" unCheckedChildren="中" />
     </div>
@@ -46,11 +47,12 @@
 
 <script>
 import SignupForm from '@/pages/login/components/signup-form.vue'
+import WorldFlightBackground from '@/components/world-flight-background.vue'
 import { setLanguge } from '@/common/language'
 import { toLoginPage, register, getCsrfTokenFromServer, getAesKey } from '@/common/common-func'
 export default {
   name: "signup-page",
-  components: { SignupForm },
+  components: { SignupForm, WorldFlightBackground },
   props: {},
   data () {
     return {
@@ -114,10 +116,11 @@ export default {
 ::v-deep .el-form-item {
   margin-bottom: 28px;
 }
+.signup { position: relative; min-height: 100vh; }
 .sign-up-title {
   text-align: center;
   color: var(--custom-font-color);
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 400;
 }
 .signup-main {
@@ -126,7 +129,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 40px 100px 40px 40px;
+  padding: 48px 120px 48px 48px;
   border-radius: 40px;
 
   box-sizing: border-box;
@@ -136,8 +139,8 @@ export default {
   margin: 0 auto;
 }
 .signup-form {
-  padding: 24px 24px 0 0;
-  width: 500px;
+  padding: 28px 28px 0 0;
+  width: 560px;
 }
 .register-or-login {
   display: flex;
@@ -154,6 +157,7 @@ export default {
 }
 .to-login-message {
   color: var(--custom-font-color2);
+  font-size: 16px;
 }
 
 /* Language switch - fixed top-right for clear access */
@@ -162,5 +166,19 @@ export default {
   top: 20px;
   right: 20px;
   z-index: 1000;
+}
+
+/* Upscale inputs, labels and buttons in the form */
+.signup-main :deep(.el-form-item__label) {
+  font-size: 16px;
+}
+.signup-main :deep(.el-input__inner) {
+  height: 42px;
+  font-size: 16px;
+}
+.signup-main :deep(.el-button) {
+  height: 44px;
+  font-size: 16px;
+  padding: 0 18px;
 }
 </style>

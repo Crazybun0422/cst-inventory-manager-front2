@@ -6,6 +6,7 @@
 !-->
 <template>
   <div class="login">
+    <WorldFlightBackground :lang="$i18n.locale" />
     <!-- Language Switch (top-right) -->
     <div class="lang-switch">
       <a-switch size="small" :checked="isEnglish" @change="toggleLanguage" checkedChildren="EN" unCheckedChildren="中" />
@@ -16,7 +17,8 @@
           <img src="../assets/logo-no-background.svg" />
         </div>
         <div class="logo-text">
-          Wing Dropship<span class="trademark">®</span>
+          Wing Dropship
+          <!-- <span class="trademark">®</span> -->
         </div>
         <div class="login-form">
           <div class="login-form-title">
@@ -53,7 +55,7 @@
       <template v-if="isERP">
         <span class="brand">{{ brandName }}</span>
         <span class="separator">|</span>
-        <a :href="policyPath" @click.prevent="$router.push(policyPath)">{{$t('footer.pp')}}</a>
+        <a :href="policyPath" @click.prevent="$router.push(policyPath)">{{ $t('footer.pp') }}</a>
       </template>
       <template v-else>
         <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
@@ -69,11 +71,12 @@ import ForgetPassword from "@/pages/login/components/forget-password.vue"
 import ThirdPartLogin from "@/pages/login/components/third-part-login.vue"
 import SigninForm from "@/pages/login/components/signin-form.vue"
 import { setLanguge } from '@/common/language'
+import WorldFlightBackground from '@/components/world-flight-background.vue'
 
 export default {
   name: 'login-page',
   props: {},
-  components: { CaptchaView, LanguageSelect, ForgetPassword, ThirdPartLogin, SigninForm },
+  components: { CaptchaView, LanguageSelect, ForgetPassword, ThirdPartLogin, SigninForm, WorldFlightBackground },
   data() {
     return {
       emailFormVisible: false,
@@ -129,14 +132,11 @@ export default {
   width: 100%;
   height: 100vh;
   border-radius: 24px;
-  background-color: var(--custom-background-color7);
-  background-image: var(--custom--background-image-url);
-  background-repeat: no-repeat;
-  /* 防止背景重复 */
-  background-size: cover;
-  /* 自动调整背景大小以适应容器 */
-  background-position: center;
-  /* 居中背景图片 */
+  /* Use transparent to reveal the canvas background */
+  background-color: transparent;
+  background-image: none;
+  font-size: 16px;
+  /* Base upscaling */
 }
 
 /* Language switch - fixed top-right for clear access */
@@ -150,12 +150,12 @@ export default {
 .login-form {
   position: absolute;
   opacity: 1;
-  top: 20%;
-  left: 71%;
-  width: 384px;
-  height: 454px;
+  top: 18%;
+  left: 68%;
+  width: 460px;
+  min-height: 520px;
   border-radius: 24px;
-  padding: 40px;
+  padding: 48px;
   background-color: var(--custom-background-color);
 
   .login-form-title {
@@ -163,14 +163,14 @@ export default {
 
     .login-form-main-title {
       color: var(--custom-font-color);
-      font-size: 30px;
+      font-size: 34px;
       font-weight: 400;
     }
 
     .login-form-sub-title {
       color: var(--custom-font-color2);
       margin-top: 8px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 400;
     }
   }
@@ -178,21 +178,23 @@ export default {
 
 .to-sign-up {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 24px;
   color: var(--custom-font-color2);
+  font-size: 16px;
 
   a {
     color: var(--custom-color-primary);
     cursor: pointer;
+    font-size: 16px;
   }
 }
 
 .logo-image {
   img {
-    top: -20px;
-    left: 20px;
-    width: 120px;
-    height: 120px;
+    top: -24px;
+    left: 16px;
+    width: 150px;
+    height: 150px;
     position: relative;
   }
 }
@@ -207,8 +209,8 @@ export default {
 .logo-text {
   /* 可以换成更匹配品牌的字体 */
   position: absolute;
-  top: 100px;
-  font-size: 24px;
+  top: 120px;
+  font-size: 28px;
   /* 适当调整字体大小 */
   font-weight: bold;
   /* 让文字与图片保持适当间距 */
@@ -225,14 +227,16 @@ export default {
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 12px;
+  font-size: 16px;
   color: #999;
   display: flex;
   align-items: center;
+  gap: 8px;
 
   a {
     color: #999;
     text-decoration: none;
+    font-size: 16px;
 
     &:hover {
       text-decoration: underline;
@@ -240,7 +244,19 @@ export default {
   }
 
   .separator {
-    margin: 0 5px;
+    margin: 0 8px;
   }
+}
+
+/* Upscale inputs and buttons inside login form */
+.login-form :deep(.el-input__inner) {
+  height: 42px;
+  font-size: 16px;
+}
+
+.login-form :deep(.el-button) {
+  height: 44px;
+  font-size: 16px;
+  padding: 0 18px;
 }
 </style>
