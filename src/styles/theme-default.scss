@@ -71,4 +71,9 @@
   /* Switch
 -------------------------- */
   --cusom-switch-background-svg: url('@/assets/svg/Sun.svg');
+
+  /* Cursor ring/halo (neutral, visible on light) */
+  --cursor-ring-color: rgba(0, 0, 0, 0.28);
+  --cursor-glow-1: rgba(0, 0, 0, 0.18);
+  --cursor-glow-2: rgba(0, 0, 0, 0.10);
 }

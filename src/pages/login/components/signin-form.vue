@@ -26,9 +26,9 @@
           }}</a>
         </div>
         <div class="login-button">
-          <el-button style="width: 100%" type="primary" @click="submitForm('loginFrom')" :loading="isLoggingIn">
+          <el-button class="cursor-btn cursor-btn--primary" style="width: 100%" type="primary" @click="submitForm('loginFrom')" :loading="isLoggingIn">
             {{ $t('message.login.login') }}</el-button>
-        </div>
+          </div>
       </el-form-item>
     </el-form>
     <ForgetPassword :visible.sync="emailFormVisible" @close="handleCloseForm" />
@@ -289,7 +289,7 @@ export default {
     display: flex;
     justify-content: center;
     // width: 200px;
-    height: 40px;
+    min-height: 48px; /* allow outer ring halo without clipping */
     font-size: 60px;
     padding: 0;
 

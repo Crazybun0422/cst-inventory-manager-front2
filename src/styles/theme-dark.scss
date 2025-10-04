@@ -71,4 +71,9 @@
   /* Switch
 -------------------------- */
   --cusom-switch-background-svg: url('@/assets/svg/Moon.svg');
+
+  /* Cursor ring/halo (neutral, visible on dark) */
+  --cursor-ring-color: rgba(255, 255, 255, 0.64);
+  --cursor-glow-1: rgba(255, 255, 255, 0.28);
+  --cursor-glow-2: rgba(255, 255, 255, 0.16);
 }

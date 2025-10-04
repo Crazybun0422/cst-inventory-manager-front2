@@ -20,7 +20,7 @@
           Wing Dropship
           <!-- <span class="trademark">®</span> -->
         </div>
-        <div class="login-form">
+        <div class="login-form cursor-frame cursor-frame--strong">
           <div class="login-form-title">
             <div class="login-form-main-title">
               {{
@@ -157,6 +157,8 @@ export default {
   border-radius: 24px;
   padding: 48px;
   background-color: var(--custom-background-color);
+  /* match ring rounding */
+  &.cursor-frame { --frame-radius: 24px; }
 
   .login-form-title {
     text-align: center;
