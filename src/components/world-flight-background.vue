@@ -23,6 +23,7 @@ export default {
       DPR: Math.max(1, window.devicePixelRatio || 1),
       mapImg: null,
       boxImg: null,
+      mapReady: false,
       cover: { s: 1, offX: 0, offY: 0, iw: 4096, ih: 2048 },
       cities: [],
       flights: [],
@@ -94,14 +95,21 @@ export default {
     this.mapImg = new Image();
     this.mapImg.src = this.mapSrc;
     this.mapImg.decoding = 'async';
-    this.mapImg.onload = () => { this._drawMapOnce(); this._reprojectAll(); };
+    this.mapImg.onload = () => {
+      this.mapReady = true;
+      this._drawMapOnce();
+      this._reprojectAll();
+      // Initialize flights only after map image is ready
+      if (!Array.isArray(this.flights) || this.flights.length === 0) {
+        this._initFlights();
+      }
+    };
 
     this.boxImg = new Image();
     this.boxImg.src = this.boxSrc;
     this.boxImg.decoding = 'async';
 
-    // Flights
-    this._initFlights();
+    // Flights will be initialized after map is loaded (see map onload)
 
     // Timers
     this._updateCityTimes();
@@ -119,8 +127,10 @@ export default {
     const loop = (now = 0) => {
       const W = this.fx.width / this.DPR, H = this.fx.height / this.DPR;
       this.fxCtx.clearRect(0, 0, W, H);
-      if (this.routesDirty) this._drawAllRoutes();
-      this.flights.forEach(f => { f.update(); f.drawPlane(this.fxCtx, now); });
+      if (this.mapReady && Array.isArray(this.flights) && this.flights.length) {
+        if (this.routesDirty) this._drawAllRoutes();
+        this.flights.forEach(f => { f.update(); f.drawPlane(this.fxCtx, now); });
+      }
       this._drawCityLabels(this.fxCtx);
       this.rafId = requestAnimationFrame(loop);
     };
@@ -207,15 +217,15 @@ export default {
         return { x, y, ang: Math.atan2(dy, dx) };
       };
       const drawWing = (ctx, side = 1, phase = 0) => {
-        // Simple three-line wing without feathers
+        // Five-feather wing for a fuller look
         ctx.save();
         ctx.strokeStyle = '#FFC86A';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         const flap = Math.sin(phase) * 5;
-        for (let i = 0; i < 3; i++) {
-          const base = 18 + i * 10;
-          const up = (-6 - i * 5) + flap * 0.6;
+        for (let i = 0; i < 5; i++) {
+          const base = 14 + i * 8;
+          const up = (-6 - i * 4) + flap * 0.6;
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.quadraticCurveTo(side * base * 0.45, up, side * base, up + 8);
@@ -252,6 +262,25 @@ export default {
         if (!this.route) this.ensureRoute();
         const { A, B, C } = this.route;
         const p = pointOnQuad(A, B, C, this.t);
+        // Tail trail that fades behind the box
+        this.tail = this.tail || [];
+        this.tail.push({ x: p.x, y: p.y });
+        const MAX_TAIL = 28;
+        if (this.tail.length > MAX_TAIL) this.tail.shift();
+        // Draw fading tail
+        ctx.save();
+        ctx.lineWidth = 1.0;
+        for (let i = 1; i < this.tail.length; i++) {
+          const a = this.tail[i - 1];
+          const b = this.tail[i];
+          const t = i / this.tail.length; // older -> smaller t
+          ctx.strokeStyle = `rgba(255, 175, 90, ${Math.min(0.45, t * 0.55)})`;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+        ctx.restore();
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang);
         const phase = now * 0.010 + this.phaseOffset;
         ctx.save(); ctx.translate(-BOX_SIZE / 2, 0); drawWing(ctx, -1, phase); ctx.restore();
@@ -280,15 +309,18 @@ export default {
         this.flights.forEach(f => f.ensureRoute());
         this.flightsNeedRouteRecalc = false;
       }
-      this.rtCtx.strokeStyle = 'rgba(255,175,90,0.35)';
-      this.rtCtx.lineWidth = 1.4;
+      this.rtCtx.strokeStyle = 'rgba(255,175,90,0.32)';
+      this.rtCtx.lineWidth = 0.9;
+      this.rtCtx.setLineDash([6, 6]);
       for (const f of this.flights) {
         const { A, B, C } = f.route;
         this.rtCtx.beginPath(); this.rtCtx.moveTo(A.x, A.y);
         this.rtCtx.quadraticCurveTo(C.x, C.y, B.x, B.y); this.rtCtx.stroke();
-        this.rtCtx.fillStyle = 'rgba(255,175,90,0.35)';
+        this.rtCtx.setLineDash([]);
+        this.rtCtx.fillStyle = 'rgba(255,175,90,0.28)';
         this.rtCtx.beginPath(); this.rtCtx.arc(A.x, A.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
         this.rtCtx.beginPath(); this.rtCtx.arc(B.x, B.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
+        this.rtCtx.setLineDash([6, 6]);
       }
       this.routesDirty = false;
     },

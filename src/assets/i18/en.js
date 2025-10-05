@@ -107,6 +107,8 @@ const en_us = {
       googleProcessing: 'Google Signing in...',
     },
     signUp: {
+      initialPassword: 'Initial Password',
+      keepPasswordSafe: 'Please save this password; it is shown only once.',
       linkedExistingAccounts: "Link Existed Accounts",
       linkedExistingAccountsDescription: "If you already have an account, please choose to associate it with an existing account for unified management. Otherwise, please choose to generate a new account.",
       generateNewAccount: "Generate new account",
@@ -1124,3 +1126,4 @@ const en_us = {
 }
 
 export default en_us
+

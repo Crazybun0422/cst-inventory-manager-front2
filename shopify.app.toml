@@ -1,0 +1,31 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "7d96e9bbcd216107c25fbd2f45d01864"
+name = "Wing Dropship"
+application_url = "https://wingdropship.com/"
+embedded = false
+handle = "wing-dropship"
+
+[webhooks]
+api_version = "2025-07"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://wingdropship.com/api/webhooks"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,read_discounts,read_orders,read_customers,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_merchant_managed_fulfillment_orders"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://wingdropship.com/api/shopify/auth/callback/",
+  "https://wingdropship.com/api/shopify/auth/callback/?direct=true",
+  "https://wingdropship.com/api/webhooks",
+  "https://wingdropship.com/api/webhooks/"
+]
+
+[pos]
+embedded = false
