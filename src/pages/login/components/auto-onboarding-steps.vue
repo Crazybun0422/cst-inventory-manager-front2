@@ -296,7 +296,9 @@ export default {
 
 .gradient-text {
   background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
+  background-clip: text; /* standard */
   -webkit-background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
 }
 
@@ -371,7 +373,9 @@ export default {
   font-size: 13px;
   margin-bottom: 12px;
   background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
+  background-clip: text; /* standard */
   -webkit-background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
   animation: blinkGlow 1.1s ease-in-out infinite;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 16px rgba(255, 140, 0, 0.35);

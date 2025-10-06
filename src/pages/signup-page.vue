@@ -12,35 +12,32 @@
     </div>
     <el-container class="login-container">
       <el-main>
-        <div class="signup-main">
-        <!-- <div class="signup-left-img">
+        <div class="signup-panel">
+          <div class="signup-main">
+            <!-- <div class="signup-left-img">
           <img style="width: 230px" src="@/assets/logo-black.svg" alt />
         </div> -->
-        <div class="sign-up-title">{{ $t('message.login.signUp') }}</div>
-        <SignupForm ref="signupFormRef">
-          <template slot="formButton">
-            <el-form-item>
-              <div class="register-or-login">
-                <el-button
-                  style="width: 100%"
-                  type="primary"
-                  :round="true"
-                  @click="submitForm('formData')"
-                  >{{ $t('message.signUp.signup') }}</el-button
-                >
+            <div class="sign-up-title">{{ $t('message.login.signUp') }}</div>
+            <SignupForm ref="signupFormRef">
+              <template slot="formButton">
+                <el-form-item>
+                  <div class="register-or-login">
+                    <el-button style="width: 100%" type="primary" :round="true" @click="submitForm('formData')">{{
+                      $t('message.signUp.signup') }}</el-button>
 
-                <span class="to-login-message">
-                  {{ $t('message.signUp.existAccount') }}
-                  <a @click="toLogin" class="to-login">{{
-                    $t('message.signUp.login')
-                  }}</a>
-                </span>
-              </div>
-            </el-form-item>
-          </template>
-        </SignupForm>
-      </div>
-    </el-main>
+                    <span class="to-login-message">
+                      {{ $t('message.signUp.existAccount') }}
+                      <a @click="toLogin" class="to-login">{{
+                        $t('message.signUp.login')
+                        }}</a>
+                    </span>
+                  </div>
+                </el-form-item>
+              </template>
+            </SignupForm>
+          </div>
+        </div>
+      </el-main>
     </el-container>
   </div>
 </template>
@@ -54,13 +51,13 @@ export default {
   name: "signup-page",
   components: { SignupForm, WorldFlightBackground },
   props: {},
-  data () {
+  data() {
     return {
       loading: false,
     };
   },
   computed: {
-    isEnglish () {
+    isEnglish() {
       return this.$i18n.locale === 'en_us'
     }
   },
@@ -68,7 +65,7 @@ export default {
     // TODO: 使用promise优化下面的接口
     register,
     getCsrfTokenFromServer, getAesKey,
-    submitForm (formData) {
+    submitForm(formData) {
       this.$refs.signupFormRef.$refs[formData].validate(async (valid) => {
         if (valid) {
           const formData = this.$refs.signupFormRef.formData
@@ -100,7 +97,7 @@ export default {
         }
       });
     },
-    toLogin () {
+    toLogin() {
       const loginPath = toLoginPage(this.roleType)
       this.$router.push(loginPath);
     },
@@ -116,45 +113,74 @@ export default {
 ::v-deep .el-form-item {
   margin-bottom: 28px;
 }
-.signup { position: relative; min-height: 100vh; }
+
+.signup {
+  position: relative;
+  min-height: 100vh;
+}
+
 .sign-up-title {
   text-align: center;
   color: var(--custom-font-color);
   font-size: 34px;
   font-weight: 400;
 }
+
 .signup-main {
   background-color: var(--custom-background-color);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 48px 120px 48px 48px;
+  position: relative;
+
+  margin: 15px 15px;
+  padding: 20px 120px 20px 48px;
   border-radius: 40px;
 
   box-sizing: border-box;
   box-shadow: 5px 5px 10px var(--custom-theme-box-shadow);
 }
+
+.signup-panel {
+  position: absolute;
+  top: 10%;
+  left: 32%;
+  border-radius: 18px;
+  align-items: center;
+  /* Frosted glass panel */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: none;
+  box-shadow:
+    0 10px 26px rgba(255, 215, 0, 0.14),
+    0 6px 14px rgba(255, 69, 0, 0.10),
+    0 0 18px rgba(166, 124, 82, 0.10);
+}
+
 .signup-left-img {
   margin: 0 auto;
 }
+
 .signup-form {
   padding: 28px 28px 0 0;
   width: 560px;
 }
+
 .register-or-login {
   display: flex;
   align-items: center;
   flex-direction: column;
 }
+
 .to-login:hover {
   text-decoration: underline;
   cursor: pointer;
 }
+
 .image-upload {
   display: flex;
   flex-wrap: wrap;
 }
+
 .to-login-message {
   color: var(--custom-font-color2);
   font-size: 16px;
@@ -172,10 +198,12 @@ export default {
 .signup-main :deep(.el-form-item__label) {
   font-size: 16px;
 }
+
 .signup-main :deep(.el-input__inner) {
   height: 42px;
   font-size: 16px;
 }
+
 .signup-main :deep(.el-button) {
   height: 44px;
   font-size: 16px;

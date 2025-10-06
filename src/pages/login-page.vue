@@ -20,32 +20,34 @@
           Wing Dropship
           <!-- <span class="trademark">®</span> -->
         </div>
-        <div class="login-form cursor-frame cursor-frame--strong">
-          <div class="login-form-title">
-            <div class="login-form-main-title">
-              {{
-                currentPathName === 'p-login'
-                  ? $t('common.adminLogin')
-                  : $t('message.login.login')
-              }}
+        <div class="login-panel">
+          <div class="login-form">
+            <div class="login-form-title">
+              <div class="login-form-main-title">
+                {{
+                  currentPathName === 'p-login'
+                    ? $t('common.adminLogin')
+                    : $t('message.login.login')
+                }}
+              </div>
+              <div class="login-form-sub-title">
+                {{ $t('message.login.otherLoginMethods') }}
+              </div>
+              <ThirdPartLogin :disabled="isLoggingIn" />
             </div>
-            <div class="login-form-sub-title">
-              {{ $t('message.login.otherLoginMethods') }}
+            <div style="margin: 28px 0">
+              <el-divider content-position="center">
+                {{ $t('message.login.orWithAccount') }}
+              </el-divider>
             </div>
-            <ThirdPartLogin :disabled="isLoggingIn" />
-          </div>
-          <div style="margin: 28px 0">
-            <el-divider content-position="center">
-              {{ $t('message.login.orWithAccount') }}
-            </el-divider>
-          </div>
-          <SigninForm :logging-in.sync="isLoggingIn" />
-          <!-- <div class="language-select">
+            <SigninForm :logging-in.sync="isLoggingIn" />
+            <!-- <div class="language-select">
             <LanguageSelect :disabled="isLoggingIn" />
           </div> -->
-          <div class="to-sign-up">
-            {{ $t('message.login.notAMemberYet') }}
-            <a @click="jumpUrl">{{ $t('message.login.signUp') }}</a>
+            <div class="to-sign-up">
+              {{ $t('message.login.notAMemberYet') }}
+              <a @click="jumpUrl">{{ $t('message.login.signUp') }}</a>
+            </div>
           </div>
         </div>
       </el-main>
@@ -56,6 +58,8 @@
         <span class="brand">{{ brandName }}</span>
         <span class="separator">|</span>
         <a :href="policyPath" @click.prevent="$router.push(policyPath)">{{ $t('footer.pp') }}</a>
+        <span class="separator">|</span>
+        <a href="/price-tag" @click.prevent="$router.push('/price-tag')">Price Tag</a>
       </template>
       <template v-else>
         <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
@@ -147,18 +151,40 @@ export default {
   z-index: 1000;
 }
 
-.login-form {
+.login-panel {
   position: absolute;
-  opacity: 1;
+  padding: 20px 20px;
   top: 18%;
   left: 68%;
+  width: 500px;
+  min-height: 540px;
+  border-radius: 18px;
+  align-items: center;
+  /* Frosted glass panel */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: none;
+  box-shadow:
+    0 10px 26px rgba(255, 215, 0, 0.14),
+    0 6px 14px rgba(255, 69, 0, 0.10),
+    0 0 18px rgba(166, 124, 82, 0.10);
+}
+
+.login-form {
+  position: relative;
   width: 460px;
   min-height: 520px;
   border-radius: 24px;
   padding: 48px;
+  ;
   background-color: var(--custom-background-color);
+
   /* match ring rounding */
-  &.cursor-frame { --frame-radius: 24px; }
+  &.cursor-frame {
+    --frame-radius: 24px;
+  }
 
   .login-form-title {
     text-align: center;

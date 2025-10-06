@@ -56,7 +56,8 @@ export function initPermission() {
     config.estyTermsOfService,
     config.estyPrivacyPolicy,
     config.mainPage,
-    config.checkout
+    config.checkout,
+    config.priceTag
     ]
 
     if (store.state.init.isHomePage()) {
