@@ -172,7 +172,7 @@ export const asyncRoutes = [
         name: 'ds-home',
         component: () => import('@/pages/home/home-page.vue'),
         meta: {
-          title: 'navigate.home',
+          title: 'navigate.dashboard',
           roles: ['Drop shipper']
         }
       },

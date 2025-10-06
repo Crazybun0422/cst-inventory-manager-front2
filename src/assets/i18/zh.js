@@ -886,6 +886,7 @@ const zh_cn = {
   },
   navigate: {
     home: '首页',
+    dashboard: '主页',
     myInventory: '我的库存',
     storeManagement: '店铺管理',
     warehousingServices: '仓储服务',

@@ -276,6 +276,13 @@ export const navigationDataProvider = [
 ]
 export const navigationDataDs = [
   {
+    title: 'navigate.dashboard',
+    name: 'ds-dashboard',
+    path: '/ds/home',
+    icon: 'el-icon-s-data',
+    role: ['Drop shipper']
+  },
+  {
     title: 'navigate.myInventory',
     name: 'myinventory',
     path: '',

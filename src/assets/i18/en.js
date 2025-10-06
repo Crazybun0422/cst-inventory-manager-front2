@@ -885,6 +885,7 @@ const en_us = {
   },
   navigate: {
     home: 'Home',
+    dashboard: 'Dashboard',
     myInventory: 'My Inventory',
     storeManagement: 'Store Management',
     warehousingServices: 'Warehousing Services',
@@ -1126,4 +1127,3 @@ const en_us = {
 }
 
 export default en_us
-
