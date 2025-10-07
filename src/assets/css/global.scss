@@ -174,3 +174,75 @@ a[disabled] {
 @import '~@/assets/css/dialog.scss';
 @import '~@/assets/css/collapse.scss';
 @import '~@/assets/css/upload.scss';
+
+/* Ant Design Radio Button color driven by theme var */
+.ant-radio-button-wrapper-checked {
+  color: var(--custom-color-primary) !important;
+  border-color: var(--custom-color-primary) !important;
+  box-shadow: -1px 0 0 0 var(--custom-color-primary) !important;
+}
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
+  color: var(--custom-color-primary) !important;
+  border-color: var(--custom-color-primary) !important;
+}
+.ant-radio-button-wrapper-checked::before {
+  background-color: var(--custom-color-primary) !important;
+}
+.ant-radio-button-wrapper-checked + .ant-radio-button-wrapper {
+  border-left-color: var(--custom-color-primary) !important;
+}
+
+/* Segmented control look: filled active, rounded group */
+.ant-radio-button-group {
+  border-radius: 9999px;
+  overflow: hidden;
+}
+/* default state */
+.ant-radio-group .ant-radio-button-wrapper {
+  background: var(--custom-background-color2) !important;
+  border-color: var(--custom-border-color2) !important;
+  color: var(--custom-font-color2) !important;
+  transition: all 0.2s ease;
+}
+.ant-radio-group .ant-radio-button-wrapper:first-child {
+  border-radius: 9999px 0 0 9999px;
+}
+.ant-radio-group .ant-radio-button-wrapper:last-child {
+  border-radius: 0 9999px 9999px 0;
+}
+/* active */
+.ant-radio-group .ant-radio-button-wrapper-checked {
+  background: var(--custom-color-primary) !important;
+  color: var(--custom-font-color3) !important; /* main button text color per theme */
+  border-color: var(--custom-color-primary) !important;
+}
+.ant-radio-group .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
+  background: var(--custom-color-primary) !important;
+}
+
+/* Remove inner divider for a clean pill look */
+.ant-radio-group .ant-radio-button-wrapper::before { display: none !important; }
+
+/* Stronger style for our segmented instance */
+.segmented-switch .ant-radio-button-wrapper {
+  height: 28px;
+  line-height: 26px;
+  padding: 0 14px;
+  border-width: 1px !important;
+  margin: 0 !important;
+}
+.segmented-switch .ant-radio-button-wrapper-checked { box-shadow: none !important; }
+
+/* Force selected text color to follow theme button text color */
+.segmented-switch .ant-radio-button-wrapper-checked,
+.segmented-switch .ant-radio-button-wrapper-checked > span,
+.segmented-switch .ant-radio-button-wrapper-checked > * {
+  color: var(--custom-font-color3) !important;
+}
+
+/* Ensure unselected uses secondary font color */
+.segmented-switch .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked),
+.segmented-switch .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked) > span,
+.segmented-switch .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked) > * {
+  color: var(--custom-font-color2) !important;
+}

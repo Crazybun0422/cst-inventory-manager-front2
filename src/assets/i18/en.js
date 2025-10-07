@@ -1105,6 +1105,22 @@ const en_us = {
     rescan: "Rescan",
     creator: "Creator",
   },
+  dashboard: {
+    daily: 'Daily',
+    processing: 'Processing',
+    delivered: 'Delivered',
+    ordersTrend: 'Orders Trend',
+    day: 'Day',
+    month: 'Month',
+    lowStockTitle: 'Low-stock Products',
+    salesTitle: 'Top Sales',
+    image: 'Image',
+    name: 'Product',
+    shortage: 'Shortage',
+    sales: 'Sales',
+    noData: 'No data',
+    available: 'Available'
+  },
   date: {
     year: "Year",
     month: "Month",

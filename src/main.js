@@ -25,10 +25,10 @@ import en_us from '@/assets/i18/en'
 import store from './store'
 import 'default-passive-events'
 import JsonViewer from 'vue-json-viewer'
-import './assets/css/global.scss'
 import './styles/element-variables.scss'
 import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/antd.css';
+import './assets/css/global.scss'
 import { initPermission } from './permission'
 
 function changeFavicon(newIconURL) {

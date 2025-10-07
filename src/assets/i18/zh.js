@@ -1108,6 +1108,22 @@ const zh_cn = {
     rescan: "重新扫描",
     creator: "创建人",
   },
+  dashboard: {
+    daily: '每日订单',
+    processing: '处理中',
+    delivered: '已发货',
+    ordersTrend: '订单趋势',
+    day: '日',
+    month: '月',
+    lowStockTitle: '产品缺货统计',
+    salesTitle: '产品销量统计',
+    image: '图片',
+    name: '产品',
+    shortage: '缺货数量',
+    sales: '销量',
+    noData: '暂无数据',
+    available: '可用库存'
+  },
   date: {
     year: "年",
     month: "月",
