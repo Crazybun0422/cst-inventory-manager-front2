@@ -134,7 +134,7 @@ a[disabled] {
   }
 
   .el-dialog__headerbtn {
-    top: 16px;
+    top: 8px;
   }
 
   .el-dialog__body {
@@ -146,6 +146,15 @@ a[disabled] {
   .el-dialog__footer {
     // border-top: 1px solid var(--custom-border-color);
     padding: 10px 15px;
+  }
+}
+
+/* Centered modal variant for specific dialogs */
+.global-modal-center {
+  .el-dialog {
+    top: 50% !important;
+    margin-top: 0 !important;
+    transform: translateY(-50%);
   }
 }
 

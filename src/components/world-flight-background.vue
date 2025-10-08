@@ -128,8 +128,14 @@ export default {
       const W = this.fx.width / this.DPR, H = this.fx.height / this.DPR;
       this.fxCtx.clearRect(0, 0, W, H);
       if (this.mapReady && Array.isArray(this.flights) && this.flights.length) {
-        if (this.routesDirty) this._drawAllRoutes();
-        this.flights.forEach(f => { f.update(); f.drawPlane(this.fxCtx, now); });
+        // advance flights first
+        this.flights.forEach(f => f.update());
+        // compute hole positions at current frame
+        const holes = this.flights.map(f => (typeof f.getPoint === 'function' ? f.getPoint() : null)).filter(Boolean);
+        // redraw routes and cut holes beneath boxes
+        this._redrawRoutesAndCutHoles(holes);
+        // draw planes and their tails/wings/box image
+        this.flights.forEach(f => f.drawPlane(this.fxCtx, now));
       }
       this._drawCityLabels(this.fxCtx);
       this.rafId = requestAnimationFrame(loop);
@@ -217,14 +223,15 @@ export default {
         return { x, y, ang: Math.atan2(dy, dx) };
       };
       const drawWing = (ctx, side = 1, phase = 0) => {
-        // Five-feather wing for a fuller look
+        // Five-feather wing, shortened by ~1/3
         ctx.save();
         ctx.strokeStyle = '#FFC86A';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         const flap = Math.sin(phase) * 5;
+        const lenScale = 2 / 3; // shorten wings ~33%
         for (let i = 0; i < 5; i++) {
-          const base = 14 + i * 8;
+          const base = (14 + i * 8) * lenScale;
           const up = (-6 - i * 4) + flap * 0.6;
           ctx.beginPath();
           ctx.moveTo(0, 0);
@@ -258,6 +265,11 @@ export default {
       };
       Flight.prototype.reproject = function () { this.route = null; };
       Flight.prototype.update = function () { this.t += this.speed; if (this.t >= 1) this.pickRoute(); };
+      Flight.prototype.getPoint = function () {
+        if (!this.route) this.ensureRoute();
+        const { A, B, C } = this.route;
+        return pointOnQuad(A, B, C, this.t);
+      };
       Flight.prototype.drawPlane = function (ctx, now) {
         if (!this.route) this.ensureRoute();
         const { A, B, C } = this.route;
@@ -280,6 +292,12 @@ export default {
           ctx.lineTo(b.x, b.y);
           ctx.stroke();
         }
+        // Erase trail inside the (possibly rotated) box area
+        // Use a square large enough to cover the rotated box (BOX_SIZE * sqrt(2))
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = '#000';
+        const MASK_SIZE = Math.ceil(BOX_SIZE * Math.SQRT2);
+        ctx.fillRect(p.x - MASK_SIZE / 2, p.y - MASK_SIZE / 2, MASK_SIZE, MASK_SIZE);
         ctx.restore();
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang);
         const phase = now * 0.010 + this.phaseOffset;
@@ -321,6 +339,40 @@ export default {
         this.rtCtx.beginPath(); this.rtCtx.arc(A.x, A.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
         this.rtCtx.beginPath(); this.rtCtx.arc(B.x, B.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
         this.rtCtx.setLineDash([6, 6]);
+      }
+      this.routesDirty = false;
+    },
+    _redrawRoutesAndCutHoles(holes = []) {
+      const W = this.rt.width / this.DPR, H = this.rt.height / this.DPR;
+      this.rtCtx.clearRect(0, 0, W, H);
+      if (this.flightsNeedRouteRecalc) {
+        this.flights.forEach(f => f.ensureRoute());
+        this.flightsNeedRouteRecalc = false;
+      }
+      // draw routes
+      this.rtCtx.strokeStyle = 'rgba(255,175,90,0.32)';
+      this.rtCtx.lineWidth = 0.9;
+      this.rtCtx.setLineDash([6, 6]);
+      for (const f of this.flights) {
+        const { A, B, C } = f.route;
+        this.rtCtx.beginPath(); this.rtCtx.moveTo(A.x, A.y);
+        this.rtCtx.quadraticCurveTo(C.x, C.y, B.x, B.y); this.rtCtx.stroke();
+        this.rtCtx.setLineDash([]);
+        this.rtCtx.fillStyle = 'rgba(255,175,90,0.28)';
+        this.rtCtx.beginPath(); this.rtCtx.arc(A.x, A.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
+        this.rtCtx.beginPath(); this.rtCtx.arc(B.x, B.y, 2, 0, Math.PI * 2); this.rtCtx.fill();
+        this.rtCtx.setLineDash([6, 6]);
+      }
+      // cut holes under current box locations so dashed route doesn't show inside the box
+      const BOX_SIZE = 32;
+      const MASK_SIZE = Math.ceil(BOX_SIZE * Math.SQRT2);
+      if (holes && holes.length) {
+        this.rtCtx.save();
+        this.rtCtx.globalCompositeOperation = 'destination-out';
+        for (const p of holes) {
+          this.rtCtx.fillRect(p.x - MASK_SIZE / 2, p.y - MASK_SIZE / 2, MASK_SIZE, MASK_SIZE);
+        }
+        this.rtCtx.restore();
       }
       this.routesDirty = false;
     },

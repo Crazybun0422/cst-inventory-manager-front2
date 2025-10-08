@@ -1,0 +1,554 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Drop Shipping Dashboard API",
+    "version": "1.0.0",
+    "description": "Drop shipping 仪表盘统计接口的 OpenAPI 文档，可直接导入 Apifox。"
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "默认服务器地址，导入 Apifox 后可在环境中调整。",
+      "variables": {
+        "host": {
+          "default": "example.com",
+          "description": "API 服务域名或 IP。"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/api/dropshipping/dashboard/statistics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "获取仪表盘统计数据",
+        "description": "返回订单概览、缺货商品及销量排行等统计信息。需使用具备直发商权限的账号登录后访问。",
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功或失败时均返回 200 状态码，通过 `code` 字段区分业务状态。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "成功示例",
+                    "value": {
+                      "code": 23000,
+                      "msg": {
+                        "zh_cn": "仪表盘操作成功",
+                        "en_us": "Dashboard operation successful"
+                      },
+                      "data": {
+                        "orders": {
+                          "today_total": 12,
+                          "processing_total": 7,
+                          "delivered_total": 19,
+                          "daily_trend": [
+                            {
+                              "date": "2024-03-01",
+                              "count": 5
+                            },
+                            {
+                              "date": "2024-03-02",
+                              "count": 7
+                            }
+                          ],
+                          "monthly_trend": [
+                            {
+                              "month": "2024-02",
+                              "count": 96
+                            },
+                            {
+                              "month": "2024-03",
+                              "count": 112
+                            }
+                          ]
+                        },
+                        "products": {
+                          "low_stock": {
+                            "total": 2,
+                            "page": 1,
+                            "page_size": 10,
+                            "items": [
+                              {
+                                "product_uuid": "P-001",
+                                "variant_id": "V-001",
+                                "sku": "SKU-001",
+                                "barcode": "B-001",
+                                "name": "蓝牙耳机-黑色",
+                                "alarm_number": 20,
+                                "available": 8,
+                                "shortage": 12
+                              }
+                            ]
+                          },
+                          "top_sales": [
+                            {
+                              "product_uuid": "P-002",
+                              "variant_id": "V-010",
+                              "sku": "SKU-010",
+                              "barcode": "B-010",
+                              "name": "真无线耳机-白色",
+                              "quantity": 256
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "noPermission": {
+                    "summary": "权限不足示例",
+                    "value": {
+                      "code": 202,
+                      "msg": {
+                        "zh_cn": "当前用户无权限",
+                        "en_us": "The current user has no permission"
+                      },
+                      "data": {}
+                    }
+                  },
+                  "businessError": {
+                    "summary": "业务失败示例",
+                    "value": {
+                      "code": 23001,
+                      "msg": {
+                        "zh_cn": "仪表盘操作失败",
+                        "en_us": "Dashboard operation failed"
+                      },
+                      "data": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dropshipping/dashboard/low-stock-products": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "分页获取缺货商品列表",
+        "description": "返回当前缺货的商品变体列表，可通过 `page` 与 `page_size` 参数翻页。",
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，默认 1",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "每页返回的记录数，默认 10",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功或失败时均返回 200 状态码，通过 `code` 字段区分业务状态。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LowStockListResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "成功示例",
+                    "value": {
+                      "code": 23000,
+                      "msg": {
+                        "zh_cn": "仪表盘操作成功",
+                        "en_us": "Dashboard operation successful"
+                      },
+                      "data": {
+                        "total": 2,
+                        "page": 1,
+                        "page_size": 10,
+                        "items": [
+                          {
+                            "product_uuid": "P-001",
+                            "variant_id": "V-001",
+                            "sku": "SKU-001",
+                            "barcode": "B-001",
+                            "name": "蓝牙耳机-黑色",
+                            "alarm_number": 20,
+                            "available": 8,
+                            "shortage": 12
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "businessError": {
+                    "summary": "业务失败示例",
+                    "value": {
+                      "code": 23001,
+                      "msg": {
+                        "zh_cn": "仪表盘操作失败",
+                        "en_us": "Dashboard operation failed"
+                      },
+                      "data": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sessionid",
+        "description": "Django 会话 Cookie，需先登录获得。"
+      }
+    },
+    "schemas": {
+      "LocalizedMessage": {
+        "type": "object",
+        "properties": {
+          "zh_cn": {
+            "type": "string",
+            "description": "中文提示"
+          },
+          "en_us": {
+            "type": "string",
+            "description": "英文提示"
+          }
+        },
+        "required": [
+          "zh_cn",
+          "en_us"
+        ]
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "业务状态码，23000 表示成功。"
+          },
+          "msg": {
+            "$ref": "#/components/schemas/LocalizedMessage"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DashboardData"
+          }
+        },
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ]
+      },
+      "DashboardData": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "$ref": "#/components/schemas/DashboardOrders"
+          },
+          "products": {
+            "$ref": "#/components/schemas/DashboardProducts"
+          }
+        },
+        "required": [
+          "orders",
+          "products"
+        ]
+      },
+      "DashboardOrders": {
+        "type": "object",
+        "properties": {
+          "today_total": {
+            "type": "integer",
+            "description": "当日新增订单数量",
+            "minimum": 0
+          },
+          "processing_total": {
+            "type": "integer",
+            "description": "处理中订单数量",
+            "minimum": 0
+          },
+          "delivered_total": {
+            "type": "integer",
+            "description": "已发货订单数量",
+            "minimum": 0
+          },
+          "daily_trend": {
+            "type": "array",
+            "description": "最近 7 天的订单趋势",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDailyTrendItem"
+            }
+          },
+          "monthly_trend": {
+            "type": "array",
+            "description": "最近 6 个月的订单趋势",
+            "items": {
+              "$ref": "#/components/schemas/DashboardMonthlyTrendItem"
+            }
+          }
+        },
+        "required": [
+          "today_total",
+          "processing_total",
+          "delivered_total",
+          "daily_trend",
+          "monthly_trend"
+        ]
+      },
+      "DashboardDailyTrendItem": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "日期 (UTC)",
+            "example": "2024-03-02"
+          },
+          "count": {
+            "type": "integer",
+            "description": "当日订单数量",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "date",
+          "count"
+        ]
+      },
+      "DashboardMonthlyTrendItem": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "月份 (UTC)",
+            "example": "2024-03"
+          },
+          "count": {
+            "type": "integer",
+            "description": "当月订单数量",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "month",
+          "count"
+        ]
+      },
+      "DashboardProducts": {
+        "type": "object",
+        "properties": {
+          "low_stock": {
+            "$ref": "#/components/schemas/DashboardLowStock"
+          },
+          "top_sales": {
+            "type": "array",
+            "description": "销量排行列表 (按 30 天内销量降序，最多返回前 10 条)",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTopSalesItem"
+            }
+          }
+        },
+        "required": [
+          "low_stock",
+          "top_sales"
+        ]
+      },
+      "DashboardLowStock": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "当前缺货的变体数量",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "description": "当前页码",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "每页返回的记录数",
+            "minimum": 1
+          },
+          "items": {
+            "type": "array",
+            "description": "缺货变体详情，按缺口数量降序排列",
+            "items": {
+              "$ref": "#/components/schemas/DashboardLowStockItem"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "page_size",
+          "items"
+        ]
+      },
+      "DashboardLowStockItem": {
+        "type": "object",
+        "properties": {
+          "product_uuid": {
+            "type": "string",
+            "description": "商品 UUID"
+          },
+          "variant_id": {
+            "type": "string",
+            "description": "变体 ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "SKU 编码"
+          },
+          "barcode": {
+            "type": "string",
+            "description": "商品条码"
+          },
+          "name": {
+            "type": "string",
+            "description": "显示名称"
+          },
+          "main_image_url": {
+            "type": "string",
+            "description": "商品主图链接",
+            "nullable": true
+          },
+          "variant_image_url": {
+            "type": "string",
+            "description": "SKU 变体图片链接",
+            "nullable": true
+          },
+          "alarm_number": {
+            "type": "integer",
+            "description": "库存告警阈值",
+            "minimum": 0
+          },
+          "available": {
+            "type": "integer",
+            "description": "当前可用库存数量",
+            "minimum": 0
+          },
+          "shortage": {
+            "type": "integer",
+            "description": "缺口数量 (告警阈值 - 可用库存)",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "product_uuid",
+          "variant_id",
+          "sku",
+          "name",
+          "alarm_number",
+          "available",
+          "shortage",
+          "main_image_url",
+          "variant_image_url"
+        ]
+      },
+      "DashboardTopSalesItem": {
+        "type": "object",
+        "properties": {
+          "product_uuid": {
+            "type": "string",
+            "description": "商品 UUID"
+          },
+          "variant_id": {
+            "type": "string",
+            "description": "变体 ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "SKU 编码"
+          },
+          "barcode": {
+            "type": "string",
+            "description": "商品条码"
+          },
+          "name": {
+            "type": "string",
+            "description": "显示名称"
+          },
+          "main_image_url": {
+            "type": "string",
+            "description": "商品主图链接",
+            "nullable": true
+          },
+          "variant_image_url": {
+            "type": "string",
+            "description": "SKU 变体图片链接",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "统计周期内的销量",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "product_uuid",
+          "variant_id",
+          "sku",
+          "name",
+          "quantity",
+          "main_image_url",
+          "variant_image_url"
+        ]
+      },
+      "LowStockListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "业务状态码，23000 表示成功。"
+          },
+          "msg": {
+            "$ref": "#/components/schemas/LocalizedMessage"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DashboardLowStock"
+          }
+        },
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ]
+      }
+    }
+  }
+}

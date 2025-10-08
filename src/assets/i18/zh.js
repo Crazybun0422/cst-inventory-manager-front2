@@ -1,4 +1,4 @@
-const zh_cn = {
+﻿const zh_cn = {
   "logoText": "持服科技",
   "slogan": "科技助力业务",
   "ourProducts": "我们的产品",
@@ -886,6 +886,7 @@ const zh_cn = {
   },
   navigate: {
     home: '首页',
+    sourcing: '选品',
     dashboard: '主页',
     myInventory: '我的库存',
     storeManagement: '店铺管理',
@@ -934,7 +935,8 @@ const zh_cn = {
     customer: "客户",
   },
   common: {
-
+    submit: "提交",
+    history: "历史",
     exportedEntries: "已导出条目",
     totalEntries: "总条目数",
     fetchingTotal: "正在获取...",
@@ -1108,6 +1110,41 @@ const zh_cn = {
     rescan: "重新扫描",
     creator: "创建人",
   },
+  sourcing: {
+    heroTitle: '快速选品',
+    productUrlOrKeyword: '商品链接或关键词',
+    urlPlaceholder: '粘贴商品链接或输入关键词',
+    expectedPrice: '预期价格',
+    pricePlaceholder: '例如 9.99',
+    purchaseReason: '采购理由',
+    purchaseReasonPlaceholder: '可选备注说明',
+    moreOptions: '更多选项',
+    inputImageDescPrice: '图片',
+    inputImageDescPriceDesc: '描述你的需求与目标价',
+    existingProducts: '基于现有产品选品',
+    existingProductsDesc: '使用内部产品ID发起报价',
+    imageUrl: '图片链接',
+    imageUrlPlaceholder: '例如 https://example.com/image.png',
+    descriptionPlaceholder: '描述商品、尺寸、颜色等信息',
+    productId: '产品ID',
+    productIdPlaceholder: '例如 PD-10001',
+    historyTitle: '选品历史',
+    sourcingId: '选品单号',
+    itemsCount: '条目数',
+    urlRequired: '请输入链接或关键词',
+    priceRequired: '请填写预期价格',
+    imageUrlRequired: '请填写图片链接',
+    imageRequired: '请上传图片',
+    descRequired: '请填写描述',
+    productIdRequired: '请填写产品ID',
+    insertLinkTitle: '插入链接',
+    acceptableLinksIntro: '支持的链接：',
+    aliexpress: '速卖通',
+    alibaba: '阿里巴巴',
+    amazon: '亚马逊',
+    insertUrlPlaceholder: '输入您的链接',
+        feedbackQuote: '返回报价',
+},
   dashboard: {
     daily: '每日订单',
     processing: '处理中',
@@ -1146,3 +1183,4 @@ const zh_cn = {
 }
 
 export default zh_cn
+
