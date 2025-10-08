@@ -1107,6 +1107,9 @@
     setting: "Setting",
     rescan: "Rescan",
     creator: "Creator",
+    tips: "Tips",
+    start: "Start",
+    inquiryConfirmation: "Confirm quote",
   },
   sourcing: {
     heroTitle: 'Quick Sourcing',
@@ -1128,6 +1131,7 @@
     productId: 'Product ID',
     productIdPlaceholder: 'e.g. PD-10001',
     historyTitle: 'Sourcing History',
+    confirmStart: 'Start sourcing now? (This will notify the customer)',
     sourcingId: 'Sourcing ID',
     itemsCount: 'Items',
     urlRequired: 'Link or keywords are required',

@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="sourcing-page">
     <div class="page-bg">
-      <WorldMagnifierBackground :lang="$languageType" :fixed="false" :gradient-stops="['#A67C52', '#FFD700', '#FF4500']"
+      <WorldMagnifierBackground :lang="$i18n.locale" :fixed="false" :gradient-stops="['#A67C52', '#FFD700', '#FF4500']"
         accent="#FFD700" />
     </div>
     <PageHead :title="$t('navigate.sourcing')" />
@@ -27,16 +27,18 @@
           </div>
         </div>
 
-        <!-- URL input with system-styled submit button -->
-        <el-form :model="urlForm" :rules="urlRules" ref="urlFormRef" class="url-form"
+        <!-- URL input with system-styled submit button (Ant Design Vue) -->
+        <a-form-model :model="urlForm" :rules="urlRules" ref="urlFormRef" class="url-form"
           @submit.native.prevent="submitUrl">
           <div class="url-row">
-            <el-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')" clearable
-              prefix-icon="el-icon-search" class="url-input" />
-            <el-button class="url-submit" type="primary" :loading="submittingUrl" @click="submitUrl">{{
-              $t('common.submit') }}</el-button>
+            <a-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')" :allowClear="true"
+              class="url-input">
+              <a-icon slot="prefix" type="search" />
+            </a-input>
+            <a-button class="url-submit" type="primary" :loading="submittingUrl" @click="submitUrl">{{
+              $t('common.submit') }}</a-button>
           </div>
-        </el-form>
+        </a-form-model>
 
         <div class="hero-links">
           <a @click.prevent="openMore">{{ $t('common.more') }}</a>
@@ -46,168 +48,178 @@
       </div>
     </div>
 
-    <!-- More Modal -->
-    <el-dialog :title="$t('sourcing.moreOptions')" :visible.sync="moreVisible" width="900px"
-      class="global-modal-class global-modal-center">
+    <!-- More Modal (Ant Design Vue) -->
+    <a-modal :title="$t('sourcing.moreOptions')" :visible="moreVisible" width="1040px"
+      class="global-modal-class global-modal-center" :footer="null" @cancel="moreVisible=false">
       <div v-if="moreStep === 'options'" class="more-options more-buttons">
-        <el-button class="more-action-btn" type="primary" @click="chooseMore('image')">
+        <a-button class="more-action-btn" type="primary" @click="chooseMore('image')">
           <span class="btn-title">{{ $t('sourcing.inputImageDescPrice') }}</span>
           <span class="btn-desc">{{ $t('sourcing.inputImageDescPriceDesc') }}</span>
-        </el-button>
-        <el-button class="more-action-btn" @click="chooseMore('product')">
+        </a-button>
+        <a-button class="more-action-btn" @click="chooseMore('product')">
           <span class="btn-title">{{ $t('sourcing.existingProducts') }}</span>
           <span class="btn-desc">{{ $t('sourcing.existingProductsDesc') }}</span>
-        </el-button>
+        </a-button>
       </div>
       <div v-else-if="moreStep === 'image'">
-        <el-form :model="imageForm" :rules="imageRules" ref="imageFormRef" label-position="top">
-          <el-form-item :label="$t('dashboard.image')" prop="image">
-            <ImageUpload :imageUrl="imageForm.image" @change="onImageUploadChange" />
-          </el-form-item>
-          <el-form-item :label="$t('common.describe')" prop="description">
-            <el-input type="textarea" v-model="imageForm.description"
+        <a-form-model :model="imageForm" :rules="imageRules" ref="imageFormRef" label-align="left" layout="vertical">
+          <a-form-model-item :label="$t('dashboard.image')" prop="image">
+            <a-upload name="files" :action="'/api-prefix/api/upload/'" list-type="picture-card"
+              :headers="getGlobalHeaders(roleType)" :file-list="imageFileList"
+              :showUploadList="{ showPreviewIcon: true, showRemoveIcon: true }"
+              :multiple="false" @change="handleAntUploadChange" @preview="handleAntPreview">
+              <a-icon type="plus" />
+            </a-upload>
+            <a-modal :visible="previewVisible" :footer="null" @cancel="previewVisible=false">
+              <img :src="previewImage" alt="preview" style="width: 100%" />
+            </a-modal>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('common.describe')" prop="description">
+            <a-input type="textarea" v-model="imageForm.description"
               :placeholder="$t('sourcing.descriptionPlaceholder')" :rows="3" />
-          </el-form-item>
-          <el-form-item :label="$t('sourcing.expectedPrice')" prop="quote">
-            <el-input v-model="imageForm.quote" :placeholder="$t('sourcing.pricePlaceholder')" clearable>
-              <template slot="prepend">{{ currencySymbol }}</template>
-            </el-input>
-          </el-form-item>
-          <el-form-item :label="$t('sourcing.purchaseReason')">
-            <el-input v-model="imageForm.purchase_reason" :disabled="true"></el-input>
-          </el-form-item>
-        </el-form>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('sourcing.expectedPrice')" prop="quote">
+            <a-input v-model="imageForm.quote" :placeholder="$t('sourcing.pricePlaceholder')" :allowClear="true">
+              <span slot="addonBefore">{{ currencySymbol }}</span>
+            </a-input>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('sourcing.purchaseReason')">
+            <a-input v-model="imageForm.purchase_reason" :disabled="true"></a-input>
+          </a-form-model-item>
+        </a-form-model>
         <div class="dialog-actions">
-          <el-button @click="backMore">{{ $t('common.back') }}</el-button>
-          <el-button type="primary" :loading="submittingImage" @click="submitImage">{{ $t('common.submit')
-          }}</el-button>
+          <a-button @click="backMore">{{ $t('common.back') }}</a-button>
+          <a-button type="primary" :loading="submittingImage" @click="submitImage">{{ $t('common.submit')
+          }}</a-button>
         </div>
       </div>
       <div v-else-if="moreStep === 'product'">
-        <!-- search bar -->
-        <el-form :inline="true" :model="productQuery" class="mb-24">
-          <el-form-item>
-            <el-input v-model="productQuery.name"
-              :placeholder="$languageType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
-              clearable style="width:220px" />
-          </el-form-item>
-          <el-form-item>
-            <el-input v-model="productQuery.sku" :placeholder="$t('message.productManagement.productSku')" clearable
+        <!-- search bar (Ant Design Vue) -->
+        <a-form-model layout="inline" :model="productQuery" class="mb-24 modal-inline-form">
+          <a-form-model-item>
+            <a-input v-model="productQuery.name" :allowClear="true"
+              :placeholder="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
               style="width:220px" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="loadProductList(1)">{{ $t('common.search') }}</el-button>
-            <el-button @click="resetProductQuery">{{ $t('common.reset') }}</el-button>
-          </el-form-item>
-        </el-form>
+          </a-form-model-item>
+          <a-form-model-item>
+            <a-input v-model="productQuery.sku" :placeholder="$t('message.productManagement.productSku')" :allowClear="true" style="width:220px" />
+          </a-form-model-item>
+          <a-form-model-item class="form-actions-inline">
+            <a-button type="primary" @click="loadProductList(1)">{{ $t('common.search') }}</a-button>
+            <a-button @click="resetProductQuery">{{ $t('common.reset') }}</a-button>
+          </a-form-model-item>
+        </a-form-model>
 
-        <!-- product table -->
-        <el-table :data="productTable.items" size="small" v-loading="productLoading"
-          @selection-change="onProductSelectionChange" style="width:100%">
-          <el-table-column type="selection" width="50" />
-          <el-table-column :label="$t('dashboard.image')" width="80">
-            <template slot-scope="scope">
-              <AuthImg :src="scope.row.sub_image_url ? scope.row.sub_image_url : scope.row.main_image_url"
+        <!-- product table (Ant Design Vue) -->
+        <a-table :data-source="productTable.items" :loading="productLoading" :rowKey="formatProductValue"
+          :row-selection="productRowSelection" :pagination="false" size="small" :scroll="{ x: true }">
+          <a-table-column :title="$t('dashboard.image')" key="image" width="90">
+            <template slot-scope="text, record">
+              <AuthImg :src="record.sub_image_url ? record.sub_image_url : record.main_image_url"
                 :styleInfo="'width:48px;height:48px;'" />
             </template>
-          </el-table-column>
-          <el-table-column
-            :label="$languageType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
-            min-width="200" show-overflow-tooltip>
-            <template slot-scope="scope">
-              <span v-if="$languageType === 'zh_cn'">{{ (scope.row.chinese_name || '') + (scope.row.sub_chinese_name ?
-                '-' + scope.row.sub_chinese_name : '') }}</span>
-              <span v-else>{{ (scope.row.english_name || '') + (scope.row.sub_english_name ? ' - ' +
-                scope.row.sub_english_name : '') }}</span>
+          </a-table-column>
+          <a-table-column :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+            key="name" :ellipsis="true">
+            <template slot-scope="text, record">
+              <span v-if="langType === 'zh_cn'">{{ (record.chinese_name || '') + (record.sub_chinese_name ? '-' + record.sub_chinese_name : '') }}</span>
+              <span v-else>{{ (record.english_name || '') + (record.sub_english_name ? ' - ' + record.sub_english_name : '') }}</span>
             </template>
-          </el-table-column>
-          <el-table-column :label="$t('message.productManagement.productSku')" min-width="260">
-            <template slot-scope="scope">
-              <span class="sku-cell">{{(scope.row.product_variants || []).map(v => v.product_code_sku).join(', ')
-              }}</span>
+          </a-table-column>
+          <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :ellipsis="false">
+            <template slot-scope="text, record">
+              <span class="sku-cell">{{ (record.product_variants || []).map(v => v.product_code_sku).join(', ') }}</span>
             </template>
-          </el-table-column>
-        </el-table>
+          </a-table-column>
+        </a-table>
         <div class="mt-16" style="text-align:right">
-          <el-pagination background layout="prev, pager, next, jumper" :page-size="productTable.page_size"
-            :current-page.sync="productTable.page_number" :total="productTable.total"
-            @current-change="loadProductList" />
+          <a-pagination show-quick-jumper :pageSize="productTable.page_size" :current="productTable.page_number"
+            :total="productTable.total" @change="loadProductList" />
         </div>
         <div class="dialog-actions">
-          <el-button @click="backMore">{{ $t('common.back') }}</el-button>
-          <el-button type="primary" :loading="submittingProduct" @click="submitProduct">{{ $t('common.submit')
-          }}</el-button>
+          <a-button @click="backMore">{{ $t('common.back') }}</a-button>
+          <a-button type="primary" :loading="submittingProduct" @click="submitProduct">{{ $t('common.submit')
+          }}</a-button>
         </div>
       </div>
-    </el-dialog>
+    </a-modal>
 
-    <!-- History Modal -->
-    <el-dialog :title="$t('sourcing.historyTitle')" :visible.sync="historyVisible" width="900px"
-      class="global-modal-class global-modal-center">
-      <el-form inline :model="historyQuery" label-width="100px" class="mb-24">
-        <el-form-item :label="$t('common.status')">
-          <el-select v-model="historyQuery.status" clearable :placeholder="$t('common.pleaseSelect')"
+    <!-- History Modal (Ant Design Vue) -->
+    <a-modal :title="$t('sourcing.historyTitle')" :visible="historyVisible" width="1040px" :footer="null"
+      class="global-modal-class global-modal-center" @cancel="historyVisible=false">
+      <a-form-model layout="inline" :model="historyQuery" class="mb-24 modal-inline-form">
+        <a-form-model-item :label="$t('common.status')">
+          <a-select v-model="historyQuery.status" :allowClear="true" :placeholder="$t('common.pleaseSelect')"
             style="width:180px">
-            <el-option v-for="s in statusList" :key="s.value" :label="s.label" :value="s.value" />
-          </el-select>
-        </el-form-item>
-        <el-button type="primary" @click="loadHistory(1)">{{ $t('common.search') }}</el-button>
-        <el-button @click="resetHistory">{{ $t('common.reset') }}</el-button>
-      </el-form>
+            <a-select-option v-for="s in statusList" :key="s.value" :value="s.value">{{ s.label }}</a-select-option>
+          </a-select>
+        </a-form-model-item>
+        <a-form-model-item class="form-actions-inline">
+          <a-button type="primary" @click="loadHistory(1)">{{ $t('common.search') }}</a-button>
+          <a-button @click="resetHistory">{{ $t('common.reset') }}</a-button>
+        </a-form-model-item>
+      </a-form-model>
 
-      <el-table :data="history.items" stripe size="small" v-loading="historyLoading">
-        <el-table-column type="expand">
-          <template slot-scope="scope">
-            <div class="his-item-list">
-              <div class="his-item" v-for="(it, idx) in (scope.row.items || [])" :key="it.item_id || idx">
-                <div class="his-item__preview">
-                  <AuthImg v-if="it.source_type === 'image' && it.image" :src="it.image"
-                    :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
-                  <i v-else-if="it.source_type === 'url'" class="el-icon-link his-item__icon"></i>
-                  <i v-else class="el-icon-goods his-item__icon"></i>
+      <a-table :data-source="history.items" :loading="historyLoading" :pagination="false" size="small">
+        <template slot="expandedRowRender" slot-scope="record">
+          <div class="his-item-list">
+            <div class="his-item" v-for="(it, idx) in (record.items || [])" :key="it.item_id || idx">
+              <div class="his-item__preview">
+                <AuthImg v-if="it.source_type === 'image' && it.image" :src="it.image"
+                  :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
+                <a-icon v-else-if="it.source_type === 'url'" type="link" class="his-item__icon" />
+                <a-icon v-else type="shopping" class="his-item__icon" />
+              </div>
+              <div class="his-item__meta">
+                <div class="his-item__line">
+                  <a-tag color="blue" size="small">{{ it.source_type }}</a-tag>
+                  <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
+                    rel="noopener">{{ it.source_url }}</a>
+                  <span v-else-if="it.source_type === 'product'" class="his-item__text">{{ it.product_id }}</span>
+                  <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
                 </div>
-                <div class="his-item__meta">
-                  <div class="his-item__line">
-                    <el-tag size="mini" type="info" effect="dark">{{ it.source_type }}</el-tag>
-                    <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
-                      rel="noopener">{{ it.source_url }}</a>
-                    <span v-else-if="it.source_type === 'product'" class="his-item__text">{{ it.product_id }}</span>
-                    <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
-                  </div>
-                  <div class="his-item__sub">
-                    <span v-if="it.quote">{{ $t('sourcing.expectedPrice') }}: {{ currencySymbol }} {{ it.quote }}</span>
-                    <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{
-                      currencySymbol }} {{ it.feedback_quote }}</span>
-                  </div>
+                <div class="his-item__sub">
+                  <span v-if="it.quote">{{ $t('sourcing.expectedPrice') }}: {{ currencySymbol }} {{ it.quote }}</span>
+                  <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{
+                    currencySymbol }} {{ it.feedback_quote }}</span>
                 </div>
               </div>
             </div>
+          </div>
+        </template>
+        <a-table-column :title="$t('common.status')" key="status" width="180">
+          <template slot-scope="text, record">
+            <a-tag :color="statusColor(record.status)">{{ statusLabel(record.status) }}</a-tag>
           </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="160">
-          <template slot-scope="scope">{{ statusLabel(scope.row.status) }}</template>
-        </el-table-column>
-        <el-table-column prop="created_at" :label="$t('common.createTime')" />
-        <el-table-column :label="$t('sourcing.itemsCount')" width="120">
-          <template slot-scope="scope">{{ (scope.row.items || []).length }}</template>
-        </el-table-column>
-      </el-table>
+        </a-table-column>
+        <a-table-column :title="$t('common.createTime')" dataIndex="created_at" key="created_at" />
+        <a-table-column :title="$t('sourcing.itemsCount')" key="items">
+          <template slot-scope="text, record">{{ (record.items || []).length }}</template>
+        </a-table-column>
+        <a-table-column :title="$t('common.operation')" key="op" width="160">
+          <template slot-scope="text, record">
+            <a-button v-if="record.status==='pending_confirmation'" type="primary" size="small" @click="confirmHistory(record)">{{ $t('common.confirm') }}</a-button>
+          </template>
+        </a-table-column>
+      </a-table>
       <div class="mt-16" style="text-align:right">
-        <el-pagination background layout="prev, pager, next, jumper" :page-size="history.page_size"
-          :current-page.sync="history.page_number" :total="history.total" @current-change="loadHistory" />
+        <a-pagination show-quick-jumper :pageSize="history.page_size" :current="history.page_number"
+          :total="history.total" @change="loadHistory" />
       </div>
-    </el-dialog>
+    </a-modal>
   </div>
 </template>
 
 <script>
 import PageHead from '@/components/page-head.vue'
 import WorldMagnifierBackground from '@/components/world-magnifier-background.vue'
-import ImageUpload from '@/pages/product-manage/components/image-upload.vue'
 import AuthImg from '@/components/auth-img.vue'
+import { message } from 'ant-design-vue'
+import { getGlobalHeaders } from '@/common/common-func'
+import bus, { EVENTS } from '@/common/event-bus'
 export default {
   name: 'DsSourcing',
-  components: { PageHead, ImageUpload, AuthImg, WorldMagnifierBackground },
+  components: { PageHead, AuthImg, WorldMagnifierBackground },
   data() {
     return {
       submittingUrl: false,
@@ -218,6 +230,9 @@ export default {
       moreVisible: false,
       moreStep: 'options',
       imageForm: { image: '', description: '', quote: '', purchase_reason: this.$t('sourcing.lowestPrice') },
+      imageFileList: [],
+      previewVisible: false,
+      previewImage: '',
       imageRules: {
         image: [{ required: true, message: this.$t('sourcing.imageRequired'), trigger: 'change' }],
         description: [{ required: true, message: this.$t('sourcing.descRequired'), trigger: 'blur' }],
@@ -237,10 +252,11 @@ export default {
     }
   },
   computed: {
+    langType() { return this.$i18n.locale },
     statusList() {
       const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
       const en = { submitted: 'Submitted', sourcing: 'Sourcing', pending_confirmation: 'Pending confirmation', completed: 'Completed' }
-      const dict = this.$languageType === 'zh_cn' ? zh : en
+      const dict = this.langType === 'zh_cn' ? zh : en
       return [
         { value: 'submitted', label: dict.submitted },
         { value: 'sourcing', label: dict.sourcing },
@@ -248,15 +264,48 @@ export default {
         { value: 'completed', label: dict.completed }
       ]
     },
-    currencySymbol() { return '$' }
+    currencySymbol() { return '$' },
+    productRowSelection() {
+      return { selectedRowKeys: this.selectedProductIds, onChange: this.onProductSelectionChangeKeys }
+    }
   },
+  created() {
+    // refresh history dialog when open and receiving WS notification
+    this._unsub = () => { if (this.historyVisible) this.loadHistory(this.history.page_number) }
+    bus.$on(EVENTS.SOURCING_NOTIFICATION, this._unsub)
+  },
+  beforeDestroy() { bus.$off(EVENTS.SOURCING_NOTIFICATION, this._unsub) },
   methods: {
     statusLabel(s) { const map = this.statusList.reduce((a, c) => (a[c.value] = c.label, a), {}); return map[s] || s },
-    onImageUploadChange(list) { this.imageForm.image = (list && list.length > 0) ? list[0].file_url : '' },
+    statusColor(s) {
+      // use AntD preset colors for clarity; can theme-map later if needed
+      const map = {
+        submitted: 'geekblue',
+        sourcing: 'gold',
+        pending_confirmation: 'purple',
+        completed: 'green'
+      }
+      return map[s] || 'default'
+    },
+    getGlobalHeaders,
+    handleAntUploadChange({ file, fileList }) {
+      this.imageFileList = fileList.slice(-1)
+      const f = this.imageFileList[0]
+      if (f && f.response && f.response.data && f.response.data[0] && !f.response.data[0].code) {
+        const url = (f.response.data[0].file_url || '').replace(/^\//, '')
+        this.imageForm.image = url
+      } else if (f && f.url) {
+        this.imageForm.image = f.url
+      }
+    },
+    handleAntPreview(file) {
+      this.previewImage = (file.url || (file.response && file.response.data && file.response.data[0] && file.response.data[0].file_url) || '').replace(/^\//, '')
+      this.previewVisible = true
+    },
     formatProductLabel(p) {
       const cn = p.chinese_name || '', en = p.english_name || ''
       const skuCount = (p.product_variants || []).length
-      const name = this.$languageType === 'zh_cn' ? (cn || en) : (en || cn)
+      const name = this.langType === 'zh_cn' ? (cn || en) : (en || cn)
       return skuCount ? `${name} (${skuCount})` : name
     },
     formatProductValue(p) { return p.product_uuid || p.product_id || p.system_number },
@@ -264,7 +313,7 @@ export default {
       if (!query) { this.productOptions = []; return }
       this.productLoading = true
       try {
-        const key = this.$languageType === 'zh_cn' ? 'chinese_name_reg' : 'english_name_reg'
+        const key = this.langType === 'zh_cn' ? 'chinese_name_reg' : 'english_name_reg'
         const params = { [key]: query, cur_page: 1, page_size: 10 }
         const res = await this.$ajax({ url: '/api-prefix/api/product/query-product', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) { this.productOptions = (res.data?.result) || [] }
@@ -277,18 +326,18 @@ export default {
         try {
           const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: [{ source_type: 'url', source_url: this.urlForm.source_url }] }
           const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-          if (this.$isRequestSuccessful(res.code)) { this.$message.success(this.$t('common.operationSuccessful')); this.urlForm.source_url = '' }
+          if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.urlForm.source_url = '' }
         } finally { this.submittingUrl = false }
       })
     },
     openMore() { this.moreVisible = true; this.moreStep = 'options' },
     chooseMore(step) { this.moreStep = step; if (step === 'image') this.imageForm.purchase_reason = this.$t('sourcing.lowestPrice'); if (step === 'product') { this.selectedProductIds = []; this.loadProductList(1) } },
-    onProductSelectionChange(selection) { this.selectedProductIds = (selection || []).map(row => this.formatProductValue(row)) },
+    onProductSelectionChangeKeys(selectedRowKeys, selectedRows) { this.selectedProductIds = selectedRowKeys },
     resetProductQuery() { this.productQuery = { name: '', sku: '' }; this.loadProductList(1) },
     async loadProductList(page) {
       this.productLoading = true
       try {
-        const key = this.$languageType === 'zh_cn' ? 'chinese_name_reg' : 'english_name_reg'
+        const key = this.langType === 'zh_cn' ? 'chinese_name_reg' : 'english_name_reg'
         const params = { cur_page: page || this.productTable.page_number, page_size: this.productTable.page_size }
         if (this.productQuery.name) params[key] = this.productQuery.name
         if (this.productQuery.sku) params['product_variants.product_code_sku_reg'] = this.productQuery.sku
@@ -310,17 +359,17 @@ export default {
         try {
           const payload = { status: 'submitted', purchase_reason: this.imageForm.purchase_reason, items: [{ source_type: 'image', image: this.imageForm.image, description: this.imageForm.description, quote: this.imageForm.quote }] }
           const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-          if (this.$isRequestSuccessful(res.code)) { this.$message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.imageForm = { image: '', description: '', quote: '', purchase_reason: '' } }
+          if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.imageForm = { image: '', description: '', quote: '', purchase_reason: '' } }
         } finally { this.submittingImage = false }
       })
     },
     async submitProduct() {
-      if (!this.selectedProductIds.length) { this.$message.warning(this.$t('message.productManagement.productSelect')); return }
+      if (!this.selectedProductIds.length) { message.warning(this.$t('message.productManagement.productSelect')); return }
       this.submittingProduct = true
       try {
         const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: (this.selectedProductIds || []).map(id => ({ source_type: 'product', product_id: id })) }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-        if (this.$isRequestSuccessful(res.code)) { this.$message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.selectedProductIds = [] }
+        if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.selectedProductIds = [] }
       } finally { this.submittingProduct = false }
     },
     openHistory() { this.historyVisible = true; this.loadHistory(1) },
@@ -333,10 +382,17 @@ export default {
         const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) { const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }; this.history = data }
       } finally { this.historyLoading = false }
+    },
+    async confirmHistory(row) {
+      try {
+        const res = await this.$ajax({ url: `/api/sourcing/${row.sourcing_id}`, method: 'put', data: { status: 'completed' }, roleType: this.roleType })
+        if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.loadHistory() }
+      } catch (e) { /* ignore */ }
     }
   }
 }
 </script>
+
 
 <style lang="scss" scoped>
 .page-bg {
@@ -427,9 +483,19 @@ export default {
 }
 
 .url-input {
-  .el-input__inner {
+  /* Ant Design input inner */
+  ::v-deep .ant-input {
     height: 44px;
     border-radius: 5px;
+  }
+}
+
+/* inline forms actions alignment */
+.form-actions-inline {
+  ::v-deep .ant-form-item-control {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
   }
 }
 
@@ -498,12 +564,27 @@ export default {
 }
 
 .dialog-actions {
-  text-align: right;
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .sku-cell {
   white-space: normal;
   word-break: break-word;
+}
+
+/* spacing for inline forms in modals */
+.modal-inline-form {
+  margin-bottom: 12px;
+}
+.modal-inline-form ::v-deep .ant-form-item {
+  margin-right: 16px;
+  margin-bottom: 12px;
+}
+.modal-inline-form ::v-deep .ant-btn + .ant-btn {
+  margin-left: 8px;
 }
 
 /* Make the page header title white on this page to ensure contrast over the map */

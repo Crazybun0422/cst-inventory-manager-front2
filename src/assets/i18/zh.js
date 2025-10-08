@@ -1109,6 +1109,9 @@
     setting: "设置",
     rescan: "重新扫描",
     creator: "创建人",
+    tips: "提示",
+    start: "开始",
+    inquiryConfirmation: "确认报价",
   },
   sourcing: {
     heroTitle: '快速选品',
@@ -1129,6 +1132,7 @@
     productId: '产品ID',
     productIdPlaceholder: '例如 PD-10001',
     historyTitle: '选品历史',
+    confirmStart: '是否确认开始选品？（此步将同步给客户）',
     sourcingId: '选品单号',
     itemsCount: '条目数',
     urlRequired: '请输入链接或关键词',

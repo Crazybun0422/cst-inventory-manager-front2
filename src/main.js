@@ -30,6 +30,10 @@ import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/antd.css';
 import './assets/css/global.scss'
 import { initPermission } from './permission'
+import sourcingWS from '@/common/ws-notify'
+import { getRoleTypeForP } from '@/common/common-func'
+import { config, dropShipper } from '@/common/commonconfig'
+import bus, { EVENTS } from '@/common/event-bus'
 
 function changeFavicon(newIconURL) {
   let link = document.querySelector('link[rel="icon"]');
@@ -84,6 +88,13 @@ async function init() {
 
   }
   initPermission()
+  // Init WS notifications after permissions are set
+  try {
+    let role = getRoleType(window.location.pathname) || dropShipper
+    if (role === config.provider.role) role = getRoleTypeForP()
+    // DS 端已有头部的 WebSocket，实现统一的 bus 转发；此处仅在 P 端启动全局 WS
+    if (role !== dropShipper) sourcingWS.start()
+  } catch (e) { /* ignore */ }
 
   // 继续创建 Vue 实例
   new Vue({
@@ -97,6 +108,8 @@ async function init() {
       this.$i18n.locale = userLanguage;
       changeFavicon(data.homepage_icon);
       document.title = this.$i18n.locale === "en_us" ? data.homepage_title_en : data.homepage_title;
+      // Example global listener (no-op): components can add their own
+      bus.$on(EVENTS.SOURCING_NOTIFICATION, () => {})
     },
     methods: {
       setTheme() {

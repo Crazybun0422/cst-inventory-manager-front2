@@ -161,6 +161,7 @@ import {
   getWebSocketUrl,
 } from '@/common/common-func'
 import OperatorSignup from '@/pages/login/operator-signup.vue'
+import bus, { EVENTS } from '@/common/event-bus'
 export default {
   name: 'home-header',
   props: {},
@@ -488,12 +489,16 @@ export default {
           this.$router.push('/ds/mail')
         } else if (pathType === 'download') {
           this.$router.push('/ds/order')
+        } else if (pathType === 'sourcing') {
+          this.$router.push('/ds/sourcing')
         }
 
         return
       } else if (this.config.pRoleList.includes(this.roleType)) {
         if (pathType === 'mail') {
           this.$router.push('/p/mail')
+        } else if (pathType === 'sourcing') {
+          this.$router.push('/p/sourcing')
         }
         // else if(pathType === 'download'){}
         return
@@ -657,7 +662,12 @@ export default {
     websocketonmessage(event) {
       //this.heatBeat();      //收到消息会刷新心跳检测，如果一直收到消息，就推迟心跳发送
 
-      let msgData = JSON.parse(event.data)
+      let msgData = {}
+      try { msgData = JSON.parse(event.data) } catch (e) { msgData = {} }
+      // Forward sourcing notifications to global bus for pages to react
+      if (msgData && (msgData.type === EVENTS.SOURCING_NOTIFICATION || msgData.event === EVENTS.SOURCING_NOTIFICATION || (msgData.sourcing_id && msgData.status))) {
+        bus.$emit(EVENTS.SOURCING_NOTIFICATION, msgData)
+      }
       if (msgData.message == 're-link signal') {
         this.reconnect()
       } else {
@@ -715,25 +725,44 @@ export default {
       let title = ''
       let msgContent = ''
       let pathType = ''
-      let iconClass = ''
-      if (msgData.message) {
+      let iconUrl = (document.querySelector('link[rel="icon"]') || {}).href || '/favicon.ico'
+
+      // 1) Sourcing 实时通知
+      if (
+        msgData && (
+          msgData.type === 'sourcing_notification' ||
+          msgData.event === 'sourcing_notification' ||
+          (msgData.sourcing_id && msgData.status)
+        )
+      ) {
+        const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
+        const en = { submitted: 'Submitted', sourcing: 'Sourcing', pending_confirmation: 'Pending confirmation', completed: 'Completed' }
+        const dict = (this.$i18n && this.$i18n.locale === 'zh_cn') ? zh : en
+        const label = dict[msgData.status] || msgData.status
+        title = this.$t('navigate.sourcing')
+        msgContent = `${this.$t('sourcing.sourcingId') || 'ID'}: ${msgData.sourcing_id || ''} · ${label}`
+        pathType = 'sourcing'
+
+      // 2) 邮件
+      } else if (msgData.message) {
         title = this.$t('message.myAccount.emailNotification')
         msgContent = msgData.message
         pathType = 'mail'
-        iconClass = 'el-icon-message'
         //  收到信息 更新刷新邮箱状态
         this.$store.dispatch('user/triggerEmailRefresh')
+
+      // 3) 文件导出
       } else if (msgData.filename) {
         title = this.$t('message.myAccount.fileExportNotification')
         msgContent = msgData.filename
         pathType = 'download'
-        iconClass = 'el-icon-download'
         this.$store.dispatch('user/triggerDownloadRefresh')
-      } else if (msgData.event_name) {
+
+      // 4) 告警/系统通知
+      } else if (msgData.event_name || msgData.title || msgData.content) {
         title = this.$t('message.myAccount.alarmNotification')
-        msgContent = msgData.event_name
+        msgContent = msgData.content || msgData.event_name || msgData.title || ''
         pathType = 'alarm'
-        iconClass = 'el-icon-warning-outline'
       }
 
       setTimeout(
@@ -745,8 +774,8 @@ export default {
               function (status) {
                 if (status === 'granted') {
                   var m = new Notification(title, {
-                    body: msgContent, //消息体内容
-                    icon: iconClass //消息图片
+                    body: msgContent || window.location.host, // 消息体内容
+                    icon: iconUrl // 图标 URL
                   })
                     //点击当前消息内容
                     ; (m.onclick = () => {
