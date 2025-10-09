@@ -165,12 +165,30 @@ export default {
     },
     brandColor() {
       // from CSS variable, fallback to Ant Design blue
+      // include theme as reactive dep so it updates realtime
+      const _theme = this.$store.state.user.theme; /* reactive dep */
+      void _theme
       const computed = getComputedStyle(document.documentElement)
       return computed.getPropertyValue('--custom-color-primary')?.trim() || '#1890ff'
     },
-    axisColor() { return '#000000' },
+    axisColor() {
+      // Follow theme: dark -> white, light -> black
+      const _theme = this.$store.state.user.theme; /* reactive dep */
+      void _theme
+      const computed = getComputedStyle(document.documentElement)
+      const varColor = computed.getPropertyValue('--custom-font-color')?.trim()
+      if (varColor) return varColor
+      return this.isDarkTheme ? '#ffffff' : '#000000'
+    },
     gridColor() { return this.axisColor },
-    labelColor() { return '#000000' },
+    labelColor() {
+      const _theme = this.$store.state.user.theme; /* reactive dep */
+      void _theme
+      const computed = getComputedStyle(document.documentElement)
+      const varColor = computed.getPropertyValue('--custom-font-color')?.trim()
+      if (varColor) return varColor
+      return this.isDarkTheme ? '#ffffff' : '#000000'
+    },
     logoColor() {
       const c = getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-color')?.trim()
       return c && c !== '' ? c : '#59b7dc'
@@ -436,6 +454,7 @@ export default {
   /*box-shadow: none;  shadow provided via inline style with logo color */
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
   border-radius: 12px;
+  overflow: hidden; /* ensure inner body respects rounded corners */
 }
 
 .metric-card:hover {
@@ -445,14 +464,23 @@ export default {
 .card-dark {
   /* dark theme => white card, black text */
   background: #ffffff !important;
-  color: #000000;
-
+  color: #000000 !important;
+}
+.card-dark ::v-deep .ant-card-body {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 12px !important;
 }
 
 .card-light {
   /* light theme => black card, white text */
   background: #000000 !important;
-  color: #ffffff;
+  color: #ffffff !important;
+}
+.card-light ::v-deep .ant-card-body {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
 }
 
 .metric-content {

@@ -7,6 +7,16 @@
         <a-tab-pane v-for="t in statusTabs" :tab="t.label" :key="t.value" />
       </a-tabs>
 
+      <!-- Keyword search -->
+      <a-form-model layout="inline" :model="search" class="modal-inline-form" style="margin-bottom: 12px">
+        <a-form-model-item>
+          <a-input v-model="search.keyword" :allowClear="true" :placeholder="$t('common.pleaseEnterAKeyword')" style="width: 300px" />
+        </a-form-model-item>
+        <a-form-model-item class="form-actions-inline">
+          <a-button @click="resetSearch">{{ $t('common.reset') }}</a-button>
+        </a-form-model-item>
+      </a-form-model>
+
       <a-table :data-source="table.items" :loading="loading" :pagination="false" size="small">
         <template slot="expandedRowRender" slot-scope="record">
           <div class="his-item-list">
@@ -74,6 +84,8 @@ export default {
       quoteModalVisible: false,
       quoteInput: '',
       quoteRow: null,
+      search: { keyword: '' },
+      _searchDebounce: null,
     }
   },
   computed: {
@@ -95,6 +107,12 @@ export default {
     bus.$on(EVENTS.SOURCING_NOTIFICATION, this._unsub)
   },
   beforeDestroy() { bus.$off(EVENTS.SOURCING_NOTIFICATION, this._unsub) },
+  watch: {
+    'search.keyword': function () {
+      clearTimeout(this._searchDebounce)
+      this._searchDebounce = setTimeout(() => this.loadList(1), 400)
+    }
+  },
   methods: {
     statusColor(s) {
       const map = {
@@ -113,6 +131,7 @@ export default {
       this.loading = true
       try {
         const params = { page_number: page || this.table.page_number, page_size: this.table.page_size, status: this.activeStatus }
+        if (this.search.keyword) params.keyword = this.search.keyword
         const res = await this.$ajax({ url: '/api/admin/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) {
           const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }
@@ -120,6 +139,7 @@ export default {
         }
       } finally { this.loading = false }
     },
+    resetSearch() { this.search = { keyword: '' }; this.loadList(1) },
     async startSourcing(row) {
       Modal.confirm({
         title: this.$t('common.tips'),
@@ -158,6 +178,8 @@ export default {
 
 <style scoped>
 .mt-16 { margin-top: 16px; }
+.modal-inline-form ::v-deep .ant-form-item { margin-right: 16px; margin-bottom: 12px; }
+.modal-inline-form ::v-deep .ant-btn + .ant-btn { margin-left: 8px; }
 .his-item-list { display: grid; grid-template-columns: 1fr; grid-row-gap: 8px; }
 .his-item { display: flex; align-items: center; padding: 6px 0; }
 .his-item__preview { width: 64px; display: flex; justify-content: center; }

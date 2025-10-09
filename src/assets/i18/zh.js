@@ -87,6 +87,15 @@
     tos: "服务条款",
     pp: "隐私政策"
   },
+  tasks: {
+    centerTitle: '任务中心',
+    taskName: '任务',
+    progress: '进度',
+    exportToXls: '导出订单（XLSX）',
+    fulfillOrders: '订单履约',
+    exportShopifyOrders: '导出 Shopify 订单',
+    syncProducts: '同步产品'
+  },
   message: {
     login: {
       login: "登录",
@@ -1136,6 +1145,7 @@
     sourcingId: '选品单号',
     itemsCount: '条目数',
     urlRequired: '请输入链接或关键词',
+    urlInvalid: '请输入以 http:// 或 https:// 开头的有效链接，例如：https://domain.com/path 或 http://sub.domain.com/product?id=123',
     priceRequired: '请填写预期价格',
     imageUrlRequired: '请填写图片链接',
     imageRequired: '请上传图片',
@@ -1148,6 +1158,12 @@
     amazon: '亚马逊',
     insertUrlPlaceholder: '输入您的链接',
         feedbackQuote: '返回报价',
+    statusTips: {
+      submitted: '已收到您的选品请求，但尚未开始处理。',
+      sourcing: '我们正在为您积极寻找货源，预计很快会有结果。',
+      pending_confirmation: '已找到货源并提供了报价，请展开对应条目查看并确认。',
+      completed: '您已确认报价，我们将为您推进下一步服务。'
+    },
 },
   dashboard: {
     daily: '每日订单',

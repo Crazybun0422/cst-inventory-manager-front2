@@ -31,10 +31,12 @@
         <a-form-model :model="urlForm" :rules="urlRules" ref="urlFormRef" class="url-form"
           @submit.native.prevent="submitUrl">
           <div class="url-row">
-            <a-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')" :allowClear="true"
-              class="url-input">
-              <a-icon slot="prefix" type="search" />
-            </a-input>
+            <a-form-model-item prop="source_url" class="url-item">
+              <a-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')" :allowClear="true"
+                class="url-input">
+                <a-icon slot="prefix" type="search" />
+              </a-input>
+            </a-form-model-item>
             <a-button class="url-submit" type="primary" :loading="submittingUrl" @click="submitUrl">{{
               $t('common.submit') }}</a-button>
           </div>
@@ -148,6 +150,9 @@
     <a-modal :title="$t('sourcing.historyTitle')" :visible="historyVisible" width="1040px" :footer="null"
       class="global-modal-class global-modal-center" @cancel="historyVisible=false">
       <a-form-model layout="inline" :model="historyQuery" class="mb-24 modal-inline-form">
+        <a-form-model-item>
+          <a-input v-model="historyQuery.keyword" :allowClear="true" :placeholder="$t('common.pleaseEnterAKeyword')" style="width:260px" />
+        </a-form-model-item>
         <a-form-model-item :label="$t('common.status')">
           <a-select v-model="historyQuery.status" :allowClear="true" :placeholder="$t('common.pleaseSelect')"
             style="width:180px">
@@ -155,7 +160,6 @@
           </a-select>
         </a-form-model-item>
         <a-form-model-item class="form-actions-inline">
-          <a-button type="primary" @click="loadHistory(1)">{{ $t('common.search') }}</a-button>
           <a-button @click="resetHistory">{{ $t('common.reset') }}</a-button>
         </a-form-model-item>
       </a-form-model>
@@ -187,7 +191,21 @@
             </div>
           </div>
         </template>
-        <a-table-column :title="$t('common.status')" key="status" width="180">
+        <a-table-column key="status" width="220">
+          <span slot="title">
+            <span>{{ $t('common.status') }}</span>
+            <a-tooltip placement="top" overlayClassName="status-tips-pop">
+              <template slot="title">
+                <div class="status-tips-list">
+                  <div><a-tag color="geekblue" size="small">{{ statusLabel('submitted') }}</a-tag> — {{ $t('sourcing.statusTips.submitted') }}</div>
+                  <div><a-tag color="gold" size="small">{{ statusLabel('sourcing') }}</a-tag> — {{ $t('sourcing.statusTips.sourcing') }}</div>
+                  <div><a-tag color="purple" size="small">{{ statusLabel('pending_confirmation') }}</a-tag> — {{ $t('sourcing.statusTips.pending_confirmation') }}</div>
+                  <div><a-tag color="green" size="small">{{ statusLabel('completed') }}</a-tag> — {{ $t('sourcing.statusTips.completed') }}</div>
+                </div>
+              </template>
+              <a-icon type="info-circle" style="margin-left:6px; color: var(--custom-font-color2)" />
+            </a-tooltip>
+          </span>
           <template slot-scope="text, record">
             <a-tag :color="statusColor(record.status)">{{ statusLabel(record.status) }}</a-tag>
           </template>
@@ -226,7 +244,12 @@ export default {
       submittingImage: false,
       submittingProduct: false,
       urlForm: { source_url: '' },
-      urlRules: { source_url: [{ required: true, message: this.$t('sourcing.urlRequired'), trigger: 'blur' }] },
+      urlRules: {
+        source_url: [
+          { required: true, message: this.$t('sourcing.urlRequired'), trigger: ['blur', 'change'] },
+          { validator: this.validateSourceUrl, trigger: ['blur', 'change'] }
+        ]
+      },
       moreVisible: false,
       moreStep: 'options',
       imageForm: { image: '', description: '', quote: '', purchase_reason: this.$t('sourcing.lowestPrice') },
@@ -247,8 +270,9 @@ export default {
       selectedProductIds: [],
       historyVisible: false,
       historyLoading: false,
-      historyQuery: { status: '' },
-      history: { items: [], total: 0, page_number: 1, page_size: 10 }
+      historyQuery: { status: '', keyword: '' },
+      history: { items: [], total: 0, page_number: 1, page_size: 10 },
+      _historyDebounce: null
     }
   },
   computed: {
@@ -275,7 +299,20 @@ export default {
     bus.$on(EVENTS.SOURCING_NOTIFICATION, this._unsub)
   },
   beforeDestroy() { bus.$off(EVENTS.SOURCING_NOTIFICATION, this._unsub) },
+  watch: {
+    historyQuery: {
+      handler() { this.scheduleHistorySearch() },
+      deep: true
+    }
+  },
   methods: {
+    validateSourceUrl(rule, value, callback) {
+      if (!value) { callback(); return }
+      // Must start with http/https and contain a valid domain like a.b.com with optional port and path
+      const re = /^(https?:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{2,5})?(?:[/?#].*)?$/
+      if (re.test(value)) { callback() }
+      else { callback(new Error(this.$t('sourcing.urlInvalid'))) }
+    },
     statusLabel(s) { const map = this.statusList.reduce((a, c) => (a[c.value] = c.label, a), {}); return map[s] || s },
     statusColor(s) {
       // use AntD preset colors for clarity; can theme-map later if needed
@@ -373,12 +410,18 @@ export default {
       } finally { this.submittingProduct = false }
     },
     openHistory() { this.historyVisible = true; this.loadHistory(1) },
-    resetHistory() { this.historyQuery = { status: '' }; this.loadHistory(1) },
+    resetHistory() { this.historyQuery = { status: '', keyword: '' }; this.loadHistory(1) },
+    scheduleHistorySearch() {
+      if (!this.historyVisible) return
+      clearTimeout(this._historyDebounce)
+      this._historyDebounce = setTimeout(() => this.loadHistory(1), 400)
+    },
     async loadHistory(page) {
       this.historyLoading = true
       try {
         const params = { page_number: page || this.history.page_number, page_size: this.history.page_size }
         if (this.historyQuery.status) params.status = this.historyQuery.status
+        if (this.historyQuery.keyword) params.keyword = this.historyQuery.keyword
         const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) { const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }; this.history = data }
       } finally { this.historyLoading = false }
@@ -475,11 +518,18 @@ export default {
 .url-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  /* 让按钮与输入框顶对齐，出现错误提示时也不下沉 */
+  align-items: flex-start;
+}
+
+.url-item {
+  flex: 1;
+  margin-bottom: 0; /* keep row height compact */
 }
 
 .url-submit {
   height: 44px;
+  align-self: flex-start;
 }
 
 .url-input {
@@ -488,6 +538,12 @@ export default {
     height: 44px;
     border-radius: 5px;
   }
+}
+
+/* 表单校验提示与输入框保持更舒适的间距 */
+::v-deep .url-item .ant-form-explain {
+  margin-top: 6px;
+  line-height: 1.3;
 }
 
 /* inline forms actions alignment */
@@ -644,4 +700,9 @@ export default {
   color: var(--custom-font-color2);
   font-size: 12px;
 }
+
+.status-tips {
+  max-width: 520px;
+}
+.status-tips b { color: var(--custom-font-color); }
 </style>

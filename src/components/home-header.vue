@@ -30,6 +30,7 @@
             style="font-size: 24px; padding: 0 0px; width: 30px; height: 30px" @click="showNoticeDrawer"></el-button>
         </el-badge>
       </div>
+      <task-center />
       <div class="language-select">
         <LanguageSelect />
       </div>
@@ -326,7 +327,8 @@ export default {
   components: {
     LanguageSelect,
     OperatorSignup,
-    ThemePicker
+    ThemePicker,
+    TaskCenter: () => import('@/components/task-center.vue')
   },
   methods: {
     getAlarmList,

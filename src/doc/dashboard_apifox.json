@@ -1,554 +1,254 @@
+# Sourcing API (Apifox)
+
+Sourcing 相关接口已同步至 Apifox，涵盖用户侧与管理端常用能力。
+
+## 数据结构与通用约定
+
+- 所有接口均返回统一响应格式：
+
+```json
 {
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Drop Shipping Dashboard API",
-    "version": "1.0.0",
-    "description": "Drop shipping 仪表盘统计接口的 OpenAPI 文档，可直接导入 Apifox。"
+  "code": 13000,
+  "msg": {
+    "zh_cn": "操作成功",
+    "en_us": "Operation successful"
   },
-  "servers": [
-    {
-      "url": "https://{host}",
-      "description": "默认服务器地址，导入 Apifox 后可在环境中调整。",
-      "variables": {
-        "host": {
-          "default": "example.com",
-          "description": "API 服务域名或 IP。"
-        }
-      }
-    }
-  ],
-  "paths": {
-    "/api/dropshipping/dashboard/statistics": {
-      "get": {
-        "tags": [
-          "Dashboard"
-        ],
-        "summary": "获取仪表盘统计数据",
-        "description": "返回订单概览、缺货商品及销量排行等统计信息。需使用具备直发商权限的账号登录后访问。",
-        "security": [
-          {
-            "SessionAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "请求成功或失败时均返回 200 状态码，通过 `code` 字段区分业务状态。",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DashboardResponse"
-                },
-                "examples": {
-                  "success": {
-                    "summary": "成功示例",
-                    "value": {
-                      "code": 23000,
-                      "msg": {
-                        "zh_cn": "仪表盘操作成功",
-                        "en_us": "Dashboard operation successful"
-                      },
-                      "data": {
-                        "orders": {
-                          "today_total": 12,
-                          "processing_total": 7,
-                          "delivered_total": 19,
-                          "daily_trend": [
-                            {
-                              "date": "2024-03-01",
-                              "count": 5
-                            },
-                            {
-                              "date": "2024-03-02",
-                              "count": 7
-                            }
-                          ],
-                          "monthly_trend": [
-                            {
-                              "month": "2024-02",
-                              "count": 96
-                            },
-                            {
-                              "month": "2024-03",
-                              "count": 112
-                            }
-                          ]
-                        },
-                        "products": {
-                          "low_stock": {
-                            "total": 2,
-                            "page": 1,
-                            "page_size": 10,
-                            "items": [
-                              {
-                                "product_uuid": "P-001",
-                                "variant_id": "V-001",
-                                "sku": "SKU-001",
-                                "barcode": "B-001",
-                                "name": "蓝牙耳机-黑色",
-                                "alarm_number": 20,
-                                "available": 8,
-                                "shortage": 12
-                              }
-                            ]
-                          },
-                          "top_sales": [
-                            {
-                              "product_uuid": "P-002",
-                              "variant_id": "V-010",
-                              "sku": "SKU-010",
-                              "barcode": "B-010",
-                              "name": "真无线耳机-白色",
-                              "quantity": 256
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "noPermission": {
-                    "summary": "权限不足示例",
-                    "value": {
-                      "code": 202,
-                      "msg": {
-                        "zh_cn": "当前用户无权限",
-                        "en_us": "The current user has no permission"
-                      },
-                      "data": {}
-                    }
-                  },
-                  "businessError": {
-                    "summary": "业务失败示例",
-                    "value": {
-                      "code": 23001,
-                      "msg": {
-                        "zh_cn": "仪表盘操作失败",
-                        "en_us": "Dashboard operation failed"
-                      },
-                      "data": {}
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/dropshipping/dashboard/low-stock-products": {
-      "get": {
-        "tags": [
-          "Dashboard"
-        ],
-        "summary": "分页获取缺货商品列表",
-        "description": "返回当前缺货的商品变体列表，可通过 `page` 与 `page_size` 参数翻页。",
-        "security": [
-          {
-            "SessionAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "页码，默认 1",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "description": "每页返回的记录数，默认 10",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "请求成功或失败时均返回 200 状态码，通过 `code` 字段区分业务状态。",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LowStockListResponse"
-                },
-                "examples": {
-                  "success": {
-                    "summary": "成功示例",
-                    "value": {
-                      "code": 23000,
-                      "msg": {
-                        "zh_cn": "仪表盘操作成功",
-                        "en_us": "Dashboard operation successful"
-                      },
-                      "data": {
-                        "total": 2,
-                        "page": 1,
-                        "page_size": 10,
-                        "items": [
-                          {
-                            "product_uuid": "P-001",
-                            "variant_id": "V-001",
-                            "sku": "SKU-001",
-                            "barcode": "B-001",
-                            "name": "蓝牙耳机-黑色",
-                            "alarm_number": 20,
-                            "available": 8,
-                            "shortage": 12
-                          }
-                        ]
-                      }
-                    }
-                  },
-                  "businessError": {
-                    "summary": "业务失败示例",
-                    "value": {
-                      "code": 23001,
-                      "msg": {
-                        "zh_cn": "仪表盘操作失败",
-                        "en_us": "Dashboard operation failed"
-                      },
-                      "data": {}
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  "data": {}
+}
+```
+
+- `code` 为业务状态码，常见取值：
+  - `13000`：操作成功。
+  - `13001`：Sourcing 操作失败（通常为服务端异常）。
+  - `13002`：未找到对应单据。
+  - `13003`：状态值非法。
+  - `13004`：条目校验不通过。
+  - `13005`：请求参数非法。
+- `msg` 提供中英文文案，`data` 结构因接口而异。
+- 时间字段（如 `created_at`、`updated_at`）返回格式为 `YYYY-MM-DD HH:MM:SS`。
+
+### Sourcing 主体结构
+
+| 字段                | 类型               | 说明                                                        |
+|-------------------|------------------|-----------------------------------------------------------|
+| `sourcing_id`     | `string`         | Sourcing 单唯一标识，系统默认生成 UUID，可外部自定义。                        |
+| `related_id`      | `string`         | 单据所属关联 ID（用户侧为当前登录用户的 `related_id`）。                      |
+| `user_code`       | `string`         | 归属用户编码。未显式传入时，会回退到 `UserProviderMap` 中 `CUSTOMER` 关系的默认值。 |
+| `status`          | `string`         | 单据状态，见下文“状态枚举”。                                           |
+| `purchase_reason` | `string`         | 采购理由，可选。                                                  |
+| `notes`           | `string`         | 备注信息，可选。                                                  |
+| `items`           | `SourcingItem[]` | 单据条目列表，结构见下文。                                             |
+| `deleted`         | `number`         | 软删除标记，`0` 表示有效。                                           |
+| `created_at`      | `string`         | 创建时间。                                                     |
+| `updated_at`      | `string`         | 最后更新时间。                                                   |
+
+### SourcingItem 结构
+
+| 公共字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `item_id` | `string` | 条目 ID，创建时可省略，系统自动生成。 |
+| `source_type` | `string` | 货源类型，见下文“条目类型枚举”。部分接口在部分更新场景下可省略。 |
+| `quote` | `string` | 客户端报价，必填。 |
+| `feedback_quote` | `string` | 供应商反馈报价，可选。 |
+| `created_at` | `string` | 条目创建时间。 |
+| `updated_at` | `string` | 条目更新时间。 |
+
+| `source_type` | 额外字段 | 说明 |
+| --- | --- | --- |
+| `url` | `source_url` (`string`) | 必填，目标商品链接。 |
+| `image` | `image` (`string`)、`description` (`string`) | 均为必填，分别为图片地址与描述。 |
+| `product` | `product_id` (`string`) | 必填，内部商品 ID。 |
+
+### 枚举说明
+
+- 状态枚举（`status`）：`draft`、`submitted`、`sourcing`、`pending_confirmation`、`completed`。
+- 条目来源类型（`source_type`）：`url`、`image`、`product`。
+
+## 用户侧接口
+
+### GET `/api/sourcing`
+- 描述：分页查询当前登录用户的 sourcing 单。
+- 请求参数：
+  - `page_number` (query，可选，默认 `1`)
+  - `page_size` (query，可选，默认 `10`)
+  - `status` (query，可选，支持 `draft/submitted/sourcing/pending_confirmation/completed`)
+  - `url` / `url_keyword` (query，可选，模糊匹配条目中的 `source_url`，忽略大小写。两个参数作用相同，传任意一个即可。)
+- 返回：
+```json
+{
+  "code": 13000,
+  "msg": {
+    "zh_cn": "获取列表成功",
+    "en_us": "List fetched successfully"
   },
-  "components": {
-    "securitySchemes": {
-      "SessionAuth": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "sessionid",
-        "description": "Django 会话 Cookie，需先登录获得。"
-      }
-    },
-    "schemas": {
-      "LocalizedMessage": {
-        "type": "object",
-        "properties": {
-          "zh_cn": {
-            "type": "string",
-            "description": "中文提示"
-          },
-          "en_us": {
-            "type": "string",
-            "description": "英文提示"
+  "data": {
+    "items": [
+      {
+        "sourcing_id": "SRC-202401010001",
+        "status": "submitted",
+        "purchase_reason": "价格最低",
+        "user_code": "10001",
+        "related_id": "rel_123",
+        "created_at": "2024-01-01 10:00:00",
+        "items": [
+          {
+            "item_id": "item-1",
+            "source_type": "url",
+            "source_url": "https://example.com/product",
+            "quote": "9.80",
+            "feedback_quote": "9.50"
           }
-        },
-        "required": [
-          "zh_cn",
-          "en_us"
-        ]
-      },
-      "DashboardResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "description": "业务状态码，23000 表示成功。"
-          },
-          "msg": {
-            "$ref": "#/components/schemas/LocalizedMessage"
-          },
-          "data": {
-            "$ref": "#/components/schemas/DashboardData"
-          }
-        },
-        "required": [
-          "code",
-          "msg",
-          "data"
-        ]
-      },
-      "DashboardData": {
-        "type": "object",
-        "properties": {
-          "orders": {
-            "$ref": "#/components/schemas/DashboardOrders"
-          },
-          "products": {
-            "$ref": "#/components/schemas/DashboardProducts"
-          }
-        },
-        "required": [
-          "orders",
-          "products"
-        ]
-      },
-      "DashboardOrders": {
-        "type": "object",
-        "properties": {
-          "today_total": {
-            "type": "integer",
-            "description": "当日新增订单数量",
-            "minimum": 0
-          },
-          "processing_total": {
-            "type": "integer",
-            "description": "处理中订单数量",
-            "minimum": 0
-          },
-          "delivered_total": {
-            "type": "integer",
-            "description": "已发货订单数量",
-            "minimum": 0
-          },
-          "daily_trend": {
-            "type": "array",
-            "description": "最近 7 天的订单趋势",
-            "items": {
-              "$ref": "#/components/schemas/DashboardDailyTrendItem"
-            }
-          },
-          "monthly_trend": {
-            "type": "array",
-            "description": "最近 6 个月的订单趋势",
-            "items": {
-              "$ref": "#/components/schemas/DashboardMonthlyTrendItem"
-            }
-          }
-        },
-        "required": [
-          "today_total",
-          "processing_total",
-          "delivered_total",
-          "daily_trend",
-          "monthly_trend"
-        ]
-      },
-      "DashboardDailyTrendItem": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date",
-            "description": "日期 (UTC)",
-            "example": "2024-03-02"
-          },
-          "count": {
-            "type": "integer",
-            "description": "当日订单数量",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "date",
-          "count"
-        ]
-      },
-      "DashboardMonthlyTrendItem": {
-        "type": "object",
-        "properties": {
-          "month": {
-            "type": "string",
-            "description": "月份 (UTC)",
-            "example": "2024-03"
-          },
-          "count": {
-            "type": "integer",
-            "description": "当月订单数量",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "month",
-          "count"
-        ]
-      },
-      "DashboardProducts": {
-        "type": "object",
-        "properties": {
-          "low_stock": {
-            "$ref": "#/components/schemas/DashboardLowStock"
-          },
-          "top_sales": {
-            "type": "array",
-            "description": "销量排行列表 (按 30 天内销量降序，最多返回前 10 条)",
-            "items": {
-              "$ref": "#/components/schemas/DashboardTopSalesItem"
-            }
-          }
-        },
-        "required": [
-          "low_stock",
-          "top_sales"
-        ]
-      },
-      "DashboardLowStock": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "description": "当前缺货的变体数量",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "description": "当前页码",
-            "minimum": 1
-          },
-          "page_size": {
-            "type": "integer",
-            "description": "每页返回的记录数",
-            "minimum": 1
-          },
-          "items": {
-            "type": "array",
-            "description": "缺货变体详情，按缺口数量降序排列",
-            "items": {
-              "$ref": "#/components/schemas/DashboardLowStockItem"
-            }
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "page_size",
-          "items"
-        ]
-      },
-      "DashboardLowStockItem": {
-        "type": "object",
-        "properties": {
-          "product_uuid": {
-            "type": "string",
-            "description": "商品 UUID"
-          },
-          "variant_id": {
-            "type": "string",
-            "description": "变体 ID"
-          },
-          "sku": {
-            "type": "string",
-            "description": "SKU 编码"
-          },
-          "barcode": {
-            "type": "string",
-            "description": "商品条码"
-          },
-          "name": {
-            "type": "string",
-            "description": "显示名称"
-          },
-          "main_image_url": {
-            "type": "string",
-            "description": "商品主图链接",
-            "nullable": true
-          },
-          "variant_image_url": {
-            "type": "string",
-            "description": "SKU 变体图片链接",
-            "nullable": true
-          },
-          "alarm_number": {
-            "type": "integer",
-            "description": "库存告警阈值",
-            "minimum": 0
-          },
-          "available": {
-            "type": "integer",
-            "description": "当前可用库存数量",
-            "minimum": 0
-          },
-          "shortage": {
-            "type": "integer",
-            "description": "缺口数量 (告警阈值 - 可用库存)",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "product_uuid",
-          "variant_id",
-          "sku",
-          "name",
-          "alarm_number",
-          "available",
-          "shortage",
-          "main_image_url",
-          "variant_image_url"
-        ]
-      },
-      "DashboardTopSalesItem": {
-        "type": "object",
-        "properties": {
-          "product_uuid": {
-            "type": "string",
-            "description": "商品 UUID"
-          },
-          "variant_id": {
-            "type": "string",
-            "description": "变体 ID"
-          },
-          "sku": {
-            "type": "string",
-            "description": "SKU 编码"
-          },
-          "barcode": {
-            "type": "string",
-            "description": "商品条码"
-          },
-          "name": {
-            "type": "string",
-            "description": "显示名称"
-          },
-          "main_image_url": {
-            "type": "string",
-            "description": "商品主图链接",
-            "nullable": true
-          },
-          "variant_image_url": {
-            "type": "string",
-            "description": "SKU 变体图片链接",
-            "nullable": true
-          },
-          "quantity": {
-            "type": "integer",
-            "description": "统计周期内的销量",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "product_uuid",
-          "variant_id",
-          "sku",
-          "name",
-          "quantity",
-          "main_image_url",
-          "variant_image_url"
-        ]
-      },
-      "LowStockListResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "description": "业务状态码，23000 表示成功。"
-          },
-          "msg": {
-            "$ref": "#/components/schemas/LocalizedMessage"
-          },
-          "data": {
-            "$ref": "#/components/schemas/DashboardLowStock"
-          }
-        },
-        "required": [
-          "code",
-          "msg",
-          "data"
         ]
       }
-    }
+    ],
+    "total": 1,
+    "page_number": 1,
+    "page_size": 10
   }
 }
+```
+
+### POST `/api/sourcing`
+- 描述：创建 sourcing 单，支持一次录入多个条目。
+- 请求体示例：
+```json
+{
+  "sourcing_id": "SRC-202401010001",
+  "status": "submitted",
+  "purchase_reason": "价格最低",
+  "notes": "请优先按销量排序给出报价",
+  "user_code": "10001",
+  "items": [
+    {
+      "source_type": "url",
+      "source_url": "https://example.com/product",
+      "quote": "9.80",
+      "feedback_quote": "9.50"
+    },
+    {
+      "source_type": "image",
+      "image": "https://static.example.com/img.png",
+      "description": "24cm 红色陶瓷碗",
+      "quote": "11.00"
+    },
+    {
+      "source_type": "product",
+      "product_id": "PD-10001",
+      "quote": "8.90"
+    }
+  ]
+}
+```
+- 返回：
+```json
+{
+  "code": 13000,
+  "msg": {
+    "zh_cn": "操作成功",
+    "en_us": "Operation successful"
+  },
+  "data": {
+    "sourcing_id": "a3d58a4a-74a9-4a8a-8fb9-b8746f331d73",
+    "status": "submitted"
+  }
+}
+```
+
+### PUT `/api/sourcing/{sourcing_id
+}`
+- 描述：更新 sourcing 单，需传入需要修改的字段，`items` 为覆盖式更新。
+- 请求体示例：
+```json
+{
+  "status": "pending_confirmation",
+  "purchase_reason": "价格最低",
+  "notes": "客户追加说明",
+  "user_code": "10002",
+  "items": [
+    {
+      "item_id": "item-1",
+      "source_type": "url",
+      "source_url": "https://example.com/new-product",
+      "quote": "9.60",
+      "feedback_quote": "9.30"
+    }
+  ]
+}
+```
+
+### DELETE `/api/sourcing/{sourcing_id
+}`
+- 描述：删除 sourcing 单（软删除）。
+
+## 管理端接口
+
+### GET `/api/admin/sourcing`
+- 描述：分页查询所有用户的 sourcing 单。
+- 请求参数：
+  - `page_number`、`page_size`
+  - `related_id`、`user_code`（可选过滤）
+  - `user_keyword` / `user` / `user_search`（可选，模糊匹配 `user_code` 与 `related_id`，忽略大小写。）
+  - `status`、`sourcing_id`
+  - `url` / `url_keyword`（可选，模糊匹配条目中的 `source_url`，忽略大小写。）
+  - `start_date`、`end_date`（YYYY-MM-DD，过滤 `created_at`）
+
+### GET `/api/admin/sourcing/{sourcing_id
+}`
+- 描述：查看单个 sourcing 单详情。
+
+### PATCH `/api/admin/sourcing/{sourcing_id
+}`
+- 描述：更新指定 sourcing 单的部分字段。
+- 请求体示例：
+```json
+{
+  "status": "sourcing",
+  "current_related_id": "rel_123",
+  "related_id": "rel_123",
+  "notes": "供应商备注",
+  "items": [
+    {
+      "item_id": "item-1",
+      "feedback_quote": "9.20"
+    }
+  ]
+}
+```
+- 说明：
+  - `user_code`、`related_id`、`purchase_reason`、`notes` 均支持单独更新。
+  - `current_related_id` 为可选，若传入则仅当单据仍属于该用户时才会更新。
+  - `items` 支持部分更新，未提供的字段保持不变；若传入新的条目（无 `item_id`），则需包含完整字段。
+
+## WebSocket 通知
+
+Sourcing 单的关键操作会通过 WebSocket 推送实时通知，方便客户与供应商及时获悉状态变化。
+
+- 连接地址：`ws/notifications/<related_id>`，其中 `<related_id>` 为当前登录用户的关联 ID。
+- 事件类型：`sourcing_notification`。
+
+### 通知触发时机
+
+| 场景 | 接收方 | 触发条件 |
+| --- | --- | --- |
+| 客户创建 / 更新 sourcing 单 | 供应商 | 当客户通过 `POST /api/sourcing` 或 `PUT /api/sourcing/{sourcing_id
+}` 创建或更新单据后，系统会查找与该客户关联的所有供应商，并向其推送通知。 |
+| 供应商更新 sourcing 单 | 指定客户 | 当供应商通过 `PATCH /api/admin/sourcing/{sourcing_id
+}` 更新单据后，对应客户会收到通知。 |
+
+### 消息载荷
+
+所有 `sourcing_notification` 消息均为 JSON 对象，包含以下字段：
+
+| 字段 | 说明 |
+| --- | --- |
+| `sourcing_id` | 单据 ID。 |
+| `status` | 当前状态。 |
+| `action` | 操作类型，取值为 `created` 或 `updated`。 |
+| `related_id` | 单据所属客户 `related_id`。 |
+| `user_code` | 单据归属用户编码。 |
+| `actor_role` | 触发通知的角色：`customer`（客户）或 `provider`（供应商）。 |
+| `actor_related_id` | 触发操作方的 `related_id`。 |
+| `provider_uuid` | 供应商标识；当通知面向供应商或由供应商触发时会携带。 |
+| `target_role` | 通知目标角色：`provider` 或 `customer`。 |
+
+> 说明：实际推送仅包含与当前场景相关的字段，例如面向供应商的通知不包含 `target_role: customer`。

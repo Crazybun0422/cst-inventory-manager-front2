@@ -87,6 +87,15 @@
     tos: "Terms of Service",
     pp: "Privacy Policy"
   },
+  tasks: {
+    centerTitle: 'Tasks',
+    taskName: 'Task',
+    progress: 'Progress',
+    exportToXls: 'Export Orders to XLSX',
+    fulfillOrders: 'Fulfill Orders',
+    exportShopifyOrders: 'Export Shopify Orders',
+    syncProducts: 'Sync Products'
+  },
   message: {
 
     login: {
@@ -1135,6 +1144,7 @@
     sourcingId: 'Sourcing ID',
     itemsCount: 'Items',
     urlRequired: 'Link or keywords are required',
+    urlInvalid: 'Please enter a valid URL starting with http:// or https:// (e.g. https://domain.com/path or http://sub.domain.com/product?id=123)',
     priceRequired: 'Expected price is required',
     imageUrlRequired: 'Image URL is required',
     imageRequired: 'Please upload an image',
@@ -1148,6 +1158,12 @@
     amazon: 'Amazon',
     insertUrlPlaceholder: 'Insert your url',
         feedbackQuote: 'Supplier quote',
+    statusTips: {
+      submitted: 'Your sourcing request has been received. Service has not started yet.',
+      sourcing: 'Our team is actively sourcing items for you. Results will be available shortly.',
+      pending_confirmation: 'A supplier and quote have been provided. Expand the item to review the quote and confirm.',
+      completed: 'You have confirmed the quote. We are preparing the next steps of the service.'
+    },
 },
   dashboard: {
     daily: 'Daily',
