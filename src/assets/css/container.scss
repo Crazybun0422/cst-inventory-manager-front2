@@ -77,12 +77,20 @@
     }
     /* Popup submenu when collapsed: ensure arrow doesn't overlap text */
     .el-menu--popup {
+      /* Use flex so the right arrow sits at the far end without overlapping */
       .el-submenu__title,
       .el-menu-item {
-        padding-right: 32px !important; /* space for right arrow */
+        display: flex;
+        align-items: center;
+        padding-right: 12px !important;
       }
-      .el-submenu__icon-arrow {
-        right: 12px !important;
+      .el-submenu__title .el-submenu__icon-arrow,
+      .el-menu-item .el-submenu__icon-arrow {
+        position: static !important;
+        margin-left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
       }
     }
   }
