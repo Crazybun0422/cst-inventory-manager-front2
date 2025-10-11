@@ -3,79 +3,80 @@ import { getRoleType, getRoleTypeForP, getWebSocketUrl } from '@/common/common-f
 import bus, { EVENTS } from '@/common/event-bus'
 import store from '@/store'
 
+// 简单可靠：按 URL 去重管理连接；open 时登记，error/close 时移除。
 class SourcingWS {
   constructor() {
-    this.ws = null
-    this.timer = null
-    this.retries = 0
+    // channels[url] = { ws, pingTimer }
+    this.channels = {}
   }
 
-  getRelatedId() {
+  // 收集需要维持的 ID：related_id 始终尝试；P 端有 provider_uuid 再额外尝试
+  collectIds() {
+    const ids = new Set()
     let role = getRoleType(window.location.pathname) || dropShipper
     if (role === config.provider.role) role = getRoleTypeForP()
     const key = (config[role] && config[role].userRelatedId) || config.dropShipper.userRelatedId
-    let rid = localStorage.getItem(key)
-    // P 端优先用当前选择的 provider_uuid（与既有 header 逻辑保持一致）
+    const rid = localStorage.getItem(key)
+    if (rid) ids.add(rid)
     if (role === config.provider.role || role === config.operator.role) {
       try {
         const shop = store.state.shopProviderUuid && store.state.shopProviderUuid.shopInfo
-        if (shop && shop.provider_uuid) rid = shop.provider_uuid
-      } catch (_) {}
+        if (shop && shop.provider_uuid) ids.add(shop.provider_uuid)
+      } catch (_) { /* ignore */ }
     }
-    return { related_id: rid, role }
+    return Array.from(ids)
   }
 
-  getUrl(related_id) {
-    // 与 header 的拼接规则一致：<ws-base>/ws/notifications/<id>
+  getUrl(id) {
     const base = getWebSocketUrl().replace(/\/$/, '')
-    return `${base}/ws/notifications/${encodeURIComponent(related_id)}`
+    return `${base}/ws/notifications/${encodeURIComponent(id)}`
+  }
+
+  ensureUrl(url) {
+    const ch = this.channels[url]
+    if (ch && ch.ws && (ch.ws.readyState === 0 || ch.ws.readyState === 1)) return
+    try {
+      const ws = new WebSocket(url)
+      const entry = { ws, pingTimer: null }
+      this.channels[url] = entry
+      ws.onopen = () => {
+        if (entry.pingTimer) clearInterval(entry.pingTimer)
+        entry.pingTimer = setInterval(() => {
+          try { ws && ws.readyState === 1 && ws.send(JSON.stringify({ type: 'ping' })) } catch (_) {}
+        }, 30000)
+        // eslint-disable-next-line no-console
+        console.log('[WS] connected', url)
+      }
+      ws.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data || '{}')
+          if (data && (data.type === EVENTS.SOURCING_NOTIFICATION || data.event === EVENTS.SOURCING_NOTIFICATION || (data.sourcing_id && data.status))) {
+            bus.$emit(EVENTS.SOURCING_NOTIFICATION, data)
+          }
+          if (data && (data.event === EVENTS.EXPORT_NOTIFICATION || data.filename)) {
+            bus.$emit(EVENTS.EXPORT_NOTIFICATION, data)
+          }
+        } catch (_) { /* ignore */ }
+      }
+      const cleanup = () => {
+        try { entry.pingTimer && clearInterval(entry.pingTimer) } catch (_) {}
+        delete this.channels[url]
+        // 轻量重试一次，保持简单
+        setTimeout(() => this.ensureUrl(url), 3000)
+      }
+      ws.onerror = cleanup
+      ws.onclose = cleanup
+    } catch (_) { /* ignore */ }
   }
 
   start() {
-    const { related_id } = this.getRelatedId()
-    if (!related_id) {
+    const ids = this.collectIds()
+    if (!ids.length) {
       // eslint-disable-next-line no-console
-      console.warn('[WS] skip connect: related_id not found')
+      console.warn('[WS] skip connect: no ids')
       return
     }
-    // 已连接或正在连接时不重复连接
-    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) return
-    const url = this.getUrl(related_id)
-    try {
-      this.ws = new WebSocket(url)
-    } catch (_) { return }
-
-    this.ws.onopen = () => {
-      this.retries = 0
-      this.ping()
-      // eslint-disable-next-line no-console
-      console.log('[WS] connected', url)
-    }
-    this.ws.onmessage = (evt) => {
-      try {
-        const data = JSON.parse(evt.data || '{}')
-        if (data && (data.type === EVENTS.SOURCING_NOTIFICATION || data.event === EVENTS.SOURCING_NOTIFICATION || (data.sourcing_id && data.status))) {
-          bus.$emit(EVENTS.SOURCING_NOTIFICATION, data)
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-    this.ws.onerror = () => { /* eslint-disable no-console */ console.warn('[WS] error'); this.scheduleReconnect() }
-    this.ws.onclose = () => { /* eslint-disable no-console */ console.warn('[WS] closed'); this.scheduleReconnect() }
-  }
-
-  ping() {
-      if (this.timer) clearInterval(this.timer)
-      this.timer = setInterval(() => { try { this.ws && this.ws.readyState === 1 && this.ws.send(JSON.stringify({ type: 'ping' })) } catch (_) {} }, 30000)
-  }
-
-  scheduleReconnect() {
-    if (this.timer) { clearInterval(this.timer); this.timer = null }
-    if (this.retries > 6) return
-    const delay = Math.min(1000 * Math.pow(2, this.retries), 15000)
-    this.retries++
-    setTimeout(() => this.start(), delay)
+    ids.map(id => this.getUrl(id)).forEach(url => this.ensureUrl(url))
   }
 }
 

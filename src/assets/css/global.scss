@@ -778,6 +778,10 @@ a,
   color: var(--custom-font-color3);
 }
 .status-tips-pop .ant-tooltip-inner { padding: 10px 12px; border-radius: 8px; }
+/* Allow width to expand to fit single-line items */
+.status-tips-pop .ant-tooltip-inner { max-width: none; }
+/* Ensure tooltip overlays above modals and other layers */
+.status-tips-pop { z-index: 5000 !important; }
 /* Invert board by theme: light -> black board; dark -> white board */
 .defaultTheme .status-tips-pop .ant-tooltip-inner {
   background: #000000 !important;
@@ -794,6 +798,8 @@ a,
 /* One item per line, no wrap */
 .status-tips-pop .status-tips-list { display: flex; flex-direction: column; gap: 6px; }
 .status-tips-pop .status-tips-list > div { white-space: nowrap; }
+/* Ensure tooltip container is not constrained */
+.status-tips-pop { max-width: none !important; }
 
 .ant-popover-inner {
   background: var(--custom-background-color);

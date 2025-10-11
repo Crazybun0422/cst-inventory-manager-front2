@@ -287,20 +287,7 @@ export default {
       const base = getWebSocketUrl().replace(/\/$/, '')
       // Bind mission websockets based on current cache first
       this.ensureMissionSockets()
-      // Notifications channel for export completion (optional, light)
-      try {
-        if (this.relatedId) {
-          this.wsNotify = new WebSocket(`${base}/ws/notifications/${encodeURIComponent(this.relatedId)}`)
-        }
-        this.wsNotify.onmessage = (evt) => {
-          let msg = {}
-          try { msg = JSON.parse(evt.data || '{}') } catch (_) { msg = {} }
-          if (msg && (msg.event === 'export_notification' || msg.filename)) {
-            // On completion, refresh list to flip status
-            this.refresh()
-          }
-        }
-      } catch (_) {}
+      // Export completion notifications are now forwarded via global ws-notify -> bus
     },
     reconnect () { this.connectWS() },
     closeWS () {
@@ -319,9 +306,21 @@ export default {
     // Always pull tasks on page load to ensure animation and sockets
     this.refresh()
     this.connectWS()
+    // Listen to global export notifications
+    try {
+      const bus = require('@/common/event-bus').default
+      const { EVENTS } = require('@/common/event-bus')
+      this._onExport = () => this.refresh()
+      bus.$on(EVENTS.EXPORT_NOTIFICATION, this._onExport)
+    } catch (_) {}
   },
   beforeDestroy () {
     this.closeWS()
+    try {
+      const bus = require('@/common/event-bus').default
+      const { EVENTS } = require('@/common/event-bus')
+      if (this._onExport) bus.$off(EVENTS.EXPORT_NOTIFICATION, this._onExport)
+    } catch (_) {}
   }
 }
 </script>

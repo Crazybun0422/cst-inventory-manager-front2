@@ -4,13 +4,23 @@
 
     <a-card :bordered="false" class="mt-16">
       <a-tabs :activeKey="activeStatus" @change="onTab">
-        <a-tab-pane v-for="t in statusTabs" :tab="t.label" :key="t.value" />
+        <a-tab-pane v-for="t in statusTabs" :tab="t.label" :key="t.value" :disabled="disableStatusFilter" />
+        <template slot="tabBarExtraContent">
+          <div class="tab-extra-action">
+            <a-tooltip
+              :title="disableStatusFilter ? $t('sourcing.enableStatusFilter') : $t('sourcing.disableStatusFilter')">
+              <a-button shape="circle" size="small" :icon="disableStatusFilter ? 'filter' : 'stop'"
+                :type="disableStatusFilter ? 'default' : 'primary'" @click="toggleStatusFilter" />
+            </a-tooltip>
+          </div>
+        </template>
       </a-tabs>
 
       <!-- Keyword search -->
       <a-form-model layout="inline" :model="search" class="modal-inline-form" style="margin-bottom: 12px">
         <a-form-model-item>
-          <a-input v-model="search.keyword" :allowClear="true" :placeholder="$t('common.pleaseEnterAKeyword')" style="width: 300px" />
+          <a-input v-model="search.keyword" :allowClear="true" :placeholder="$t('sourcing.adminSearchPlaceholder')"
+            style="width: 300px" />
         </a-form-model-item>
         <a-form-model-item class="form-actions-inline">
           <a-button @click="resetSearch">{{ $t('common.reset') }}</a-button>
@@ -22,20 +32,23 @@
           <div class="his-item-list">
             <div class="his-item" v-for="(it, idx) in (record.items || [])" :key="it.item_id || idx">
               <div class="his-item__preview">
-                <AuthImg v-if="it.source_type==='image' && it.image" :src="it.image" :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
-                <a-icon v-else-if="it.source_type==='url'" type="link" class="his-item__icon" />
+                <AuthImg v-if="it.source_type === 'image' && it.image" :src="it.image"
+                  :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
+                <a-icon v-else-if="it.source_type === 'url'" type="link" class="his-item__icon" />
                 <a-icon v-else type="shopping" class="his-item__icon" />
               </div>
               <div class="his-item__meta">
                 <div class="his-item__line">
                   <a-tag color="blue" size="small">{{ it.source_type }}</a-tag>
-                  <a v-if="it.source_type==='url'" class="his-item__link" :href="it.source_url" target="_blank" rel="noopener">{{ it.source_url }}</a>
-                  <span v-else-if="it.source_type==='product'" class="his-item__text">{{ it.product_id }}</span>
-                  <span v-else-if="it.source_type==='image'" class="his-item__text">{{ it.description }}</span>
+                  <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
+                    rel="noopener">{{ it.source_url }}</a>
+                  <span v-else-if="it.source_type === 'product'" class="his-item__text">{{ it.product_id }}</span>
+                  <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
                 </div>
                 <div class="his-item__sub">
                   <span v-if="it.quote">{{ $t('sourcing.expectedPrice') }}: {{ currencySymbol }} {{ it.quote }}</span>
-                  <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{ currencySymbol }} {{ it.feedback_quote }}</span>
+                  <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{
+                    currencySymbol }} {{ it.feedback_quote }}</span>
                 </div>
               </div>
             </div>
@@ -51,18 +64,23 @@
         <a-table-column :title="$t('common.createTime')" dataIndex="created_at" key="created_at" />
         <a-table-column :title="$t('common.operation')" key="operate" width="260">
           <template slot-scope="text, record">
-            <a-button v-if="record.status==='submitted'" type="primary" size="small" @click="startSourcing(record)">{{ $t('common.start') }}</a-button>
-            <a-button v-else-if="record.status==='sourcing'" type="primary" size="small" @click="openQuoteModal(record)">{{ $t('common.inquiryConfirmation') }}</a-button>
+            <a-button v-if="record.status === 'submitted'" type="primary" size="small" @click="startSourcing(record)">{{
+              $t('common.start') }}</a-button>
+            <a-button v-else-if="record.status === 'sourcing'" type="primary" size="small"
+              @click="openQuoteModal(record)">{{ $t('common.inquiryConfirmation') }}</a-button>
           </template>
         </a-table-column>
       </a-table>
       <div class="mt-16" style="text-align:right">
-        <a-pagination show-quick-jumper :pageSize="table.page_size" :current="table.page_number" :total="table.total" @change="loadList" />
+        <a-pagination show-quick-jumper :showSizeChanger="true" :pageSizeOptions="['10', '20', '50', '100']"
+          :pageSize="table.page_size" :current="table.page_number" :total="table.total" @change="loadList"
+          @showSizeChange="onPageSizeChange" />
       </div>
     </a-card>
 
     <!-- Quote input modal -->
-    <a-modal class="global-modal-class" :title="$t('sourcing.feedbackQuote') + ' (' + currencySymbol + ')'" :visible="quoteModalVisible" @ok="confirmQuote" @cancel="closeQuoteModal">
+    <a-modal class="global-modal-class" :title="$t('sourcing.feedbackQuote') + ' (' + currencySymbol + ')'"
+      :visible="quoteModalVisible" @ok="confirmQuote" @cancel="closeQuoteModal">
       <a-input v-model="quoteInput" :placeholder="currencySymbol + ' 0.00'" />
     </a-modal>
   </div>
@@ -86,6 +104,8 @@ export default {
       quoteRow: null,
       search: { keyword: '' },
       _searchDebounce: null,
+      disableStatusFilter: false,
+      _toggleLock: false,
     }
   },
   computed: {
@@ -94,7 +114,7 @@ export default {
       const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
       const en = { submitted: 'Submitted', sourcing: 'Sourcing', pending_confirmation: 'Pending confirmation', completed: 'Completed' }
       const dict = this.$i18n.locale === 'zh_cn' ? zh : en
-      return [ 'submitted','sourcing','pending_confirmation','completed' ].map(v => ({ value: v, label: dict[v] }))
+      return ['submitted', 'sourcing', 'pending_confirmation', 'completed'].map(v => ({ value: v, label: dict[v] }))
     }
   },
   created() {
@@ -111,7 +131,8 @@ export default {
     'search.keyword': function () {
       clearTimeout(this._searchDebounce)
       this._searchDebounce = setTimeout(() => this.loadList(1), 400)
-    }
+    },
+    disableStatusFilter() { this.loadList(1) }
   },
   methods: {
     statusColor(s) {
@@ -124,14 +145,20 @@ export default {
       return map[s] || 'default'
     },
     statusLabel(s) {
-      const map = this.statusTabs.reduce((acc,cur)=>{acc[cur.value]=cur.label;return acc},{}); return map[s] || s
+      const map = this.statusTabs.reduce((acc, cur) => { acc[cur.value] = cur.label; return acc }, {}); return map[s] || s
     },
-    onTab(activeKey) { this.activeStatus = activeKey; this.loadList(1) },
+    onTab(activeKey) {
+      if (this.disableStatusFilter) return
+      this.activeStatus = activeKey; this.loadList(1)
+    },
     async loadList(page) {
       this.loading = true
       try {
-        const params = { page_number: page || this.table.page_number, page_size: this.table.page_size, status: this.activeStatus }
-        if (this.search.keyword) params.keyword = this.search.keyword
+        const params = { page_number: page || this.table.page_number, page_size: this.table.page_size }
+        if (!this.disableStatusFilter) params.status = this.activeStatus
+        if (this.search.keyword) {
+          params.keyword = this.search.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        }
         const res = await this.$ajax({ url: '/api/admin/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) {
           const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }
@@ -140,6 +167,18 @@ export default {
       } finally { this.loading = false }
     },
     resetSearch() { this.search = { keyword: '' }; this.loadList(1) },
+    toggleStatusFilter() {
+      if (this._toggleLock) return
+      this._toggleLock = true
+      this.disableStatusFilter = !this.disableStatusFilter
+      this.loadList(1)
+      setTimeout(() => { this._toggleLock = false }, 500)
+    },
+    onPageSizeChange(current, size) {
+      this.table.page_size = size
+      this.loadList(1)
+    },
+
     async startSourcing(row) {
       Modal.confirm({
         title: this.$t('common.tips'),
@@ -177,16 +216,72 @@ export default {
 
 
 <style scoped>
-.mt-16 { margin-top: 16px; }
-.modal-inline-form ::v-deep .ant-form-item { margin-right: 16px; margin-bottom: 12px; }
-.modal-inline-form ::v-deep .ant-btn + .ant-btn { margin-left: 8px; }
-.his-item-list { display: grid; grid-template-columns: 1fr; grid-row-gap: 8px; }
-.his-item { display: flex; align-items: center; padding: 6px 0; }
-.his-item__preview { width: 64px; display: flex; justify-content: center; }
-.his-item__icon { font-size: 28px; color: var(--custom-color-primary); }
-.his-item__meta { flex: 1; }
-.his-item__line { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
-.his-item__link { color: var(--custom-color-primary); max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
-.his-item__text { color: var(--custom-font-color); }
-.his-item__sub { color: var(--custom-font-color2); font-size: 12px; }
+.mt-16 {
+  margin-top: 16px;
+}
+
+.modal-inline-form ::v-deep .ant-form-item {
+  margin-right: 16px;
+  margin-bottom: 12px;
+}
+
+.modal-inline-form ::v-deep .ant-btn+.ant-btn {
+  margin-left: 8px;
+}
+
+.tab-extra-action {
+  margin-right: 12px;
+}
+
+.his-item-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-row-gap: 8px;
+}
+
+.his-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.his-item__preview {
+  width: 64px;
+  display: flex;
+  justify-content: center;
+}
+
+.his-item__icon {
+  font-size: 28px;
+  color: var(--custom-color-primary);
+}
+
+.his-item__meta {
+  flex: 1;
+}
+
+.his-item__line {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.his-item__link {
+  color: var(--custom-color-primary);
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.his-item__text {
+  color: var(--custom-font-color);
+}
+
+.his-item__sub {
+  color: var(--custom-font-color2);
+  font-size: 12px;
+}
 </style>

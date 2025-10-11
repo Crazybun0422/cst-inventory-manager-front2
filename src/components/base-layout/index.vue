@@ -92,6 +92,8 @@ export default {
     padding: 0px 0px;
     // background-color: #f7fafc;
     min-height: calc(100vh - 120px);
+    border-radius: 12px;
+    overflow: hidden; /* Ensure inner content (tabs/pages/backgrounds) clip to rounded corners */
   }
   .layout-footer {
     border-top: 1px solid #ebebeb;

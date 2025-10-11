@@ -108,9 +108,38 @@ async function init() {
       this.$i18n.locale = userLanguage;
       changeFavicon(data.homepage_icon);
       document.title = this.$i18n.locale === "en_us" ? data.homepage_title_en : data.homepage_title;
-      // Example global listener (no-op): components can add their own
-      bus.$on(EVENTS.SOURCING_NOTIFICATION, () => {})
+      // P 端：监听并在右下角弹出通知；DS 端走 Header 内置逻辑
+      try {
+        let role = getRoleType(window.location.pathname) || dropShipper
+        if (role === config.provider.role) role = getRoleTypeForP()
+        if (role !== dropShipper) {
+          this._pBusNotify = (msgData) => {
+            if (!msgData) return
+            // 仅处理选品通知
+            if (msgData.type === EVENTS.SOURCING_NOTIFICATION || msgData.event === EVENTS.SOURCING_NOTIFICATION || (msgData.sourcing_id && msgData.status)) {
+              const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
+              const en = { submitted: 'Submitted', sourcing: 'Sourcing', pending_confirmation: 'Pending confirmation', completed: 'Completed' }
+              const dict = this.$i18n.locale === 'zh_cn' ? zh : en
+              const label = dict[msgData.status] || msgData.status
+              const title = this.$t('navigate.sourcing')
+              const content = `${this.$t('sourcing.sourcingId') || 'ID'}: ${msgData.sourcing_id || ''} · ${label}`
+              this.$notify({
+                title,
+                message: this.$createElement('i', {
+                  style: 'color: teal; cursor: pointer;',
+                  on: { click: () => { this.$router.push({ name: 'p-sourcing' }); window.focus() } }
+                }, content),
+                duration: 0,
+                offset: 100,
+                type: 'success'
+              })
+            }
+          }
+          bus.$on(EVENTS.SOURCING_NOTIFICATION, this._pBusNotify)
+        }
+      } catch (e) { /* ignore */ }
     },
+    beforeDestroy() { if (this._pBusNotify) bus.$off(EVENTS.SOURCING_NOTIFICATION, this._pBusNotify) },
     methods: {
       setTheme() {
         const currentTheme = localStorage.getItem('theme') || 'defaultTheme';

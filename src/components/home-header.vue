@@ -745,7 +745,7 @@ export default {
         msgContent = `${this.$t('sourcing.sourcingId') || 'ID'}: ${msgData.sourcing_id || ''} · ${label}`
         pathType = 'sourcing'
 
-      // 2) 邮件
+        // 2) 邮件
       } else if (msgData.message) {
         title = this.$t('message.myAccount.emailNotification')
         msgContent = msgData.message
@@ -753,14 +753,14 @@ export default {
         //  收到信息 更新刷新邮箱状态
         this.$store.dispatch('user/triggerEmailRefresh')
 
-      // 3) 文件导出
+        // 3) 文件导出
       } else if (msgData.filename) {
         title = this.$t('message.myAccount.fileExportNotification')
         msgContent = msgData.filename
         pathType = 'download'
         this.$store.dispatch('user/triggerDownloadRefresh')
 
-      // 4) 告警/系统通知
+        // 4) 告警/系统通知
       } else if (msgData.event_name || msgData.title || msgData.content) {
         title = this.$t('message.myAccount.alarmNotification')
         msgContent = msgData.content || msgData.event_name || msgData.title || ''
@@ -872,15 +872,16 @@ export default {
       }
     },
     providerUuidBySelectStore(newValue) {
-      if (newValue) {
-        if (this.config.pRoleList.includes(this.roleType)) {
-          this.fetchUnreadMessageCount()
-          // 关闭之前的websocket 重新初始化
-          this.closeWebSocket()
-          this.websocketId = newValue
-          this.initWebSocket()
-          this.getAlarm()
-        }
+      if (!newValue) return
+      // P 端不再干预全局通知 WS，避免触发二次连接；仅更新计数/告警
+      if (this.config.pRoleList.includes(this.roleType)) {
+        this.fetchUnreadMessageCount()
+        this.getAlarm()
+        try {
+          const mod = require('@/common/ws-notify').default
+          // if (mod && mod.ws && mod.ws.close) { mod.ws.close() }
+          if (mod && mod.start) { mod.start() }
+        } catch (e) { /* ignore */ }
       }
     }
   },

@@ -7,6 +7,22 @@
     <PageHead :title="$t('navigate.sourcing')" />
 
     <div class="sourcing-hero">
+      <!-- Inline Support Items Banner (inside hero area, above card) -->
+      <div class="support-inline">
+        <div class="support-banner" ref="supportBanner">
+          <div class="scroller" ref="scrollerWrap" @mouseenter="pauseScroll = true" @mouseleave="pauseScroll = false">
+            <div class="scroller-track" ref="scrollerTrack" :class="{ paused: pauseScroll }" :style="{ '--block-width': (marqueeBlockWidth || 0) + 'px' }">
+              <section v-for="(it, idx) in duplicatedSupportItems" :key="'inline' + idx"
+                :class="['banner-item', { 'is-tiktok': /tiktok/i.test(it.name) }]">
+                <a :href="it.url" target="_blank" rel="noopener">
+                  <img :src="it.img" :alt="it.name" />
+                </a>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="hero-card">
         <div class="hero-title">{{ $t('sourcing.heroTitle') }}</div>
 
@@ -23,7 +39,7 @@
             ,
             <a class="info-link" href="https://www.amazon.com/" target="_blank" rel="noopener">{{ $t('sourcing.amazon')
             }}</a>
-            .
+            <span> {{ $t('sourcing.etcSuffix') }} </span>
           </div>
         </div>
 
@@ -32,8 +48,8 @@
           @submit.native.prevent="submitUrl">
           <div class="url-row">
             <a-form-model-item prop="source_url" class="url-item">
-              <a-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')" :allowClear="true"
-                class="url-input">
+              <a-input v-model="urlForm.source_url" :placeholder="$t('sourcing.insertUrlPlaceholder')"
+                :allowClear="true" class="url-input">
                 <a-icon slot="prefix" type="search" />
               </a-input>
             </a-form-model-item>
@@ -48,11 +64,14 @@
           <a @click.prevent="openHistory">{{ $t('common.history') }}</a>
         </div>
       </div>
+
+      
     </div>
+
 
     <!-- More Modal (Ant Design Vue) -->
     <a-modal :title="$t('sourcing.moreOptions')" :visible="moreVisible" width="1040px"
-      class="global-modal-class global-modal-center" :footer="null" @cancel="moreVisible=false">
+      class="global-modal-class global-modal-center" :footer="null" @cancel="moreVisible = false">
       <div v-if="moreStep === 'options'" class="more-options more-buttons">
         <a-button class="more-action-btn" type="primary" @click="chooseMore('image')">
           <span class="btn-title">{{ $t('sourcing.inputImageDescPrice') }}</span>
@@ -68,11 +87,11 @@
           <a-form-model-item :label="$t('dashboard.image')" prop="image">
             <a-upload name="files" :action="'/api-prefix/api/upload/'" list-type="picture-card"
               :headers="getGlobalHeaders(roleType)" :file-list="imageFileList"
-              :showUploadList="{ showPreviewIcon: true, showRemoveIcon: true }"
-              :multiple="false" @change="handleAntUploadChange" @preview="handleAntPreview">
+              :showUploadList="{ showPreviewIcon: true, showRemoveIcon: true }" :multiple="false"
+              @change="handleAntUploadChange" @preview="handleAntPreview">
               <a-icon type="plus" />
             </a-upload>
-            <a-modal :visible="previewVisible" :footer="null" @cancel="previewVisible=false">
+            <a-modal :visible="previewVisible" :footer="null" @cancel="previewVisible = false">
               <img :src="previewImage" alt="preview" style="width: 100%" />
             </a-modal>
           </a-form-model-item>
@@ -104,7 +123,8 @@
               style="width:220px" />
           </a-form-model-item>
           <a-form-model-item>
-            <a-input v-model="productQuery.sku" :placeholder="$t('message.productManagement.productSku')" :allowClear="true" style="width:220px" />
+            <a-input v-model="productQuery.sku" :placeholder="$t('message.productManagement.productSku')"
+              :allowClear="true" style="width:220px" />
           </a-form-model-item>
           <a-form-model-item class="form-actions-inline">
             <a-button type="primary" @click="loadProductList(1)">{{ $t('common.search') }}</a-button>
@@ -121,16 +141,20 @@
                 :styleInfo="'width:48px;height:48px;'" />
             </template>
           </a-table-column>
-          <a-table-column :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+          <a-table-column
+            :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
             key="name" :ellipsis="true">
             <template slot-scope="text, record">
-              <span v-if="langType === 'zh_cn'">{{ (record.chinese_name || '') + (record.sub_chinese_name ? '-' + record.sub_chinese_name : '') }}</span>
-              <span v-else>{{ (record.english_name || '') + (record.sub_english_name ? ' - ' + record.sub_english_name : '') }}</span>
+              <span v-if="langType === 'zh_cn'">{{ (record.chinese_name || '') + (record.sub_chinese_name ? '-' +
+                record.sub_chinese_name : '') }}</span>
+              <span v-else>{{ (record.english_name || '') + (record.sub_english_name ? ' - ' + record.sub_english_name :
+                '') }}</span>
             </template>
           </a-table-column>
           <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :ellipsis="false">
             <template slot-scope="text, record">
-              <span class="sku-cell">{{ (record.product_variants || []).map(v => v.product_code_sku).join(', ') }}</span>
+              <span class="sku-cell">{{(record.product_variants || []).map(v => v.product_code_sku).join(', ')
+              }}</span>
             </template>
           </a-table-column>
         </a-table>
@@ -148,10 +172,11 @@
 
     <!-- History Modal (Ant Design Vue) -->
     <a-modal :title="$t('sourcing.historyTitle')" :visible="historyVisible" width="1040px" :footer="null"
-      class="global-modal-class global-modal-center" @cancel="historyVisible=false">
+      class="global-modal-class global-modal-center" @cancel="historyVisible = false">
       <a-form-model layout="inline" :model="historyQuery" class="mb-24 modal-inline-form">
         <a-form-model-item>
-          <a-input v-model="historyQuery.keyword" :allowClear="true" :placeholder="$t('common.pleaseEnterAKeyword')" style="width:260px" />
+          <a-input v-model="historyQuery.keyword" :allowClear="true" :placeholder="$t('sourcing.partUrlPlaceholder')"
+            style="width:260px" />
         </a-form-model-item>
         <a-form-model-item :label="$t('common.status')">
           <a-select v-model="historyQuery.status" :allowClear="true" :placeholder="$t('common.pleaseSelect')"
@@ -197,10 +222,14 @@
             <a-tooltip placement="top" overlayClassName="status-tips-pop">
               <template slot="title">
                 <div class="status-tips-list">
-                  <div><a-tag color="geekblue" size="small">{{ statusLabel('submitted') }}</a-tag> — {{ $t('sourcing.statusTips.submitted') }}</div>
-                  <div><a-tag color="gold" size="small">{{ statusLabel('sourcing') }}</a-tag> — {{ $t('sourcing.statusTips.sourcing') }}</div>
-                  <div><a-tag color="purple" size="small">{{ statusLabel('pending_confirmation') }}</a-tag> — {{ $t('sourcing.statusTips.pending_confirmation') }}</div>
-                  <div><a-tag color="green" size="small">{{ statusLabel('completed') }}</a-tag> — {{ $t('sourcing.statusTips.completed') }}</div>
+                  <div><a-tag color="geekblue" size="small">{{ statusLabel('submitted') }}</a-tag> — {{
+                    $t('sourcing.statusTips.submitted') }}</div>
+                  <div><a-tag color="gold" size="small">{{ statusLabel('sourcing') }}</a-tag> — {{
+                    $t('sourcing.statusTips.sourcing') }}</div>
+                  <div><a-tag color="purple" size="small">{{ statusLabel('pending_confirmation') }}</a-tag> — {{
+                    $t('sourcing.statusTips.pending_confirmation') }}</div>
+                  <div><a-tag color="green" size="small">{{ statusLabel('completed') }}</a-tag> — {{
+                    $t('sourcing.statusTips.completed') }}</div>
                 </div>
               </template>
               <a-icon type="info-circle" style="margin-left:6px; color: var(--custom-font-color2)" />
@@ -216,15 +245,19 @@
         </a-table-column>
         <a-table-column :title="$t('common.operation')" key="op" width="160">
           <template slot-scope="text, record">
-            <a-button v-if="record.status==='pending_confirmation'" type="primary" size="small" @click="confirmHistory(record)">{{ $t('common.confirm') }}</a-button>
+            <a-button v-if="record.status === 'pending_confirmation'" type="primary" size="small"
+              @click="confirmHistory(record)">{{ $t('common.confirm') }}</a-button>
           </template>
         </a-table-column>
       </a-table>
       <div class="mt-16" style="text-align:right">
-        <a-pagination show-quick-jumper :pageSize="history.page_size" :current="history.page_number"
-          :total="history.total" @change="loadHistory" />
+        <a-pagination show-quick-jumper :showSizeChanger="true" :pageSizeOptions="['10', '20', '50', '100']"
+          :pageSize="history.page_size" :current="history.page_number" :total="history.total" @change="loadHistory"
+          @showSizeChange="onHistorySizeChange" />
       </div>
     </a-modal>
+
+    <!-- Removed Support Items Modal; now inline above -->
   </div>
 </template>
 
@@ -232,7 +265,7 @@
 import PageHead from '@/components/page-head.vue'
 import WorldMagnifierBackground from '@/components/world-magnifier-background.vue'
 import AuthImg from '@/components/auth-img.vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { getGlobalHeaders } from '@/common/common-func'
 import bus, { EVENTS } from '@/common/event-bus'
 export default {
@@ -272,7 +305,14 @@ export default {
       historyLoading: false,
       historyQuery: { status: '', keyword: '' },
       history: { items: [], total: 0, page_number: 1, page_size: 10 },
-      _historyDebounce: null
+      _historyDebounce: null,
+      // inline support banner state
+      pauseScroll: false,
+      supportItems: [],
+      marqueeBlock: [],
+      bannerHeight: 100,
+      scrollerGap: 24,
+      marqueeBlockWidth: 0
     }
   },
   computed: {
@@ -291,21 +331,41 @@ export default {
     currencySymbol() { return '$' },
     productRowSelection() {
       return { selectedRowKeys: this.selectedProductIds, onChange: this.onProductSelectionChangeKeys }
+    },
+    duplicatedSupportItems() {
+      // two identical blocks to enable seamless looping at -50%
+      const block = this.marqueeBlock.length ? this.marqueeBlock : this.supportItems
+      return [...block, ...block]
     }
   },
   created() {
     // refresh history dialog when open and receiving WS notification
     this._unsub = () => { if (this.historyVisible) this.loadHistory(this.history.page_number) }
     bus.$on(EVENTS.SOURCING_NOTIFICATION, this._unsub)
+    // preload support items
+    this.loadSupportItems()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.buildMarquee)
+    }
   },
-  beforeDestroy() { bus.$off(EVENTS.SOURCING_NOTIFICATION, this._unsub) },
+  beforeDestroy() {
+    bus.$off(EVENTS.SOURCING_NOTIFICATION, this._unsub)
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.buildMarquee)
+    }
+  },
   watch: {
     historyQuery: {
       handler() { this.scheduleHistorySearch() },
       deep: true
+    },
+    supportItems() {
+      this.$nextTick(() => this.buildMarquee())
     }
   },
   methods: {
+    // Escape regex special characters for backend literal matching
+    escapeRegexLiteral(str) { return str ? String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '' },
     validateSourceUrl(rule, value, callback) {
       if (!value) { callback(); return }
       // Must start with http/https and contain a valid domain like a.b.com with optional port and path
@@ -356,16 +416,69 @@ export default {
         if (this.$isRequestSuccessful(res.code)) { this.productOptions = (res.data?.result) || [] }
       } finally { this.productLoading = false }
     },
-    submitUrl() {
+    async submitUrl() {
       this.$refs.urlFormRef.validate(async valid => {
         if (!valid) return
         this.submittingUrl = true
         try {
-          const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: [{ source_type: 'url', source_url: this.urlForm.source_url }] }
-          const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-          if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.urlForm.source_url = '' }
+          const url = (this.urlForm.source_url || '').trim()
+          const existed = await this.checkExistingUrl(url)
+          const doSubmit = async () => {
+            const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: [{ source_type: 'url', source_url: url }] }
+            const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
+            if (this.$isRequestSuccessful(res.code)) {
+              this.urlForm.source_url = ''
+              this.showSubmitSuccess(url)
+            }
+          }
+          if (existed && existed.length) {
+            const h = this.$createElement
+            const link = h('a', {
+              attrs: { href: 'javascript:void(0)' },
+              style: { color: 'var(--custom-color-primary)', cursor: 'pointer', textDecoration: 'underline' },
+              on: { click: () => { this.openHistory(url); Modal.destroyAll() } }
+            }, this.$t('sourcing.viewExistingRecords'))
+            const content = h('div', [
+              h('div', this.$t('sourcing.urlExistsMessage')),
+              h('div', { style: { marginTop: '6px' } }, [link])
+            ])
+            Modal.confirm({
+              title: this.$t('sourcing.urlExistsTitle'),
+              content,
+              okText: this.$t('common.confirm'),
+              cancelText: this.$t('common.cancel'),
+              onOk: doSubmit
+            })
+          } else {
+            await doSubmit()
+          }
         } finally { this.submittingUrl = false }
       })
+    },
+    showSubmitSuccess(keyword) {
+      const h = this.$createElement
+      const link = h('a', {
+        attrs: { href: 'javascript:void(0)' },
+        style: { color: 'var(--custom-color-primary)', cursor: 'pointer', textDecoration: 'underline' },
+        on: { click: () => { this.openHistory(typeof keyword === 'string' ? keyword : ''); Modal.destroyAll() } }
+      }, this.$t('sourcing.openHistory'))
+      const content = h('div', [
+        h('div', this.$t('sourcing.submitSuccessMsg')),
+        h('div', { style: { marginTop: '6px' } }, [link])
+      ])
+      Modal.success({ title: this.$t('sourcing.submitSuccessTitle'), content })
+    },
+    async checkExistingUrl(url) {
+      if (!url) return []
+      try {
+        const params = { page_number: 1, page_size: 10, keyword: this.escapeRegexLiteral(url) }
+        const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
+        if (this.$isRequestSuccessful(res.code)) {
+          const data = res.data || { items: [] }
+          return data.items || []
+        }
+      } catch (e) { /* ignore */ }
+      return []
     },
     openMore() { this.moreVisible = true; this.moreStep = 'options' },
     chooseMore(step) { this.moreStep = step; if (step === 'image') this.imageForm.purchase_reason = this.$t('sourcing.lowestPrice'); if (step === 'product') { this.selectedProductIds = []; this.loadProductList(1) } },
@@ -409,8 +522,19 @@ export default {
         if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.selectedProductIds = [] }
       } finally { this.submittingProduct = false }
     },
-    openHistory() { this.historyVisible = true; this.loadHistory(1) },
-    resetHistory() { this.historyQuery = { status: '', keyword: '' }; this.loadHistory(1) },
+    openHistory(keyword) {
+      // Guard against Vue event object being passed implicitly
+      const kw = (typeof keyword === 'string') ? keyword : ''
+      this.historyVisible = true
+      if (kw) { this.historyQuery.keyword = kw }
+      // Use debounced search to avoid duplicate requests
+      this.$nextTick(() => this.scheduleHistorySearch && this.scheduleHistorySearch())
+    },
+    resetHistory() {
+      this.historyQuery = { status: '', keyword: '' }
+      // 交由防抖调度，避免重复请求
+      this.$nextTick(() => this.scheduleHistorySearch && this.scheduleHistorySearch())
+    },
     scheduleHistorySearch() {
       if (!this.historyVisible) return
       clearTimeout(this._historyDebounce)
@@ -421,16 +545,75 @@ export default {
       try {
         const params = { page_number: page || this.history.page_number, page_size: this.history.page_size }
         if (this.historyQuery.status) params.status = this.historyQuery.status
-        if (this.historyQuery.keyword) params.keyword = this.historyQuery.keyword
+        if (this.historyQuery.keyword) {
+          params.keyword = this.escapeRegexLiteral(this.historyQuery.keyword)
+        }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) { const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }; this.history = data }
       } finally { this.historyLoading = false }
+    },
+    onHistorySizeChange(current, size) {
+      this.history.page_size = size
+      this.loadHistory(1)
     },
     async confirmHistory(row) {
       try {
         const res = await this.$ajax({ url: `/api/sourcing/${row.sourcing_id}`, method: 'put', data: { status: 'completed' }, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.loadHistory() }
       } catch (e) { /* ignore */ }
+    },
+    loadSupportItems() {
+      try {
+        // Dynamically import all images from pf_logs
+        const ctx = require.context('@/assets/pf_logs', false, /\.(png|jpe?g|svg|webp)$/)
+        const map = {
+          aliexpress: 'https://www.aliexpress.com/',
+          alibaba: 'https://www.alibaba.com/',
+          amazon: 'https://www.amazon.com/',
+          temu: 'https://www.temu.com/',
+          tiktok: 'https://www.tiktok.com/',
+          etsy: 'https://www.etsy.com/',
+          esty: 'https://www.etsy.com/',
+          shopify: 'https://www.shopify.com/'
+        }
+        const items = ctx.keys().map(k => {
+          const filename = k.replace('./', '')
+          const name = filename.replace(/\.(png|jpe?g|svg|webp)$/i, '')
+          const key = name.toLowerCase()
+          return { name, img: ctx(k), url: map[key] || `https://www.${key}.com/` }
+        })
+        this.supportItems = items
+      } catch (e) {
+        // ignore if context missing
+        this.supportItems = []
+      }
+    },
+    async buildMarquee() {
+      this.$nextTick(async () => {
+        const wrap = this.$refs.supportBanner
+        if (!wrap || !(this.supportItems || []).length) return
+        const wrapWidth = wrap.clientWidth || 0
+        const measure = (src) => new Promise(resolve => {
+          const img = new Image()
+          img.onload = () => {
+            const h = img.height || 1
+            const w = img.width || 1
+            const scaled = w * (this.bannerHeight / h)
+            resolve(scaled)
+          }
+          img.onerror = () => resolve(180)
+          img.src = src
+        })
+        const widths = await Promise.all(this.supportItems.map(it => measure(it.img)))
+        const baseWidth = widths.reduce((a, w) => a + w, 0) + this.scrollerGap * Math.max(this.supportItems.length - 1, 0)
+        let times = 1
+        if (baseWidth < wrapWidth) times = Math.ceil(wrapWidth / baseWidth) + 1
+        const block = []
+        for (let i = 0; i < times; i++) block.push(...this.supportItems)
+        this.marqueeBlock = block
+        const blockWidth = times * baseWidth + this.scrollerGap * (times - 1)
+        this.marqueeBlockWidth = Math.ceil(blockWidth)
+      })
     }
   }
 }
@@ -438,6 +621,11 @@ export default {
 
 
 <style lang="scss" scoped>
+.sourcing-page {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden; /* clip background/map on all corners */
+}
 .page-bg {
   position: absolute;
   inset: 0;
@@ -449,14 +637,14 @@ export default {
 .sourcing-hero {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  /* stack card + banner vertically */
+  align-items: center;
+  justify-content: flex-start;
   padding: 32px 0 24px;
   min-height: 90vh;
-  /* fill this area */
   overflow: hidden;
   border-radius: 10px !important;
-
 }
 
 .hero-card {
@@ -524,7 +712,8 @@ export default {
 
 .url-item {
   flex: 1;
-  margin-bottom: 0; /* keep row height compact */
+  margin-bottom: 0;
+  /* keep row height compact */
 }
 
 .url-submit {
@@ -533,6 +722,7 @@ export default {
 }
 
 .url-input {
+
   /* Ant Design input inner */
   ::v-deep .ant-input {
     height: 44px;
@@ -635,11 +825,13 @@ export default {
 .modal-inline-form {
   margin-bottom: 12px;
 }
+
 .modal-inline-form ::v-deep .ant-form-item {
   margin-right: 16px;
   margin-bottom: 12px;
 }
-.modal-inline-form ::v-deep .ant-btn + .ant-btn {
+
+.modal-inline-form ::v-deep .ant-btn+.ant-btn {
   margin-left: 8px;
 }
 
@@ -702,7 +894,79 @@ export default {
 }
 
 .status-tips {
-  max-width: 520px;
+  min-width: 1024px !important;
 }
-.status-tips b { color: var(--custom-font-color); }
+
+.status-tips b {
+  color: var(--custom-font-color);
+}
+
+/* Inline Support banner */
+.support-inline {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.support-inline .support-banner {
+  width: 100%; /* match sourcing area width */
+}
+
+.support-inline .scroller {
+  overflow: hidden;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.support-inline .scroller-track {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 6px 6px;
+  animation: support-scroll 24s linear infinite;
+}
+
+.support-inline .scroller-track.paused {
+  animation-play-state: paused;
+}
+
+.support-inline .banner-item {
+  flex: 0 0 auto;
+  height: 100px;
+  display: flex;
+  align-items: center;
+}
+
+.support-inline .banner-item img {
+  height: 100px;
+  /* show full image with fixed height */
+  width: auto;
+  /* keep aspect ratio */
+  object-fit: contain;
+  /* ensure no cropping */
+  display: block;
+}
+
+/* TikTok (抖音) with translucent white background */
+.support-inline .banner-item.is-tiktok img {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+@keyframes support-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-1 * var(--block-width, 0px)));
+  }
+}
+
+/* (Modal version removed) */
 </style>
