@@ -4,7 +4,8 @@
 }
 
 .base-layout {
-  border: 1px solid var(--custom-border-color);
+  /* Remove overall border to avoid an outer frame when zoomed */
+  border: 0;
 
   .el-aside {
     background-color: var(--custom-background-color);

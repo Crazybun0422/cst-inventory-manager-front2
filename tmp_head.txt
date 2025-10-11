@@ -1,0 +1,80 @@
+<template>
+  <div class="erp-login">
+    <div class="progress-bar" :style="{ width: progress + '%' }" v-if="isVerifying"></div>
+    <!-- 自定义顶部进度条 -->
+    <el-container class="erp-login-container">
+      <el-main>
+        <div class="erp-login-main" ref="erpLoginMain">
+          <!-- 页面内容，可以保持现有结�?-->
+        </div>
+      </el-main>
+    </el-container>
+  </div>
+</template>
+
+<script>
+import {
+  getCsrfTokenFromServer,
+  getWarehouseRelatedInfo,
+  shopifyAuth,
+  shopifyDirectAuth,
+} from '@/common/common-func'
+import { dropShipper, config } from '@/common/commonconfig'
+
+export default {
+  name: 'erp-login',
+  data() {
+    return {
+      isVerifying: false, // 控制进度条显�?
+      progress: 0, // 进度条的进度控制
+      thirdPartyParams: {
+        hmac: '',
+        host: '',
+        session: '',
+        shop: '',
+        timestamp: '',
+        direct: false
+      },
+
+    }
+  },
+  mounted() {
+    // 获取第三方验证参数并存入 data
+    const queryParams = this.$route.query
+    this.thirdPartyParams.hmac = queryParams.hmac || ''
+    this.thirdPartyParams.host = queryParams.host || ''
+    this.thirdPartyParams.session = queryParams.session || ''
+    if (this.thirdPartyParams.session === '') {
+      delete this.thirdPartyParams.session
+    }
+    this.thirdPartyParams.shop = queryParams.shop || ''
+    this.thirdPartyParams.timestamp = queryParams.timestamp || ''
+    this.thirdPartyParams.direct = queryParams.direct
+    // 如果没有必要的验证参数，则跳回到login页面
+    if (!this.thirdPartyParams.hmac || !this.thirdPartyParams.shop) {
+      this.$router.push({ name: 'ds-login' })
+    } else {
+      // 自动发起第三方验证请�?
+      this.submitThirdPartyVerification()
+    }
+  },
+  methods: {
+    shopifyAuth,
+    shopifyDirectAuth,
+    getWarehouseRelatedInfo,
+    getCsrfTokenFromServer,
+    startProgressBar() {
+      this.progress = 0
+      this.isVerifying = true
+      this.increaseProgress() // 开始增加进�?
+    },
+    increaseProgress() {
+      if (this.progress < 90) {
+        // 进度条达�?0%后等待请求完�?
+        this.progress += 1
+        setTimeout(this.increaseProgress, 100) // �?00ms增加进度
+      }
+    },
+    stopProgressBar() {
+      this.progress = 100 // 请求完成后将进度条设置为100%
+      setTimeout(() => {
