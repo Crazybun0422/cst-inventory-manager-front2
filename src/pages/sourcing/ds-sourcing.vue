@@ -344,6 +344,10 @@ export default {
     bus.$on(EVENTS.SOURCING_NOTIFICATION, this._unsub)
     // preload support items
     this.loadSupportItems()
+    // Check if there are sourcing records awaiting confirmation and gently prompt
+    this.$nextTick(() => {
+      try { this.checkPendingConfirmations() } catch (_) {}
+    })
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this.buildMarquee)
     }
@@ -970,3 +974,37 @@ export default {
 
 /* (Modal version removed) */
 </style>
+    openHistoryWithStatus(status) {
+      this.historyQuery.status = status || ''
+      this.openHistory('')
+    },
+    async checkPendingConfirmations() {
+      try {
+        const params = { status: 'pending_confirmation', page_number: 1, page_size: 1 }
+        const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
+        const total = (res && res.data && (res.data.total || res.data.count)) || 0
+        if (this.$isRequestSuccessful(res.code) && total > 0) {
+          const lang = this.$i18n && this.$i18n.locale === 'zh_cn' ? 'zh' : 'en'
+          const dict = lang === 'zh' ? {
+            title: '�ѱ�����ȷ�ϵ�����',
+            msg: `���� ${total} ����ѡƷ�ѻ�õ��۸񣬵ȴ�����ȷ�ϣ�������ȷ�Ͽ��ٴ������̡�`,
+            review: '�����鿴'
+          } : {
+            title: 'Quotes awaiting your confirmation',
+            msg: `You have ${total} sourcing request(s) with quotes ready. Please review and confirm to proceed.`,
+            review: 'Review now'
+          }
+          const title = dict.title
+          const content = this.$createElement('div', {
+            style: 'font-size:13px; color: var(--custom-font-color2);'
+          }, [
+            dict.msg,
+            this.$createElement('a', {
+              style: 'margin-left:8px; color: var(--custom-color-primary);',
+              on: { click: () => { this.openHistoryWithStatus('pending_confirmation'); Modal.destroyAll() } }
+            }, dict.review)
+          ])
+          Modal.info({ title, content, okText: (this.$t && this.$t('common.gotIt')) || (lang==='zh' ? '�õ�' : 'OK') })
+        }
+      } catch (_) { /* ignore */ }
+    },

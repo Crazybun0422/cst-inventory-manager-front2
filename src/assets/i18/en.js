@@ -1179,6 +1179,10 @@
       pending_confirmation: 'A supplier and quote have been provided. Expand the item to review the quote and confirm.',
       completed: 'You have confirmed the quote. We are preparing the next steps of the service.'
     },
+    // Reminder for pending confirmations
+    pendingConfirmTitle: 'Quotes awaiting your confirmation',
+    pendingConfirmMessage: 'You have {count} sourcing request(s) with quotes ready. Please review and confirm to proceed.',
+    reviewNow: 'Review now'
   },
   dashboard: {
     daily: 'Daily',
