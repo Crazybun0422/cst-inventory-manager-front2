@@ -76,4 +76,8 @@
   --cursor-ring-color: rgba(0, 0, 0, 0.28);
   --cursor-glow-1: rgba(0, 0, 0, 0.18);
   --cursor-glow-2: rgba(0, 0, 0, 0.10);
+
+  /* App outer background (contrast for gaps). Light theme -> dark outer */
+  /* Use a soft lavender (from screenshot) for outer background */
+  --outer-background-color: #c6c7f8;
 }

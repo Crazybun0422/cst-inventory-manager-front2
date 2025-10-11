@@ -16,6 +16,7 @@
     >
       <Navigate
         @loading="(loading) => (containerLoading = loading)"
+        @toggle-collapse="toggleExpand"
         :isCollapse="isCollapse"
       >
       </Navigate>
@@ -23,11 +24,6 @@
 
     <el-container class="container-main">
       <el-header class="layout-header">
-        <i
-          @click="toggleExpand"
-          style="margin-left: 10px; font-size: 22px; cursor: pointer"
-          :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"
-        ></i>
         <HomeHeader></HomeHeader>
       </el-header>
       <el-main>

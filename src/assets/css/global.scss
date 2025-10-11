@@ -18,7 +18,8 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background-color: #e2e7ec;
+  /* outer background that shows through layout gaps */
+  background-color: var(--outer-background-color, #e2e7ec);
   font-family: 'NunitoSans', sans-serif;
 }
 
@@ -812,6 +813,28 @@ a,
 
 .ant-popover-arrow {
   border-color: var(--custom-border-color);
+}
+
+/* Theme-aware popover shadows */
+.defaultTheme .ant-popover-inner,
+.defaultTheme .task-center-popover .ant-popover-inner {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+.darkTheme .ant-popover-inner,
+.darkTheme .task-center-popover .ant-popover-inner {
+  box-shadow: 0 10px 24px rgba(255, 255, 255, 0.10), 0 2px 8px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Theme-aware modal shadows (including confirms) */
+.defaultTheme .ant-modal-content,
+.defaultTheme .ant-modal-confirm .ant-modal-content,
+.defaultTheme .theme-confirm-modal .ant-modal-content {
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.22), 0 8px 16px rgba(0, 0, 0, 0.12) !important;
+}
+.darkTheme .ant-modal-content,
+.darkTheme .ant-modal-confirm .ant-modal-content,
+.darkTheme .theme-confirm-modal .ant-modal-content {
+  box-shadow: 0 24px 56px rgba(255, 255, 255, 0.12), 0 8px 16px rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Upload */

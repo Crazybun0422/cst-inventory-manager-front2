@@ -76,4 +76,7 @@
   --cursor-ring-color: rgba(255, 255, 255, 0.64);
   --cursor-glow-1: rgba(255, 255, 255, 0.28);
   --cursor-glow-2: rgba(255, 255, 255, 0.16);
+
+  /* App outer background (contrast for gaps). Dark theme -> light outer */
+  --outer-background-color: #e2e7ec;
 }
