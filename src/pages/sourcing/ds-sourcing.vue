@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="sourcing-page">
     <div class="page-bg">
       <WorldMagnifierBackground :lang="$i18n.locale" :fixed="false" :gradient-stops="['#A67C52', '#FFD700', '#FF4500']"
@@ -11,7 +11,8 @@
       <div class="support-inline">
         <div class="support-banner" ref="supportBanner">
           <div class="scroller" ref="scrollerWrap" @mouseenter="pauseScroll = true" @mouseleave="pauseScroll = false">
-            <div class="scroller-track" ref="scrollerTrack" :class="{ paused: pauseScroll }" :style="{ '--block-width': (marqueeBlockWidth || 0) + 'px' }">
+            <div class="scroller-track" ref="scrollerTrack" :class="{ paused: pauseScroll }"
+              :style="{ '--block-width': (marqueeBlockWidth || 0) + 'px' }">
               <section v-for="(it, idx) in duplicatedSupportItems" :key="'inline' + idx"
                 :class="['banner-item', { 'is-tiktok': /tiktok/i.test(it.name) }]">
                 <a :href="it.url" target="_blank" rel="noopener">
@@ -38,7 +39,7 @@
               $t('sourcing.alibaba') }}</a>
             ,
             <a class="info-link" href="https://www.amazon.com/" target="_blank" rel="noopener">{{ $t('sourcing.amazon')
-            }}</a>
+              }}</a>
             <span> {{ $t('sourcing.etcSuffix') }} </span>
           </div>
         </div>
@@ -65,7 +66,7 @@
         </div>
       </div>
 
-      
+
     </div>
 
 
@@ -111,7 +112,7 @@
         <div class="dialog-actions">
           <a-button @click="backMore">{{ $t('common.back') }}</a-button>
           <a-button type="primary" :loading="submittingImage" @click="submitImage">{{ $t('common.submit')
-          }}</a-button>
+            }}</a-button>
         </div>
       </div>
       <div v-else-if="moreStep === 'product'">
@@ -154,7 +155,7 @@
           <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :ellipsis="false">
             <template slot-scope="text, record">
               <span class="sku-cell">{{(record.product_variants || []).map(v => v.product_code_sku).join(', ')
-              }}</span>
+                }}</span>
             </template>
           </a-table-column>
         </a-table>
@@ -165,7 +166,7 @@
         <div class="dialog-actions">
           <a-button @click="backMore">{{ $t('common.back') }}</a-button>
           <a-button type="primary" :loading="submittingProduct" @click="submitProduct">{{ $t('common.submit')
-          }}</a-button>
+            }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -346,7 +347,7 @@ export default {
     this.loadSupportItems()
     // Check if there are sourcing records awaiting confirmation and gently prompt
     this.$nextTick(() => {
-      try { this.checkPendingConfirmations() } catch (_) {}
+      try { this.checkPendingConfirmations() } catch (_) { }
     })
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this.buildMarquee)
@@ -534,6 +535,36 @@ export default {
       // Use debounced search to avoid duplicate requests
       this.$nextTick(() => this.scheduleHistorySearch && this.scheduleHistorySearch())
     },
+    openHistoryWithStatus(status) {
+      this.historyQuery.status = status || ''
+      // 直接打开并加载，避免 debounce 造成的偶发不触发
+      this.historyVisible = true
+      this.$nextTick(() => this.loadHistory(1))
+    },
+    async checkPendingConfirmations() {
+      try {
+        const params = { status: 'pending_confirmation', page_number: 1, page_size: 1 }
+        const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
+        const total = (res && res.data && (res.data.total || res.data.count)) || 0
+        if (this.$isRequestSuccessful(res.code) && total > 0) {
+          const isZh = this.$i18n && this.$i18n.locale === 'zh_cn'
+          const title = isZh ? '已有报价待确认' : 'Quotes awaiting your confirmation'
+          const message = isZh
+            ? `您有 ${total} 条选品已出价待您确认，请及时查看并确认以推进处理。`
+            : `You have ${total} sourcing request(s) with quotes ready. Please review and confirm to proceed.`
+          const linkText = isZh ? '立即查看' : 'Review now'
+          const content = this.$createElement('div', { style: 'font-size:13px; color: var(--custom-font-color2);' }, [
+            message,
+            this.$createElement('a', {
+              style: 'margin-left:8px; color: var(--custom-color-primary);',
+              on: { click: () => { this.openHistoryWithStatus('pending_confirmation'); Modal.destroyAll() } }
+            }, linkText)
+          ])
+          const okText = (this.$t && this.$t('common.confirm')) || (isZh ? '确认' : 'OK')
+          Modal.info({ title, content, okText })
+        }
+      } catch (_) { /* ignore */ }
+    },
     resetHistory() {
       this.historyQuery = { status: '', keyword: '' }
       // 交由防抖调度，避免重复请求
@@ -628,8 +659,10 @@ export default {
 .sourcing-page {
   position: relative;
   border-radius: 12px;
-  overflow: hidden; /* clip background/map on all corners */
+  overflow: hidden;
+  /* clip background/map on all corners */
 }
+
 .page-bg {
   position: absolute;
   inset: 0;
@@ -917,7 +950,8 @@ export default {
 }
 
 .support-inline .support-banner {
-  width: 100%; /* match sourcing area width */
+  width: 100%;
+  /* match sourcing area width */
 }
 
 .support-inline .scroller {
@@ -974,38 +1008,3 @@ export default {
 
 /* (Modal version removed) */
 </style>
-    openHistoryWithStatus(status) {
-      this.historyQuery.status = status || ''
-      this.openHistory('')
-    },
-    async checkPendingConfirmations() {
-      try {
-        const params = { status: 'pending_confirmation', page_number: 1, page_size: 1 }
-        const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
-        const total = (res && res.data && (res.data.total || res.data.count)) || 0
-        if (this.$isRequestSuccessful(res.code) && total > 0) {
-          const lang = this.$i18n && this.$i18n.locale === 'zh_cn' ? 'zh' : 'en'
-          const dict = lang === 'zh' ? {
-            title: '�ѱ�����ȷ�ϵ�����',
-            msg: `���� ${total} ����ѡƷ�ѻ�õ��۸񣬵ȴ�����ȷ�ϣ�������ȷ�Ͽ��ٴ������̡�`,
-            review: '�����鿴'
-          } : {
-            title: 'Quotes awaiting your confirmation',
-            msg: `You have ${total} sourcing request(s) with quotes ready. Please review and confirm to proceed.`,
-            review: 'Review now'
-          }
-          const title = dict.title
-          const content = this.$createElement('div', {
-            style: 'font-size:13px; color: var(--custom-font-color2);'
-          }, [
-            dict.msg,
-            this.$createElement('a', {
-              style: 'margin-left:8px; color: var(--custom-color-primary);',
-              on: { click: () => { this.openHistoryWithStatus('pending_confirmation'); Modal.destroyAll() } }
-            }, dict.review)
-          ])
-          const okText = (this.$t && this.$t('common.confirm')) || (lang === 'zh' ? '确认' : 'OK')
-          Modal.info({ title, content, okText })
-        }
-      } catch (_) { /* ignore */ }
-    },
