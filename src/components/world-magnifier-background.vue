@@ -28,6 +28,7 @@ export default {
       fx: null, fxCtx: null,
       rafId: null,
       resizeHandler: null,
+      ro: null,
       accentColor: '#2d7fff',
       // cities
       cities: [],
@@ -123,11 +124,20 @@ export default {
       this.orbitsLeft = 1 + Math.floor(Math.random() * 2) // 1-2 loops
     }
 
+    // Observe element size to handle layout changes that don't fire window resize
+    try {
+      if (window.ResizeObserver) {
+        this.ro = new ResizeObserver(() => this._resize())
+        this.ro.observe(this.$el)
+      }
+    } catch (e) { /* ignore */ }
+
     this._loop()
   },
   beforeDestroy() {
     if (this.rafId) cancelAnimationFrame(this.rafId)
     if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler)
+    try { this.ro && this.ro.disconnect && this.ro.disconnect() } catch (_) {}
   },
   methods: {
     _rand(a, b) { return a + Math.random() * (b - a) },
