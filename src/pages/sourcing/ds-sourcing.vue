@@ -815,6 +815,16 @@ export default {
   transition: all .15s ease;
 }
 
+/* Use theme lavender for focus/hover outline on the non-primary option */
+::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary) {
+  border-color: var(--custom-border-color2) !important;
+}
+::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):hover,
+::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):focus {
+  border-color: var(--outer-background-color, #c6c7f8) !important;
+  box-shadow: 0 0 0 2px rgba(198, 199, 248, 0.45) !important;
+}
+
 .more-action-btn .btn-title {
   display: block;
   font-size: 16px;
