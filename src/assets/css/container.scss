@@ -102,11 +102,17 @@
   .el-menu-item {
     display: flex;
     align-items: center;
+    height: 50px; /* keep same height as main menu */
+    line-height: 50px;
     padding-right: 20px !important; /* room for arrow */
   }
   /* Right arrow icon in popup submenu title */
   .el-submenu__title .el-submenu__icon-arrow,
   .el-submenu__title .el-icon-arrow-right {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 50px; line-height: 50px;
+    vertical-align: middle;
     margin-left: auto !important;
     position: static !important;
     right: auto !important;
