@@ -76,23 +76,7 @@
       }
     }
     /* Popup submenu when collapsed: ensure arrow doesn't overlap text */
-    .el-menu--popup {
-      /* Use flex so the right arrow sits at the far end without overlapping */
-      .el-submenu__title,
-      .el-menu-item {
-        display: flex;
-        align-items: center;
-        padding-right: 12px !important;
-      }
-      .el-submenu__title .el-submenu__icon-arrow,
-      .el-menu-item .el-submenu__icon-arrow {
-        position: static !important;
-        margin-left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        transform: none !important;
-      }
-    }
+    /* moved popup-specific rules to global scope below because popup is appended to body */
   }
 
   .el-header {
@@ -109,5 +93,25 @@
     .el-input__inner {
       border: 1px solid var(--custom-background-color);
     }
+  }
+}
+
+/* Global: popup submenu appended to body (not inside .base-layout .el-menu) */
+.el-menu--popup {
+  .el-submenu__title,
+  .el-menu-item {
+    display: flex;
+    align-items: center;
+    padding-right: 20px !important; /* room for arrow */
+  }
+  /* Right arrow icon in popup submenu title */
+  .el-submenu__title .el-submenu__icon-arrow,
+  .el-submenu__title .el-icon-arrow-right {
+    margin-left: auto !important;
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    pointer-events: none; /* avoid intercepting text clicks */
   }
 }
