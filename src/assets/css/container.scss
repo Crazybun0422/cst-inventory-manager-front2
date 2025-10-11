@@ -75,6 +75,16 @@
         margin: 0 !important; /* 仅显示图标时居中显示 */
       }
     }
+    /* Popup submenu when collapsed: ensure arrow doesn't overlap text */
+    .el-menu--popup {
+      .el-submenu__title,
+      .el-menu-item {
+        padding-right: 32px !important; /* space for right arrow */
+      }
+      .el-submenu__icon-arrow {
+        right: 12px !important;
+      }
+    }
   }
 
   .el-header {
