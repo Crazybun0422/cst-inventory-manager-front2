@@ -823,6 +823,12 @@ export default {
 ::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):focus {
   border-color: var(--outer-background-color, #c6c7f8) !important;
   box-shadow: 0 0 0 2px rgba(198, 199, 248, 0.45) !important;
+  color: var(--outer-background-color, #c6c7f8) !important;
+  text-decoration: none !important;
+}
+::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):active {
+  color: var(--outer-background-color, #c6c7f8) !important;
+  border-color: var(--outer-background-color, #c6c7f8) !important;
 }
 
 .more-action-btn .btn-title {
