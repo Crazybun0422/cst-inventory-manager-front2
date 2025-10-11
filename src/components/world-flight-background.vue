@@ -31,6 +31,7 @@ export default {
       flightsNeedRouteRecalc: true,
       rafId: null,
       resizeHandler: null,
+      ro: null,
     }
   },
   computed: {
@@ -122,6 +123,13 @@ export default {
       this._reprojectAll();
     };
     window.addEventListener('resize', this.resizeHandler);
+    // Observe element resize to handle container width/height changes without window resize
+    try {
+      if (window.ResizeObserver) {
+        this.ro = new ResizeObserver(() => { this._resizeCanvases(); this._drawMapOnce(); this._reprojectAll(); })
+        this.ro.observe(this.$el)
+      }
+    } catch (_) { /* ignore */ }
 
     // Loop
     const loop = (now = 0) => {
@@ -144,6 +152,7 @@ export default {
   },
   beforeDestroy() {
     if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
+    try { this.ro && this.ro.disconnect && this.ro.disconnect() } catch (_) {}
     if (this.rafId) cancelAnimationFrame(this.rafId);
     if (this.timeTimer) clearInterval(this.timeTimer);
   },
