@@ -1004,7 +1004,8 @@ export default {
               on: { click: () => { this.openHistoryWithStatus('pending_confirmation'); Modal.destroyAll() } }
             }, dict.review)
           ])
-          Modal.info({ title, content, okText: (this.$t && this.$t('common.gotIt')) || (lang==='zh' ? '�õ�' : 'OK') })
+          const okText = (this.$t && this.$t('common.confirm')) || (lang === 'zh' ? '确认' : 'OK')
+          Modal.info({ title, content, okText })
         }
       } catch (_) { /* ignore */ }
     },
