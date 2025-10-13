@@ -115,7 +115,7 @@
                       $t('common.batchModify') }}</el-button></el-dropdown-item>
                     <el-dropdown-item><el-button icon="el-icon-s-flag" type="text" @click="markOrder">{{
                       $t('common.mark')
-                    }}</el-button></el-dropdown-item>
+                        }}</el-button></el-dropdown-item>
                     <el-dropdown-item><el-button icon="el-icon-printer" type="text" @click="printWaybill">{{
                       $t('message.orderManagement.printWaybill') }}</el-button></el-dropdown-item>
                   </el-dropdown-menu>
@@ -180,7 +180,7 @@
                 <a>
                   <!-- @click.stop="showOrderModal(scope.row, 'edit')" -->
                   {{ $t('common.edit') + $t('message.orderManagement.order') }}
-              </a></el-dropdown-item><el-popconfirm ref="popconfirm" trigger="click"
+                </a></el-dropdown-item><el-popconfirm ref="popconfirm" trigger="click"
                 :title="$t('common.confirmDelete')" placement="top-start" @cancel="closePopconfirm"
                 @confirm="delOrder(scope.row)" v-if="scope.row.order_status === 0"><span slot="reference">
                   <el-dropdown-item :command="{ delOrder: scope.row }">
@@ -237,17 +237,17 @@
           <div class="expanded-inner">
             <el-table :data="data.row.productsInfo" style="width: 100%" border size="small"
               v-loading="!data.row.loadInfo">
-            <el-table-column align="center" prop="main_image_url" :label="$t('message.orderManagement.productImages')"
-              width="120">
+              <el-table-column align="center" prop="main_image_url" :label="$t('message.orderManagement.productImages')"
+                width="120">
+                <template slot-scope="scope">
+                  <AuthImg :src="scope.row?.main_image_url" :styleInfo="'width:50px;height:50px;margin-right:8px'">
+                  </AuthImg>
+                </template>
+              </el-table-column>
+              <el-table-column align="center" show-overflow-tooltip prop="product_code_sku"
+                :label="$t('message.productManagement.productSku')" width="160">
               <template slot-scope="scope">
-                <AuthImg :src="scope.row?.main_image_url" :styleInfo="'width:50px;height:50px;margin-right:8px'">
-                </AuthImg>
-              </template>
-            </el-table-column>
-            <el-table-column align="center" show-overflow-tooltip prop="product_code_sku"
-              :label="$t('message.productManagement.productSku')" width="160">
-              <template slot-scope="scope">
-                <el-button type="text" @click="
+                <el-button type="text" class="sku-ellipsis" @click="
                   copyData(
                     scope.row.product_code_sku,
                     $t('message.productManagement.productSku')
@@ -256,29 +256,29 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="english_name" show-overflow-tooltip align="center"
-              :label="$t('message.productManagement.englishName')" width="160">
-            </el-table-column>
-            <el-table-column show-overflow-tooltip prop="chinese_name" align="center"
-              :label="$t('message.productManagement.chineseName')" width="160">
-            </el-table-column>
-            <el-table-column show-overflow-tooltip prop="price" align="center"
-              :label="$t('message.productManagement.price')" width="80">
-              <template slot-scope="scope">
-                {{ scope.row.price }} {{ currencySymbolMap[scope.row.unit] }}
-              </template>
-            </el-table-column>
-            <el-table-column show-overflow-tooltip prop="quantity" align="center"
-              :label="$t('message.productManagement.quantity')" width="80">
-            </el-table-column>
-            <el-table-column show-overflow-tooltip prop="alarm_number" align="center"
-              :label="$t('message.productManagement.inventoryWarningQuantity')" width="200">
-            </el-table-column>
-            <el-table-column prop="description" align="center" :label="$t('common.describe')" show-overflow-tooltip>
-            </el-table-column>
-            <el-table-column show-overflow-tooltip prop="quality_inspection_weight_kg" align="center"
-              :label="$t('message.productManagement.weight')" width="100">
-            </el-table-column>
+              <el-table-column prop="english_name" show-overflow-tooltip align="center"
+                :label="$t('message.productManagement.englishName')" width="160">
+              </el-table-column>
+              <el-table-column show-overflow-tooltip prop="chinese_name" align="center"
+                :label="$t('message.productManagement.chineseName')" width="160">
+              </el-table-column>
+              <el-table-column show-overflow-tooltip prop="price" align="center"
+                :label="$t('message.productManagement.price')" width="80">
+                <template slot-scope="scope">
+                  {{ scope.row.price }} {{ currencySymbolMap[scope.row.unit] }}
+                </template>
+              </el-table-column>
+              <el-table-column show-overflow-tooltip prop="quantity" align="center"
+                :label="$t('message.productManagement.quantity')" width="80">
+              </el-table-column>
+              <el-table-column show-overflow-tooltip prop="alarm_number" align="center"
+                :label="$t('message.productManagement.inventoryWarningQuantity')" width="200">
+              </el-table-column>
+              <el-table-column prop="description" align="center" :label="$t('common.describe')" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column show-overflow-tooltip prop="quality_inspection_weight_kg" align="center"
+                :label="$t('message.productManagement.weight')" width="100">
+              </el-table-column>
             </el-table>
           </div>
         </template>
@@ -1509,6 +1509,22 @@ export default {
 /* 子表外层用于控制缩进，子表保持 100% 宽度，避免 80% 带来的像素取整误差 */
 .expanded-inner {
   padding: 0 24px;
+  position: relative;
+  z-index: 10;
+  /* 盖住固定列的分隔伪元素 */
+  background: var(--custom-background-color);
+  overflow: hidden;
+}
+
+/* SKU 文本按钮在单元格内做省略号 */
+.sku-ellipsis {
+  display: inline-block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 // Column selector: force vertical list
@@ -1531,6 +1547,11 @@ export default {
 ::v-deep th.hidden-expand-col .cell,
 ::v-deep td.hidden-expand-col .cell,
 ::v-deep td.hidden-expand-col .el-table__expand-icon {
+  display: none !important;
+}
+
+/* 去掉固定列右侧分隔伪元素，避免在展开区覆盖出一条竖线 */
+::v-deep .el-table__fixed::before {
   display: none !important;
 }
 </style>
@@ -1575,9 +1596,9 @@ export default {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: -18px;
+  top: -24px;
   /* outside, above the card */
-  z-index: 3000;
+  /*z-index: 3000;*/
   pointer-events: none;
   /* only button receives events */
 }
