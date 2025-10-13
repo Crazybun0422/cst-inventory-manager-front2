@@ -1,80 +1,150 @@
+<!--
+* @Description: ds-订单
+* @Author: tj
+* @Date: 2022
+* @LastEditors: tj
+* @LastEditTime: 2022
+-->
 <template>
-  <div class="erp-login">
-    <div class="progress-bar" :style="{ width: progress + '%' }" v-if="isVerifying"></div>
-    <!-- 自定义顶部进度条 -->
-    <el-container class="erp-login-container">
-      <el-main>
-        <div class="erp-login-main" ref="erpLoginMain">
-          <!-- 页面内容，可以保持现有结�?-->
-        </div>
-      </el-main>
-    </el-container>
-  </div>
-</template>
+  <div v-loading="loading">
+    <PageHead :title="$t('message.orderManagement.order')">
+      <template slot="head-right">
+        <el-button icon="el-icon-plus" type="primary" size="mini" @click="showOrderModal({}, 'add')">
+          {{ $t('common.add') }}
+        </el-button>
+      </template>
+    </PageHead>
+    <div class="search-toolbar-wrapper">
+      <div class="search-toggle-outside">
+        <transition name="fade-bump" mode="out-in">
+          <a v-if="toolbarCollapsed" key="collapsed" class="search-toggle-btn" @click.prevent="toolbarCollapsed = false"
+            :title="$t('common.expand')">
+            <i class="el-icon-arrow-down"></i>
+          </a>
+          <a v-else key="expanded" class="search-toggle-btn" @click.prevent="toolbarCollapsed = true"
+            :title="$t('common.collapse')">
+            <i class="el-icon-arrow-up"></i>
+          </a>
+        </transition>
+      </div>
+      <SearchCard :class="['ds-search-card', { collapsed: toolbarCollapsed }]">
+        <el-form :inline="true" :model="queryData" class="demo-form-inline">
+          <transition name="fade-slide">
+            <div v-show="!toolbarCollapsed" class="toolbar-body">
+              <el-form-item>
+                <el-select v-model="queryData.storage_uuid" filterable clearable
+                  :placeholder="$t('message.storage.warehouseSelect')">
+                  <el-option v-for="item in storageList" :key="item.value" :label="item.label"
+                    :value="item.value"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.queryKeyWord" :placeholder="$t('common.pleaseSelect')">
+                  <el-option v-for="item in orderFieldSelectMap" :key="item.value" :label="item.label?.[$languageType]"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.remoteQuerySelect" filterable remote reserve-keyword
+                  :placeholder="$t('common.pleaseInput') + ' ' + queryKeyWordValue" :remote-method="remoteQueryMethod"
+                  :loading="remoteLoading" :loading-text="$t('common.loading')" clearable>
+                  <el-option v-for="item in remoteQueryOptions" :key="item.value" :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.shop" :placeholder="$t('message.storeSettings.pleaseSelectShop')"
+                  filterable style="width: 230px">
+                  <el-option v-for="item in shops" :key="item" :label="item" :value="item">
+                    <span class="custom-select-option-left">{{ item }}</span>
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-date-picker v-model="queryData.date" type="daterange" :range-separator="$t('common.to')"
+                  :start-placeholder="$t('common.startTime')" :end-placeholder="$t('common.endTime')"
+                  format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+                </el-date-picker>
+              </el-form-item>
 
-<script>
-import {
-  getCsrfTokenFromServer,
-  getWarehouseRelatedInfo,
-  shopifyAuth,
-  shopifyDirectAuth,
-} from '@/common/common-func'
-import { dropShipper, config } from '@/common/commonconfig'
+              <el-form-item>
+                <el-button type="primary" @click="queryOrder">{{
+                  $t('common.search')
+                }}</el-button>
+                <el-button type="primary" @click="resetQuery">
+                  {{ $t('common.reset') }}
+                </el-button>
+              </el-form-item>
+              <el-form-item>
+                <el-popover placement="bottom-start" trigger="click" width="300" popper-class="single-column-pop"
+                  v-model="columnSelectorVisible" @show="ensureLoadColumnSettings">
+                  <div class="column-selector">
+                    <el-checkbox-group v-model="visibleColumnIds" @change="handleVisibleColumnsChange">
+                      <el-checkbox v-for="col in allSelectableColumns" :key="col.id" :label="col.id"
+                        class="selector-item">
+                        {{ getColumnLabel(col) }}
+                      </el-checkbox>
+                    </el-checkbox-group>
+                  </div>
+                  <el-button slot="reference" icon="el-icon-view" circle size="mini" title="Columns"></el-button>
+                </el-popover>
+              </el-form-item>
+              <el-form-item style="margin-left: auto">
+                <el-popconfirm ref="exportOrderPopconfirm" trigger="click"
+                  :title="multipleSelection.length === 0 ? $t('common.exportAllDataUnderCurrentConditions') + '?' : $t('common.exportSelectedData') + '?'"
+                  style="margin-left: 10px" :width="240" placement="top-start" @cancel="closeExportPopconfirm"
+                  @confirm="exportOrder">
+                  <el-button icon="el-icon-download" type="primary" slot="reference" size="mini" plain>{{
+                    $t('common.export')
+                  }}</el-button>
+                </el-popconfirm>
+                <el-badge :is-dot="hasDownload" class="item" style="margin-top: -2px">
+                  <el-button icon="el-icon-folder-add" style="margin-left: 10px" size="mini" type="primary" plain
+                    @click="showDownloadList">{{ $t('common.download') }}</el-button>
+                </el-badge>
+                <el-dropdown style="margin-left: 10px">
+                  <el-button icon="el-icon-menu">
+                    {{ $t('common.tool') }}<i class="el-icon-arrow-down el-icon--right"></i>
+                  </el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item><el-button type="text" icon="el-icon-document-copy" @click="copyOrder">{{
+                      $t('message.orderManagement.copyOrder') }}</el-button></el-dropdown-item>
+                    <el-dropdown-item><el-button type="text" icon="el-icon-edit" @click="batchEditOrder">{{
+                      $t('common.batchModify') }}</el-button></el-dropdown-item>
+                    <el-dropdown-item><el-button icon="el-icon-s-flag" type="text" @click="markOrder">{{
+                      $t('common.mark')
+                        }}</el-button></el-dropdown-item>
+                    <el-dropdown-item><el-button icon="el-icon-printer" type="text" @click="printWaybill">{{
+                      $t('message.orderManagement.printWaybill') }}</el-button></el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </el-form-item>
+            </div>
+          </transition>
+          <!-- 伸缩按钮（仅图标）放在最右侧，控制整个功能栏（整�?SearchCard�?-->
 
-export default {
-  name: 'erp-login',
-  data() {
-    return {
-      isVerifying: false, // 控制进度条显�?
-      progress: 0, // 进度条的进度控制
-      thirdPartyParams: {
-        hmac: '',
-        host: '',
-        session: '',
-        shop: '',
-        timestamp: '',
-        direct: false
-      },
+        </el-form>
+      </SearchCard>
+    </div>
+    <CstTableHead>
+      <template slot="top-left">
+        <el-radio-group v-model="radioAuditStatus" @change="handleRadioChange" class="auditStatus">
+          <el-badge :value="auditStatusMap[item.value]" class="badge-inside-button" v-for="item in StockEntryStatusEnum"
+            :key="item.value" :max="99" :type="orderStatusMarkColorMap[item.value]">
+            <el-radio-button :label="item.value" :value="item.value">
+              <span>{{ item.label[$languageType] }}</span>
+            </el-radio-button>
+          </el-badge>
+        </el-radio-group>
+      </template>
+      <template slot="top-right">
+        <el-button icon="el-icon-check" type="success" size="mini" plain v-if="radioAuditStatus === 0"
+          @click="submitShipment(0)">{{ $t('message.orderManagement.submitConfirmation') }}</el-button>
+      </template>
 
-    }
-  },
-  mounted() {
-    // 获取第三方验证参数并存入 data
-    const queryParams = this.$route.query
-    this.thirdPartyParams.hmac = queryParams.hmac || ''
-    this.thirdPartyParams.host = queryParams.host || ''
-    this.thirdPartyParams.session = queryParams.session || ''
-    if (this.thirdPartyParams.session === '') {
-      delete this.thirdPartyParams.session
-    }
-    this.thirdPartyParams.shop = queryParams.shop || ''
-    this.thirdPartyParams.timestamp = queryParams.timestamp || ''
-    this.thirdPartyParams.direct = queryParams.direct
-    // 如果没有必要的验证参数，则跳回到login页面
-    if (!this.thirdPartyParams.hmac || !this.thirdPartyParams.shop) {
-      this.$router.push({ name: 'ds-login' })
-    } else {
-      // 自动发起第三方验证请�?
-      this.submitThirdPartyVerification()
-    }
-  },
-  methods: {
-    shopifyAuth,
-    shopifyDirectAuth,
-    getWarehouseRelatedInfo,
-    getCsrfTokenFromServer,
-    startProgressBar() {
-      this.progress = 0
-      this.isVerifying = true
-      this.increaseProgress() // 开始增加进�?
-    },
-    increaseProgress() {
-      if (this.progress < 90) {
-        // 进度条达�?0%后等待请求完�?
-        this.progress += 1
-        setTimeout(this.increaseProgress, 100) // �?00ms增加进度
-      }
-    },
-    stopProgressBar() {
-      this.progress = 100 // 请求完成后将进度条设置为100%
-      setTimeout(() => {
+      <template slot="bottom-left"> </template>
+    </CstTableHead>
+
+    <el-table :key="tableRenderKey" ref="table" :data="tableData" style="width: 100%" size="small" row-key="order_id"

@@ -1,4 +1,4 @@
-﻿const zh_cn = {
+const zh_cn = {
   "logoText": "持服科技",
   "slogan": "科技助力业务",
   "ourProducts": "我们的产品",
@@ -656,6 +656,10 @@
       clickToSelectProduct: "点击选择产品",
       submitConfirmation: '提交确认',
       returnTtoDraft: '退回草稿',
+      submitConfirmation: '提交',
+      enableStatusFilter: '开启状态',
+      disableStatusFilter: '关闭状态',
+      keywordPlaceholder: '请输入物流跟踪号/参考号/订单号/SKU',
       cutOffOrders: '截单',
       productImages: '产品图片',
       logisticsInformation: '物流信息',

@@ -1,5 +1,5 @@
 <!--
-* @Description: ds-订单
+* @Description: ds-order page
 * @Author: tj
 * @Date: 2022
 * @LastEditors: tj
@@ -14,123 +14,111 @@
         </el-button>
       </template>
     </PageHead>
+
     <div class="search-toolbar-wrapper">
-      <div class="search-toggle-outside">
-        <transition name="fade-bump" mode="out-in">
-          <a v-if="toolbarCollapsed" key="collapsed" class="search-toggle-btn" @click.prevent="toolbarCollapsed = false"
-            :title="$t('common.expand')">
-            <i class="el-icon-arrow-down"></i>
-          </a>
-          <a v-else key="expanded" class="search-toggle-btn" @click.prevent="toolbarCollapsed = true"
-            :title="$t('common.collapse')">
-            <i class="el-icon-arrow-up"></i>
-          </a>
-        </transition>
+      <!-- Centered toggle button for collapsing/expanding the search toolbar -->
+      <div class="toolbar-toggle-center">
+        <button class="toggle-pill" :title="toolbarCollapsed ? 'Expand filters' : 'Collapse filters'"
+          @click="toggleToolbar">
+          <i :class="toolbarCollapsed ? 'el-icon-caret-bottom' : 'el-icon-caret-top'"></i>
+        </button>
       </div>
+
       <SearchCard :class="['ds-search-card', { collapsed: toolbarCollapsed }]">
         <el-form :inline="true" :model="queryData" class="demo-form-inline">
           <transition name="fade-slide">
-            <div v-show="!toolbarCollapsed" class="toolbar-body">
+            <div class="toolbar-body" v-show="!toolbarCollapsed">
               <el-form-item>
                 <el-select v-model="queryData.storage_uuid" filterable clearable
-                  :placeholder="$t('message.storage.warehouseSelect')">
+                  :placeholder="$t('message.storage.warehouseSelect')" @change="onSearchFiltersChange">
                   <el-option v-for="item in storageList" :key="item.value" :label="item.label"
                     :value="item.value"></el-option>
                 </el-select>
               </el-form-item>
+
               <el-form-item>
-                <el-select v-model="queryData.queryKeyWord" :placeholder="$t('common.pleaseSelect')">
-                  <el-option v-for="item in orderFieldSelectMap" :key="item.value" :label="item.label?.[$languageType]"
-                    :value="item.value">
-                  </el-option>
-                </el-select>
+                <el-input v-model.trim="queryData.keyword" clearable
+                  :placeholder="$t('message.orderManagement.keywordPlaceholder')" style="width: 320px"
+                  @input="onKeywordInput" @clear="onSearchFiltersChange"></el-input>
               </el-form-item>
-              <el-form-item>
-                <el-select v-model="queryData.remoteQuerySelect" filterable remote reserve-keyword
-                  :placeholder="$t('common.pleaseInput') + ' ' + queryKeyWordValue" :remote-method="remoteQueryMethod"
-                  :loading="remoteLoading" :loading-text="$t('common.loading')" clearable>
-                  <el-option v-for="item in remoteQueryOptions" :key="item.value" :label="item.label"
-                    :value="item.value">
-                  </el-option>
-                </el-select>
-              </el-form-item>
+
               <el-form-item>
                 <el-select v-model="queryData.shop" :placeholder="$t('message.storeSettings.pleaseSelectShop')"
-                  filterable style="width: 230px">
+                  filterable style="width: 230px" @change="onSearchFiltersChange">
                   <el-option v-for="item in shops" :key="item" :label="item" :value="item">
                     <span class="custom-select-option-left">{{ item }}</span>
                   </el-option>
                 </el-select>
               </el-form-item>
+
               <el-form-item>
                 <el-date-picker v-model="queryData.date" type="daterange" :range-separator="$t('common.to')"
                   :start-placeholder="$t('common.startTime')" :end-placeholder="$t('common.endTime')"
-                  format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+                  format="yyyy-MM-dd" value-format="yyyy-MM-dd" @change="onSearchFiltersChange">
                 </el-date-picker>
               </el-form-item>
 
               <el-form-item>
-                <el-button type="primary" @click="queryOrder">{{
-                  $t('common.search')
-                }}</el-button>
                 <el-button type="primary" @click="resetQuery">
                   {{ $t('common.reset') }}
                 </el-button>
               </el-form-item>
-              <el-form-item>
-                <el-popover placement="bottom-start" trigger="click" width="300" popper-class="single-column-pop"
-                  v-model="columnSelectorVisible" @show="ensureLoadColumnSettings">
-                  <div class="column-selector">
-                    <el-checkbox-group v-model="visibleColumnIds" @change="handleVisibleColumnsChange">
-                      <el-checkbox v-for="col in allSelectableColumns" :key="col.id" :label="col.id"
-                        class="selector-item">
-                        {{ getColumnLabel(col) }}
-                      </el-checkbox>
-                    </el-checkbox-group>
-                  </div>
-                  <el-button slot="reference" icon="el-icon-view" circle size="mini" title="Columns"></el-button>
-                </el-popover>
-              </el-form-item>
+
               <el-form-item style="margin-left: auto">
                 <el-popconfirm ref="exportOrderPopconfirm" trigger="click"
                   :title="multipleSelection.length === 0 ? $t('common.exportAllDataUnderCurrentConditions') + '?' : $t('common.exportSelectedData') + '?'"
                   style="margin-left: 10px" :width="240" placement="top-start" @cancel="closeExportPopconfirm"
                   @confirm="exportOrder">
-                  <el-button icon="el-icon-download" type="primary" slot="reference" size="mini" plain>{{
-                    $t('common.export')
-                  }}</el-button>
+                  <el-button icon="el-icon-download" type="primary" slot="reference" size="mini" plain>
+                    {{ $t('common.export') }}
+                  </el-button>
                 </el-popconfirm>
+
                 <el-badge :is-dot="hasDownload" class="item" style="margin-top: -2px">
                   <el-button icon="el-icon-folder-add" style="margin-left: 10px" size="mini" type="primary" plain
-                    @click="showDownloadList">{{ $t('common.download') }}</el-button>
+                    @click="showDownloadList">
+                    {{ $t('common.download') }}
+                  </el-button>
                 </el-badge>
+
                 <el-dropdown style="margin-left: 10px">
                   <el-button icon="el-icon-menu">
                     {{ $t('common.tool') }}<i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
                   <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item><el-button type="text" icon="el-icon-document-copy" @click="copyOrder">{{
-                      $t('message.orderManagement.copyOrder') }}</el-button></el-dropdown-item>
-                    <el-dropdown-item><el-button type="text" icon="el-icon-edit" @click="batchEditOrder">{{
-                      $t('common.batchModify') }}</el-button></el-dropdown-item>
-                    <el-dropdown-item><el-button icon="el-icon-s-flag" type="text" @click="markOrder">{{
-                      $t('common.mark')
-                        }}</el-button></el-dropdown-item>
-                    <el-dropdown-item><el-button icon="el-icon-printer" type="text" @click="printWaybill">{{
-                      $t('message.orderManagement.printWaybill') }}</el-button></el-dropdown-item>
+                    <el-dropdown-item>
+                      <el-button type="text" icon="el-icon-document-copy" @click="copyOrder">
+                        {{ $t('message.orderManagement.copyOrder') }}
+                      </el-button>
+                    </el-dropdown-item>
+                    <el-dropdown-item>
+                      <el-button type="text" icon="el-icon-edit" @click="batchEditOrder">
+                        {{ $t('common.batchModify') }}
+                      </el-button>
+                    </el-dropdown-item>
+                    <el-dropdown-item>
+                      <el-button icon="el-icon-s-flag" type="text" @click="markOrder">
+                        {{ $t('common.mark') }}
+                      </el-button>
+                    </el-dropdown-item>
+                    <el-dropdown-item>
+                      <el-button icon="el-icon-printer" type="text" @click="printWaybill">
+                        {{ $t('message.orderManagement.printWaybill') }}
+                      </el-button>
+                    </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
               </el-form-item>
             </div>
           </transition>
-          <!-- 伸缩按钮（仅图标）放在最右侧，控制整个功能栏（整�?SearchCard�?-->
-
         </el-form>
       </SearchCard>
     </div>
+
     <CstTableHead>
       <template slot="top-left">
-        <el-radio-group v-model="radioAuditStatus" @change="handleRadioChange" class="auditStatus">
+        <el-radio-group v-model="radioAuditStatus" @change="handleRadioChange" class="auditStatus"
+          :disabled="!statusFilterEnabled">
           <el-badge :value="auditStatusMap[item.value]" class="badge-inside-button" v-for="item in StockEntryStatusEnum"
             :key="item.value" :max="99" :type="orderStatusMarkColorMap[item.value]">
             <el-radio-button :label="item.value" :value="item.value">
@@ -138,38 +126,49 @@
             </el-radio-button>
           </el-badge>
         </el-radio-group>
-      </template>
-      <template slot="top-right">
-        <el-button icon="el-icon-check" type="success" size="mini" plain v-if="radioAuditStatus === 0"
-          @click="submitShipment(0)">{{ $t('message.orderManagement.submitConfirmation') }}</el-button>
+        <el-divider direction="vertical" style="margin: 0 12px"></el-divider>
+
+        <el-switch v-model="statusFilterEnabled" @change="onStatusFilterToggle"
+          :active-text="$t('message.orderManagement.enableStatusFilter')"
+          :inactive-text="$t('message.orderManagement.disableStatusFilter')">
+        </el-switch>
+        <el-divider direction="vertical" style="margin: 0 12px"></el-divider>
+
+        <el-popover placement="bottom-start" trigger="click" width="300" popper-class="single-column-pop"
+          v-model="columnSelectorVisible" @show="ensureLoadColumnSettings">
+          <div class="column-selector">
+            <el-checkbox-group v-model="visibleColumnIds" @change="handleVisibleColumnsChange">
+              <el-checkbox v-for="col in allSelectableColumns" :key="col.id" :label="col.id" class="selector-item">
+                {{ getColumnLabel(col) }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
+          <el-button slot="reference" icon="el-icon-view" circle size="mini" title="Columns"></el-button>
+        </el-popover>
       </template>
 
-      <template slot="bottom-left"> </template>
+      <template slot="top-right">
+        <el-button icon="el-icon-check" type="success" size="mini" plain v-if="radioAuditStatus === 0"
+          @click="submitShipment(0)">{{ $t('common.submit') }}</el-button>
+      </template>
+
+      <template slot="bottom-left"></template>
     </CstTableHead>
 
     <el-table :key="tableRenderKey" ref="table" :data="tableData" style="width: 100%" size="small" row-key="order_id"
       :expand-row-keys="expandedRowKeys" @selection-change="handleSelectionChange" @expand-change="onRowExpandChange">
-      <el-table-column align="center" type="selection" width="55">
-      </el-table-column>
+      <el-table-column align="center" type="selection" width="55"></el-table-column>
+
       <el-table-column v-if="isColumnVisible('operate')" align="center" :label="$t('common.operation')" width="160"
         prop="operate" fixed="left">
         <template slot-scope="scope">
-          <!-- View detail (eye) -->
           <el-button type="text" icon="el-icon-view" @click="showDetail(scope.row)" :title="$t('common.check')"
             style="margin-right: 6px"></el-button>
-          <!-- Expand/Collapse product details -->
+
           <el-button type="text" :icon="isRowExpanded(scope.row) ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
             :title="isRowExpanded(scope.row) ? $t('common.collapse') : $t('common.expand')"
             @click="toggleRowExpansion(scope.row)" style="margin-right: 10px"></el-button>
-          <!-- <el-button
-            style="margin-right: 12px"
-            @click="copyData(scope.row)"
-            type="text"
-            size="small"
-            icon="el-icon-document-copy"
-          >
-            {{ $t('common.copy') }}
-          </el-button> -->
+
           <el-dropdown trigger="click" :hide-on-click="false" @command="handleDropdownCommand">
             <a>
               {{ $t('common.more') }}
@@ -177,60 +176,35 @@
             </a>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item :command="{ editOrder: scope.row }">
-                <a>
-                  <!-- @click.stop="showOrderModal(scope.row, 'edit')" -->
-                  {{ $t('common.edit') + $t('message.orderManagement.order') }}
-                </a></el-dropdown-item><el-popconfirm ref="popconfirm" trigger="click"
-                :title="$t('common.confirmDelete')" placement="top-start" @cancel="closePopconfirm"
-                @confirm="delOrder(scope.row)" v-if="scope.row.order_status === 0"><span slot="reference">
+                <a>{{ $t('common.edit') + $t('message.orderManagement.order') }}</a>
+              </el-dropdown-item>
+
+              <el-popconfirm ref="popconfirm" trigger="click" :title="$t('common.confirmDelete')" placement="top-start"
+                @cancel="closePopconfirm" @confirm="delOrder(scope.row)" v-if="scope.row.order_status === 0">
+                <span slot="reference">
                   <el-dropdown-item :command="{ delOrder: scope.row }">
-                    <a>
-                      {{
-                        $t('common.delete') +
-                        $t('message.orderManagement.order')
-                      }}
-                    </a>
+                    <a>{{ $t('common.delete') + $t('message.orderManagement.order') }}</a>
                   </el-dropdown-item>
                 </span>
               </el-popconfirm>
+
               <el-dropdown-item :command="{ addShipping: scope.row }">
-                <a>
-                  <!-- @click.stop="showModal(scope.row, 'add')" -->
-                  {{ $t('message.orderManagement.addLogistics') }}
-                </a></el-dropdown-item>
-              <el-dropdown-item v-if="
-                scope.row.shipping_statuses &&
-                scope.row.shipping_statuses.length !== 0
-              " :command="{ shippingInfo: scope.row }">
-                <a>
-                  <!-- @click.stop="showModal(scope.row, 'edit')" -->
-                  {{ $t('message.orderManagement.logisticsInformation') }}
-                </a>
+                <a>{{ $t('message.orderManagement.addLogistics') }}</a>
               </el-dropdown-item>
+
+              <el-dropdown-item v-if="scope.row.shipping_statuses && scope.row.shipping_statuses.length !== 0"
+                :command="{ shippingInfo: scope.row }">
+                <a>{{ $t('message.orderManagement.logisticsInformation') }}</a>
+              </el-dropdown-item>
+
               <el-dropdown-item :command="{ logDetail: scope.row }">
-                <a>
-                  {{ $t('common.log') }}
-                </a>
+                <a>{{ $t('common.log') }}</a>
               </el-dropdown-item>
-              <!-- <el-dropdown-item
-                v-if="
-                  scope.row.shipping_statuses &&
-                  scope.row.shipping_statuses.length !== 0
-                "
-                :command="{ delShipping: scope.row }"
-              >
-                <el-button icon="el-icon-delete" type="text">
-               
-                  {{
-                    $t('common.delete') +
-                    $t('message.orderManagement.logisticsInformation')
-                  }}
-                </el-button>
-              </el-dropdown-item> -->
             </el-dropdown-menu>
           </el-dropdown>
         </template>
       </el-table-column>
+
       <el-table-column align="center" type="expand" label-class-name="hidden-expand-col" class-name="hidden-expand-col"
         width="1">
         <template slot-scope="data">
@@ -244,41 +218,41 @@
                   </AuthImg>
                 </template>
               </el-table-column>
+
               <el-table-column align="center" show-overflow-tooltip prop="product_code_sku"
                 :label="$t('message.productManagement.productSku')" width="160">
-              <template slot-scope="scope">
-                <el-button type="text" class="sku-ellipsis" @click="
-                  copyData(
-                    scope.row.product_code_sku,
-                    $t('message.productManagement.productSku')
-                  )
-                  ">{{ scope.row.product_code_sku }}</el-button>
-              </template>
-            </el-table-column>
+                <template slot-scope="scope">
+                  <el-button type="text" class="sku-ellipsis"
+                    @click="copyData(scope.row.product_code_sku, $t('message.productManagement.productSku'))">
+                    {{ scope.row.product_code_sku }}
+                  </el-button>
+                </template>
+              </el-table-column>
 
               <el-table-column prop="english_name" show-overflow-tooltip align="center"
-                :label="$t('message.productManagement.englishName')" width="160">
-              </el-table-column>
+                :label="$t('message.productManagement.englishName')" width="160"></el-table-column>
+
               <el-table-column show-overflow-tooltip prop="chinese_name" align="center"
-                :label="$t('message.productManagement.chineseName')" width="160">
-              </el-table-column>
+                :label="$t('message.productManagement.chineseName')" width="160"></el-table-column>
+
               <el-table-column show-overflow-tooltip prop="price" align="center"
                 :label="$t('message.productManagement.price')" width="80">
                 <template slot-scope="scope">
                   {{ scope.row.price }} {{ currencySymbolMap[scope.row.unit] }}
                 </template>
               </el-table-column>
+
               <el-table-column show-overflow-tooltip prop="quantity" align="center"
-                :label="$t('message.productManagement.quantity')" width="80">
-              </el-table-column>
+                :label="$t('message.productManagement.quantity')" width="80"></el-table-column>
+
               <el-table-column show-overflow-tooltip prop="alarm_number" align="center"
-                :label="$t('message.productManagement.inventoryWarningQuantity')" width="200">
-              </el-table-column>
-              <el-table-column prop="description" align="center" :label="$t('common.describe')" show-overflow-tooltip>
-              </el-table-column>
+                :label="$t('message.productManagement.inventoryWarningQuantity')" width="200"></el-table-column>
+
+              <el-table-column prop="description" align="center" :label="$t('common.describe')"
+                show-overflow-tooltip></el-table-column>
+
               <el-table-column show-overflow-tooltip prop="quality_inspection_weight_kg" align="center"
-                :label="$t('message.productManagement.weight')" width="100">
-              </el-table-column>
+                :label="$t('message.productManagement.weight')" width="100"></el-table-column>
             </el-table>
           </div>
         </template>
@@ -287,39 +261,33 @@
       <el-table-column v-if="isColumnVisible('order_id')" prop="order_id" sortable
         :label="$t('message.orderManagement.order') + 'ID'" show-overflow-tooltip width="160" align="center">
         <template slot-scope="scope">
-          <el-button type="text" @click="
-            copyData(
-              scope.row.order_id,
-              $t('message.orderManagement.order') + 'ID'
-            )
-            ">{{ scope.row.order_id }}</el-button>
+          <el-button type="text" @click="copyData(scope.row.order_id, $t('message.orderManagement.order') + 'ID')">
+            {{ scope.row.order_id }}
+          </el-button>
         </template>
       </el-table-column>
+
       <el-table-column v-if="isColumnVisible('cs_reference')" align="center" prop="cs_reference" sortable
-        :label="$t('message.orderManagement.csReferenceNumber')" show-overflow-tooltip width="260">
-      </el-table-column>
+        :label="$t('message.orderManagement.csReferenceNumber')" show-overflow-tooltip width="260"></el-table-column>
+
       <el-table-column v-if="isColumnVisible('order_type')" align="center" prop="order_type"
         :label="$t('message.orderManagement.orderType')" show-overflow-tooltip width="160">
         <template slot-scope="scope">
           <span>
-            {{
-              Number(scope.row.order_type) === 1
-                ? $t('message.orderManagement.onePieceForShipping')
-                : null
-            }}
+            {{ Number(scope.row.order_type) === 1 ? $t('message.orderManagement.onePieceForShipping') : null }}
           </span>
         </template>
       </el-table-column>
+
       <el-table-column v-if="isColumnVisible('order_status')" align="center"
         :label="$t('message.orderManagement.order') + $t('common.status')" prop="order_status" width="110">
         <template slot-scope="scope">
           <el-tag :type="orderStatusMarkColorMap[scope.row.order_status]" effect="plain" class="status-tag">
-            {{
-              StockEntryStatusMap[scope.row.order_status]?.[$languageType] || ''
-            }}
+            {{ StockEntryStatusMap[scope.row.order_status]?.[$languageType] || '' }}
           </el-tag>
         </template>
       </el-table-column>
+
       <el-table-column v-if="isColumnVisible('source')" :label="$t('common.source')" width="100" show-overflow-tooltip
         align="center">
         <template slot-scope="scope">
@@ -334,71 +302,67 @@
           </el-tag>
         </template>
       </el-table-column>
+
       <el-table-column v-if="isColumnVisible('storage_uuid')" :label="$t('message.orderManagement.warehouse')"
         prop="storage_uuid" width="180" show-overflow-tooltip align="center">
         <template slot-scope="scope">
-          <span>
-            {{ storageMap[scope.row.storage_uuid] }}
-          </span>
+          <span>{{ storageMap[scope.row.storage_uuid] }}</span>
         </template>
       </el-table-column>
+
       <el-table-column v-if="isColumnVisible('create_time')" prop="create_time" :label="$t('common.createTime')"
-        width="160" sortable>
-      </el-table-column>
+        width="160" sortable></el-table-column>
+
       <el-table-column v-if="isColumnVisible('recipient_name')" align="center" prop="recipient_name"
-        :label="$t('message.orderManagement.consigneeName')" show-overflow-tooltip width="130">
-      </el-table-column>
+        :label="$t('message.orderManagement.consigneeName')" show-overflow-tooltip width="130"></el-table-column>
 
       <el-table-column v-if="isColumnVisible('recipient_phone')" align="center" prop="recipient_phone"
-        :label="$t('common.phone')" show-overflow-tooltip width="160">
-      </el-table-column>
+        :label="$t('common.phone')" show-overflow-tooltip width="160"></el-table-column>
+
       <el-table-column v-if="isColumnVisible('country')" align="center"
-        :label="$t('message.orderManagement.receivingCountry')" show-overflow-tooltip width="145" prop="country">
-      </el-table-column>
+        :label="$t('message.orderManagement.receivingCountry')" show-overflow-tooltip width="145"
+        prop="country"></el-table-column>
+
       <el-table-column v-if="isColumnVisible('address_1')" align="center"
-        :label="$t('message.orderManagement.address') + '1'" show-overflow-tooltip prop="address_1">
-      </el-table-column>
+        :label="$t('message.orderManagement.address') + '1'" show-overflow-tooltip prop="address_1"></el-table-column>
+
       <el-table-column v-if="isColumnVisible('logistics_information')" align="center"
         :label="$t('message.orderManagement.logisticsInformation')" show-overflow-tooltip width="175">
         <template slot-scope="scope">
           <el-link type="primary" v-for="shipping_statu in scope.row.shipping_statuses"
-            :key="shipping_statu.shipping_id" style="display: block; target: _blank"
-            @click="toShippingDetail(scope.row)">
+            :key="shipping_statu.shipping_id" style="display: block" @click="toShippingDetail(scope.row)">
             {{ shipping_statu.tracking_number }}
           </el-link>
         </template>
       </el-table-column>
     </el-table>
+
     <el-row type="flex" justify="end" style="margin-top: 10px">
       <el-pagination background @size-change="handleSizeChange" @current-change="handleCurrentChange"
         :current-page.sync="queryData.page_number" :page-sizes="[10, 50, 100]" :page-size="queryData.page_size"
-        layout="total,sizes, prev, pager, next" :total="total">
-      </el-pagination>
+        layout="total,sizes, prev, pager, next" :total="total"></el-pagination>
     </el-row>
+
     <el-dialog :title="$t('message.orderManagement.logisticsInformation')" :visible.sync="shippingInfoVisible"
       width="30%" v-loading="shippingInfoLoading" :before-close="closeShipingInfo">
       <el-table ref="multipleTable" :data="shipingInfoList" :max-height="tableMaxHeight" tooltip-effect="dark"
         style="width: 100%" @selection-change="handleDelShipping">
-        <!-- <el-table-column
-          type="selection"
-          width="55"
-          v-if="shippingOption !== 'edit'"
-        >
-        </el-table-column> -->
         <el-table-column :label="$t('message.orderManagement.logisticsCompany')">
           <template slot-scope="scope">
             <span>{{ logisticsCompanyMap[scope.row.shipping_company] }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('message.orderManagement.logistics') + 'ID'" prop="tracking_number">
-        </el-table-column>
+        <el-table-column :label="$t('message.orderManagement.logistics') + 'ID'"
+          prop="tracking_number"></el-table-column>
         <el-table-column fixed="left" :label="$t('common.operation')" width="140">
           <template slot-scope="scope">
-            <el-button type="text" size="small" @click="shippingTableOption(scope.row, 'edit')">{{ $t('common.edit')
-            }}</el-button>
+            <el-button type="text" size="small" @click="shippingTableOption(scope.row, 'edit')">
+              {{ $t('common.edit') }}
+            </el-button>
             <el-divider direction="vertical"></el-divider>
             <el-popconfirm ref="popconfirm" trigger="click" :title="$t('common.confirmDelete')" placement="top-start"
-              @cancel="closePopconfirm" @confirm="shippingTableOption(scope.row, 'delete')"><span slot="reference">
+              @cancel="closePopconfirm" @confirm="shippingTableOption(scope.row, 'delete')">
+              <span slot="reference">
                 <el-button icon="el-icon-delete" type="text">
                   {{ $t('common.delete') }}
                 </el-button>
@@ -408,36 +372,24 @@
         </el-table-column>
       </el-table>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="closeShipingInfo">{{
-          $t('common.cancel')
-        }}</el-button>
-        <!-- <el-button
-          v-if="shippingOption !== 'edit'"
-          type="primary"
-          @click="delShipping"
-          >{{ $t('common.confirm') }}</el-button
-        > -->
+        <el-button @click="closeShipingInfo">{{ $t('common.cancel') }}</el-button>
       </span>
     </el-dialog>
-    <DownloadList :visible="showDownloadListVisible" :downloadObject="downloadObject" @close="closeDownloadList">
-    </DownloadList>
-    <MarkOrder :visible="markOrderVisible" :markOrderIds="markOrderIds" @close="onCloseModal" @confirm="onConfirm">
-    </MarkOrder>
-    <!-- 新增,修改物流 -->
+
+    <DownloadList :visible="showDownloadListVisible" :downloadObject="downloadObject" @close="closeDownloadList" />
+    <MarkOrder :visible="markOrderVisible" :markOrderIds="markOrderIds" @close="onCloseModal" @confirm="onConfirm" />
+
     <AddShipping :visible="shippingVisible" :currentData="currentData" :operationType="operationType"
       :currentShippingId="currentShippingId" :logistics_channels="logistics_channels"
-      :logisticsCompanyMap="logisticsCompanyMap" @close="onCloseShippingInfoModel" @confirm="onConfirm"></AddShipping>
+      :logisticsCompanyMap="logisticsCompanyMap" @close="onCloseShippingInfoModel" @confirm="onConfirm" />
     <AddOrder :visible="orderVisible" :currentData="currentData" :operationType="operationType" @close="onCloseModal"
-      @confirm="onConfirm" :storageList="storageList" :radioAuditStatus="radioAuditStatus"></AddOrder>
+      @confirm="onConfirm" :storageList="storageList" :radioAuditStatus="radioAuditStatus" />
     <BatchEditOrder :visible="batchEditOrderVisible" :storageList="storageList" :orderIds="batchEditOrderIds"
-      @close="onCloseModal" @confirm="onConfirm">
-    </BatchEditOrder>
-    <!-- 订单详情 -->
+      @close="onCloseModal" @confirm="onConfirm" />
     <OrderDetail :visible="detailVisible" :currentData="currentData" @close="onCloseDrawer" :storageMap="storageMap"
-      :logistics_channels="logistics_channels" :logisticsCompanyMap="logisticsCompanyMap">
-    </OrderDetail>
+      :logistics_channels="logistics_channels" :logisticsCompanyMap="logisticsCompanyMap" />
     <LogList :visible="logDetailVisible" :currentData="currentData" :title="$t('message.orderManagement.orderLog')"
-      @close="closeLogDetail"></LogList>
+      @close="closeLogDetail" />
   </div>
 </template>
 
@@ -458,13 +410,11 @@ import {
   copyData,
   queryDsRelateStorage,
   showErrorAlert,
-  fetchSpecificElementsQueryResults,
   query_all_logistics_channels,
   getTagStyle,
   deleteLogistics
 } from '@/common/common-func'
 import {
-  orderFieldSelectMap,
   StockEntryStatusEnum,
   orderStatusMarkColorMap,
   StockEntryStatusMap,
@@ -474,7 +424,6 @@ import {
 } from '@/common/field-maping'
 import utils from '@/utils/index'
 import { initProductData } from '@/common/common-func'
-import { loadGlobalSettings, updateGlobalSettings } from '@/common/global-user-settings.js'
 import AuthImg from '@/components/auth-img.vue'
 
 export default {
@@ -521,7 +470,6 @@ export default {
       radioAuditStatus: StockEntryStatusEnum[0].value,
       StockEntryStatusEnum: StockEntryStatusEnum,
       orderStatusMarkColorMap: orderStatusMarkColorMap,
-      orderFieldSelectMap,
       tableData: [],
       variantsTotal: 0,
       total: 0,
@@ -532,27 +480,22 @@ export default {
       recordData: {},
       operationType: 'add',
       currentShippingId: '',
-      // 抽屉
       detailVisible: false,
       queryData: {
         page_number: 1,
         page_size: 10,
-        date: '',
-        tracking_number: null,
-        remoteQuerySelect: [],
-        queryKeyWord: orderFieldSelectMap[0].value,
-        shop: 'ALL'
+        date: [],
+        keyword: '',
+        shop: 'ALL',
+        storage_uuid: ''
       },
       storageList: [],
       storageMap: {},
-      remoteLoading: false,
-      remoteQueryOptions: [],
+      statusFilterEnabled: true,
       multipleSelectionShipping: [],
       isPopconfirmVisible: false,
       showDownloadListVisible: false,
-      // 强制重渲染表格用 key
       tableRenderKey: 0,
-      // ===== Column visibility (DS) =====
       columnSelectorVisible: false,
       allSelectableColumns: [
         { id: 'operate' },
@@ -572,20 +515,13 @@ export default {
       visibleColumnIds: [],
       settingsLoaded: false,
       showAllColumns: true,
-      // 顶部功能栏折叠
-      toolbarCollapsed: true,
-      // 展开行 keys
-      expandedRowKeys: []
+      toolbarCollapsed: false,
+      expandedRowKeys: [],
+      objectSpanFlag: false
     }
   },
   computed: {
     ...mapGetters(['shouldRefreshDownloads']),
-    // 计算 queryKeyWord 的当前 label
-    queryKeyWordValue() {
-      return this.orderFieldSelectMap.find(
-        (item) => item.value === this.queryData.queryKeyWord
-      ).label[this.$languageType]
-    },
     dsCurrentProviderUuid() {
       return this.$store.state.user.dsCurrentProviderUuid
     },
@@ -600,7 +536,6 @@ export default {
       return shopList
     },
     tableMaxHeight() {
-      // 视窗高度-(头部-搜索)-(分页-底部)
       return window.innerHeight - 290 - 90
     }
   },
@@ -608,10 +543,16 @@ export default {
     initProductData,
     deleteLogistics,
     getTagStyle,
-    fetchSpecificElementsQueryResults,
     showErrorAlert,
     copyData,
     queryDsRelateStorage,
+
+    toggleToolbar() {
+      this.toolbarCollapsed = !this.toolbarCollapsed
+      try {
+        localStorage.setItem('order_ds_toolbar_collapsed', JSON.stringify(this.toolbarCollapsed))
+      } catch (e) { }
+    },
 
     copyOrder() {
       if (this.multipleSelection.length === 0) {
@@ -633,7 +574,6 @@ export default {
     async getLogisticsChannels() {
       const queryParams = {
         provider_uuid: this.dsCurrentProviderUuid,
-        // 兜底使用 queryData 的分页，避免未定义
         page_number: (this.queryData && this.queryData.page_number) || 1,
         page_size: (this.queryData && this.queryData.page_size) || 10
       }
@@ -670,7 +610,7 @@ export default {
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error getting download list:', error)
         })
     },
 
@@ -683,22 +623,17 @@ export default {
       let queryString = ''
 
       if (this.multipleSelection.length !== 0) {
-        queryString = this.multipleSelection
-          .map((item) => `order_ids=${item.order_id}`)
-          .join('&')
+        queryString = this.multipleSelection.map((item) => `order_ids=${item.order_id}`).join('&')
       } else {
-        if (this.radioAuditStatus) {
+        if (this.statusFilterEnabled && this.radioAuditStatus !== undefined && this.radioAuditStatus !== null) {
           queryParam['order_status'] = this.radioAuditStatus
         }
         if (this.queryData.date !== '' && this.queryData.date.length !== 0) {
           queryParam['start_date'] = this.queryData.date[0]
           queryParam['end_date'] = this.queryData.date[1]
         }
-        if (
-          this.queryData.queryKeyWord === 'tracking_number' &&
-          this.queryData.remoteQuerySelect !== null
-        ) {
-          queryParam['tracking_number'] = this.queryData.remoteQuerySelect
+        if (this.queryData.keyword && this.queryData.keyword.trim() !== '') {
+          queryParam['keyword'] = this.queryData.keyword.trim()
         }
         queryParam = removeEmptyStringValues(queryParam)
 
@@ -718,7 +653,7 @@ export default {
           this.$message.success(this.$t('message.orderManagement.exportInfo'))
         }
       } catch (error) {
-        console.error(error)
+        console.error('Error exporting orders:', error)
       }
     },
 
@@ -727,9 +662,7 @@ export default {
         this.$message.warning(this.$t('common.selectEditData'))
         return
       }
-      this.batchEditOrderIds = this.multipleSelection.map(
-        (item) => item.order_id
-      )
+      this.batchEditOrderIds = this.multipleSelection.map((item) => item.order_id)
       this.batchEditOrderVisible = true
     },
 
@@ -744,20 +677,14 @@ export default {
 
     printWaybill() {
       if (this.multipleSelection.length === 0) {
-        this.$message.warning(
-          this.$t('message.orderManagement.printWaybillInfo')
-        )
+        this.$message.warning(this.$t('message.orderManagement.printWaybillInfo'))
         return
       }
       this.loading = true
       this.printWaybillVisible = true
-      this.printWaybillOrderIds = this.multipleSelection.map(
-        (item) => item.order_id
-      )
+      this.printWaybillOrderIds = this.multipleSelection.map((item) => item.order_id)
 
-      const queryString = this.printWaybillOrderIds
-        .map((id) => `order_ids=${id}`)
-        .join('&')
+      const queryString = this.printWaybillOrderIds.map((id) => `order_ids=${id}`).join('&')
 
       const url = `/api-prefix/api/order/print-label?&${queryString}`
       this.$ajax({
@@ -776,14 +703,12 @@ export default {
               await this.getPrintWaybillPdf(res.data)
               await this.getOrderList()
             } else {
-              this.$message.warning(
-                this.$t('message.orderManagement.noWaybillInfo')
-              )
+              this.$message.warning(this.$t('message.orderManagement.noWaybillInfo'))
             }
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error printing waybill:', error)
         })
         .finally(() => {
           this.loading = false
@@ -815,7 +740,7 @@ export default {
           link.parentNode.removeChild(link)
           window.URL.revokeObjectURL(downloadUrl)
         } catch (error) {
-          console.error('下载 PDF 文件时出错', error)
+          console.error('Error downloading PDF file:', error)
         }
       }
     },
@@ -855,11 +780,8 @@ export default {
       if (optionType === 'delete') {
         this.shippingInfoLoading = true
         this.delShippingByButton(this.currentShippingId).then(() => {
-          let targetOrder = this.tableData.filter(
-            (order) => order.order_id === this.currentSelectOrderId
-          )
-          this.shipingInfoList =
-            targetOrder.length > 0 ? targetOrder[0].shipping_statuses : []
+          const targetOrder = this.tableData.filter((order) => order.order_id === this.currentSelectOrderId)
+          this.shipingInfoList = targetOrder.length > 0 ? targetOrder[0].shipping_statuses : []
           if (this.shipingInfoList.length === 0) {
             this.shippingInfoVisible = false
           }
@@ -909,7 +831,7 @@ export default {
     },
 
     async handleExpandChange(row, expandedRows) {
-      let loadStatus = row.loadInfo || false
+      const loadStatus = row.loadInfo || false
       if (expandedRows.length !== 0 && !loadStatus) {
         await this.initTableData([row])
         row.loadInfo = true
@@ -917,18 +839,23 @@ export default {
     },
 
     onRowExpandChange(row, expandedRows) {
-      this.expandedRowKeys = (expandedRows || []).map(r => r.order_id)
+      this.expandedRowKeys = (expandedRows || []).map((r) => r.order_id)
       const loadStatus = row.loadInfo || false
       if (this.expandedRowKeys.includes(row.order_id) && !loadStatus) {
-        this.initTableData([row]).then(() => { row.loadInfo = true })
-          .catch(() => { row.loadInfo = true })  // 无论失败都结束 loading
+        this.initTableData([row])
+          .then(() => {
+            row.loadInfo = true
+          })
+          .catch(() => {
+            row.loadInfo = true
+          })
       }
     },
 
     toggleRowExpansion(row) {
       const id = row.order_id
       const isExpanded = this.expandedRowKeys.includes(id)
-      this.expandedRowKeys = isExpanded ? this.expandedRowKeys.filter(k => k !== id) : this.expandedRowKeys.concat(id)
+      this.expandedRowKeys = isExpanded ? this.expandedRowKeys.filter((k) => k !== id) : this.expandedRowKeys.concat(id)
       if (this.$refs.table && this.$refs.table.toggleRowExpansion) {
         this.$refs.table.toggleRowExpansion(row, !isExpanded)
       }
@@ -939,7 +866,6 @@ export default {
     },
 
     toShippingDetail(row) {
-      // TODO: 跳转到物流详情页（占位）
       const url = 'http://www.baidu.com'
       window.open(url)
     },
@@ -951,16 +877,16 @@ export default {
       }
       this.loading = true
       const reqUrl = {
-        0: '/api-prefix/api/order/confirm-order', //提交确认
-        1: '/api-prefix/api/order/return-back-draft', //提交草稿
-        3: '/api-prefix/api/storage-m/cancel' //废除
+        0: '/api-prefix/api/order/confirm-order',
+        1: '/api-prefix/api/order/return-back-draft',
+        3: '/api-prefix/api/storage-m/cancel'
       }
       const reqMethod = {
         0: 'put',
         1: 'put',
         3: 'delete'
       }
-      let order_ids = this.multipleSelection.map((item) => item.order_id)
+      const order_ids = this.multipleSelection.map((item) => item.order_id)
       this.$ajax({
         url: reqUrl[value],
         method: reqMethod[value],
@@ -987,7 +913,7 @@ export default {
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error submitting shipment:', error)
         })
         .finally(() => {
           this.loading = false
@@ -998,29 +924,27 @@ export default {
       await this.getOrderList()
     },
 
-    remoteQueryMethod(query) {
-      if (query === '') {
-        this.remoteQueryOptions = []
-        return
+    onKeywordInput() {
+      clearTimeout(this._keywordTimer)
+      this._keywordTimer = setTimeout(() => {
+        this.queryData.page_number = 1
+        this.getOrderList()
+      }, 300)
+    },
+
+    onSearchFiltersChange() {
+      this.queryData.page_number = 1
+      this.getOrderList()
+    },
+
+    onStatusFilterToggle() {
+      this.queryData.page_number = 1
+      this.getOrderList()
+      if (this.statusFilterEnabled) {
+        this.queryCountStatus({})
+      } else {
+        this.auditStatusMap = {}
       }
-      this.remoteLoading = true
-      const queryParam = {
-        [this.queryData.queryKeyWord]: query
-      }
-      this.fetchSpecificElementsQueryResults(queryParam)
-        .then((remoteQueryResult) => {
-          this.remoteQueryOptions = remoteQueryResult.map((item) => {
-            return { label: item, value: item }
-          })
-          this.queryData.remoteQuerySelect = query
-        })
-        .catch(() => {
-          this.remoteQueryOptions = []
-          this.queryData.remoteQuerySelect = query
-        })
-        .finally(() => {
-          this.remoteLoading = false
-        })
     },
 
     initTableData(arr) {
@@ -1095,7 +1019,7 @@ export default {
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error deleting shipping info:', error)
         })
     },
 
@@ -1112,7 +1036,7 @@ export default {
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error deleting shipping info by button:', error)
         })
     },
 
@@ -1134,7 +1058,7 @@ export default {
           }
         })
         .catch((error) => {
-          console.error(error)
+          console.error('Error deleting order:', error)
         })
     },
 
@@ -1148,11 +1072,8 @@ export default {
 
     async onCloseShippingInfoModel() {
       await this.getOrderList()
-      const targetOrder = this.tableData.filter(
-        (order) => order.order_id === this.currentSelectOrderId
-      )
-      this.shipingInfoList =
-        targetOrder.length > 0 ? targetOrder[0].shipping_statuses : []
+      const targetOrder = this.tableData.filter((order) => order.order_id === this.currentSelectOrderId)
+      this.shipingInfoList = targetOrder.length > 0 ? targetOrder[0].shipping_statuses : []
       this.recordData = targetOrder[0]
       this.shippingVisible = false
     },
@@ -1167,14 +1088,13 @@ export default {
 
     async getOrderList() {
       this.loading = true
+      const prevExpanded = new Set(this.expandedRowKeys || [])
       const queryParam = {
-        order_status: this.radioAuditStatus,
         page_number: this.queryData.page_number,
         page_size: this.queryData.page_size
       }
-      if (this.queryData.remoteQuerySelect !== '') {
-        queryParam[this.queryData.queryKeyWord] =
-          this.queryData.remoteQuerySelect
+      if (this.queryData.keyword && this.queryData.keyword.trim() !== '') {
+        queryParam['keyword'] = this.queryData.keyword.trim()
       }
       if (this.queryData.date.length > 0) {
         queryParam['start_date'] = this.queryData.date[0]
@@ -1187,10 +1107,13 @@ export default {
         queryParam['provider_uuid'] = this.dsCurrentProviderUuid
       }
       queryParam['shop'] = this.queryData.shop
+      if (this.statusFilterEnabled) {
+        queryParam['order_status'] = this.radioAuditStatus
+      }
 
       try {
         const res = await this.$ajax({
-          url: '/api-prefix/api/order/query-order',
+          url: '/api-prefix/api/order/search-order-by-keyword',
           method: 'get',
           params: queryParam,
           headers: { 'Content-Type': 'application/json' },
@@ -1205,10 +1128,23 @@ export default {
           this.tableData = results
           this.total = res.data.total
           this.objectSpanFlag = false
-          return this.queryCountStatus(queryParam)
+          const stillExistExpandedRows = this.tableData.filter((r) => prevExpanded.has(r.order_id))
+          this.expandedRowKeys = stillExistExpandedRows.map((r) => r.order_id)
+          if (stillExistExpandedRows.length > 0) {
+            try {
+              await this.initTableData(stillExistExpandedRows)
+            } finally {
+              stillExistExpandedRows.forEach((r) => {
+                r.loadInfo = true
+              })
+            }
+          }
+          if (this.statusFilterEnabled) {
+            return this.queryCountStatus(queryParam)
+          }
         }
       } catch (error) {
-        console.error(error)
+        console.error('Error getting order list:', error)
       } finally {
         this.loading = false
       }
@@ -1235,10 +1171,7 @@ export default {
       }
       this.queryDsRelateStorage(queryParam)
         .then((res) => {
-          if (
-            (Array.isArray(res.data) && res.data.length === 0) ||
-            Object.keys(res.data).length === 0
-          ) {
+          if ((Array.isArray(res.data) && res.data.length === 0) || Object.keys(res.data).length === 0) {
             this.storageList = []
             this.storageMap = {}
           } else {
@@ -1252,31 +1185,41 @@ export default {
           }
         })
         .catch((error) => {
-          console.error('Login error:', error)
+          console.error('Error querying storage list:', error)
         })
     },
 
     queryCountStatus(param = {}) {
-      let queryParam = {
+      if (!this.statusFilterEnabled) return
+      const queryParam = {
         provider_uuid: this.dsCurrentProviderUuid,
         ...param
       }
-      delete queryParam.order_status
       delete queryParam.page_number
       delete queryParam.page_size
-
+      delete queryParam.order_status
+      if (this.queryData.keyword && this.queryData.keyword.trim() !== '') {
+        queryParam['keyword'] = this.queryData.keyword.trim()
+      }
+      if (this.queryData.date && this.queryData.date.length > 0) {
+        queryParam['start_date'] = this.queryData.date[0]
+        queryParam['end_date'] = this.queryData.date[1]
+      }
+      if (this.queryData.storage_uuid) {
+        queryParam['storage_uuid'] = this.queryData.storage_uuid
+      }
       if (this.queryData.shop) {
         queryParam['shop'] = this.queryData.shop
       }
       this.$ajax({
-        url: '/api-prefix/api/order/query-count-status',
+        url: '/api-prefix/api/order/count-order-by-keyword',
         method: 'get',
         params: queryParam,
         roleType: this.roleType
       }).then((res) => {
         if (this.$isRequestSuccessful(res.code)) {
           this.auditStatusMap = {}
-          for (let obj of res.data) {
+          for (const obj of res.data) {
             Object.assign(this.auditStatusMap, obj)
           }
         }
@@ -1285,16 +1228,17 @@ export default {
 
     resetQuery() {
       this.queryData = {
-        queryKeyWord: orderFieldSelectMap[0].value,
-        remoteQuerySelect: '',
-        date: ['', ''],
+        keyword: '',
+        date: [],
         storage_uuid: '',
         page_number: 1,
-        page_size: 10
+        page_size: 10,
+        shop: 'ALL'
       }
+      this.getOrderList()
+      if (this.statusFilterEnabled) this.queryCountStatus()
     },
 
-    // ===== Column visibility helpers (DS) =====
     getColumnLabel(col) {
       const m = {
         operate: this.$t('common.operation'),
@@ -1322,9 +1266,13 @@ export default {
       if (!this.settingsLoaded) this.loadColumnSettings()
     },
 
-    getSettingsKey() { return 'order_columns_mask_ds' },
+    getSettingsKey() {
+      return 'order_columns_mask_ds'
+    },
 
-    getLocalSettingsKey() { return `${this.getSettingsKey()}_local` },
+    getLocalSettingsKey() {
+      return `${this.getSettingsKey()}_local`
+    },
 
     hiddenFromMask(mask, keys) {
       const hidden = new Set()
@@ -1336,21 +1284,25 @@ export default {
     maskFromHidden(hidden, keys) {
       if (!hidden || hidden.size === 0) return 0
       let mask = 0
-      keys.forEach((k, i) => { if (hidden.has(k)) mask |= 1 << i })
+      keys.forEach((k, i) => {
+        if (hidden.has(k)) mask |= 1 << i
+      })
       return mask
     },
 
     applyHiddenSet(hidden) {
-      const keysNow = this.allSelectableColumns.map(c => c.id)
-      const visible = keysNow.filter(k => !hidden.has(k))
+      const keysNow = this.allSelectableColumns.map((c) => c.id)
+      const visible = keysNow.filter((k) => !hidden.has(k))
       this.visibleColumnIds = visible
       this.showAllColumns = visible.length === keysNow.length
       this.tableRenderKey += 1
-      this.$nextTick(() => { this.$refs.table && this.$refs.table.doLayout && this.$refs.table.doLayout() })
+      this.$nextTick(() => {
+        this.$refs.table && this.$refs.table.doLayout && this.$refs.table.doLayout()
+      })
     },
 
     async loadColumnSettings() {
-      const allKeys = this.allSelectableColumns.map(c => c.id)
+      const allKeys = this.allSelectableColumns.map((c) => c.id)
       let loaded = false
       try {
         const res = await this.$ajax({
@@ -1363,16 +1315,20 @@ export default {
           if (raw) {
             let obj = raw
             if (typeof raw === 'string') {
-              try { obj = JSON.parse(raw) } catch (e) { obj = { mask: Number(raw) || 0, keys: allKeys } }
+              try {
+                obj = JSON.parse(raw)
+              } catch (e) {
+                obj = { mask: Number(raw) || 0, keys: allKeys }
+              }
             }
             const oldKeys = Array.isArray(obj.keys) && obj.keys.length ? obj.keys : allKeys
             const hiddenOld = this.hiddenFromMask(Number(obj.mask) || 0, oldKeys)
-            const hiddenNow = new Set([...hiddenOld].filter(k => allKeys.includes(k)))
+            const hiddenNow = new Set([...hiddenOld].filter((k) => allKeys.includes(k)))
             this.applyHiddenSet(hiddenNow)
             loaded = true
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) { }
 
       if (!loaded) {
         try {
@@ -1381,7 +1337,7 @@ export default {
             const obj = JSON.parse(local)
             const oldKeys = Array.isArray(obj.keys) && obj.keys.length ? obj.keys : allKeys
             const hiddenOld = this.hiddenFromMask(Number(obj.mask) || 0, oldKeys)
-            const hiddenNow = new Set([...hiddenOld].filter(k => allKeys.includes(k)))
+            const hiddenNow = new Set([...hiddenOld].filter((k) => allKeys.includes(k)))
             this.applyHiddenSet(hiddenNow)
           } else {
             this.visibleColumnIds = allKeys
@@ -1395,11 +1351,13 @@ export default {
     },
 
     async saveColumnSettings() {
-      const keys = this.allSelectableColumns.map(c => c.id)
-      const hidden = new Set(keys.filter(k => !this.visibleColumnIds.includes(k)))
+      const keys = this.allSelectableColumns.map((c) => c.id)
+      const hidden = new Set(keys.filter((k) => !this.visibleColumnIds.includes(k)))
       const mask = this.maskFromHidden(hidden, keys)
       const payload = { mask, keys, version: 1 }
-      try { localStorage.setItem(this.getLocalSettingsKey(), JSON.stringify(payload)) } catch { }
+      try {
+        localStorage.setItem(this.getLocalSettingsKey(), JSON.stringify(payload))
+      } catch { }
       try {
         const data = { [this.getSettingsKey()]: JSON.stringify(payload) }
         await this.$ajax({
@@ -1409,36 +1367,46 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           roleType: this.roleType
         })
-      } catch (e) { /* ignore */ }
+      } catch (e) { }
     },
 
     handleVisibleColumnsChange() {
-      const allKeys = this.allSelectableColumns.map(c => c.id)
+      const allKeys = this.allSelectableColumns.map((c) => c.id)
       this.showAllColumns = this.visibleColumnIds.length === allKeys.length
       this.tableRenderKey += 1
       clearTimeout(this._saveColumnsTimer)
       this._saveColumnsTimer = setTimeout(() => {
         this.saveColumnSettings()
-        this.$nextTick(() => { this.$refs.table && this.$refs.table.doLayout && this.$refs.table.doLayout() })
+        this.$nextTick(() => {
+          this.$refs.table && this.$refs.table.doLayout && this.$refs.table.doLayout()
+        })
       }, 200)
     },
 
     handleShowAllToggle(val) {
-      const allKeys = this.allSelectableColumns.map(c => c.id)
+      const allKeys = this.allSelectableColumns.map((c) => c.id)
       if (val) this.visibleColumnIds = allKeys
       this.handleVisibleColumnsChange()
     }
   },
   async mounted() {
-    // 先加载列可见性设置
-    try { await this.loadColumnSettings() } catch (e) { }
+    try {
+      await this.loadColumnSettings()
+    } catch (e) { }
+
+    // Load collapsed state for the search toolbar
+    try {
+      const saved = localStorage.getItem('order_ds_toolbar_collapsed')
+      if (saved !== null) this.toolbarCollapsed = JSON.parse(saved)
+    } catch (e) { }
+
     if (this.dsCurrentProviderUuid) {
       this.queryStorage()
       await this.getOrderList()
       this.getDownLoadList()
       await this.getLogisticsChannels()
     }
-    // 未加载到设置时，使用默认全显
+
     if (!this.settingsLoaded) {
       const allKeys = this.allSelectableColumns.map((c) => c.id)
       this.visibleColumnIds = allKeys
@@ -1446,14 +1414,6 @@ export default {
     }
   },
   watch: {
-    'queryData.queryKeyWord': {
-      handler(newVal, oldVal) {
-        if (newVal !== oldVal) {
-          this.queryData.remoteQuerySelect = ''
-          this.remoteQueryOptions = []
-        }
-      }
-    },
     shouldRefreshDownloads(val) {
       if (val) {
         this.getDownLoadList()
@@ -1501,22 +1461,18 @@ export default {
   }
 }
 
-/* 展开行：去除默认内边距，交给 wrapper 控制缩进 */
 ::v-deep td.el-table__expanded-cell {
   padding: 0 !important;
 }
 
-/* 子表外层用于控制缩进，子表保持 100% 宽度，避免 80% 带来的像素取整误差 */
 .expanded-inner {
   padding: 0 24px;
   position: relative;
   z-index: 10;
-  /* 盖住固定列的分隔伪元素 */
   background: var(--custom-background-color);
   overflow: hidden;
 }
 
-/* SKU 文本按钮在单元格内做省略号 */
 .sku-ellipsis {
   display: inline-block;
   width: 100%;
@@ -1527,7 +1483,6 @@ export default {
   vertical-align: bottom;
 }
 
-// Column selector: force vertical list
 ::v-deep .column-selector .el-checkbox {
   display: block;
   margin: 4px 0;
@@ -1537,7 +1492,7 @@ export default {
   white-space: normal;
 }
 
-/* 隐藏表格自带的展开箭头列，仅保留展开内容区域 */
+/* Hide the built-in expand arrow column visuals */
 ::v-deep th.hidden-expand-col,
 ::v-deep td.hidden-expand-col {
   width: 0 !important;
@@ -1550,13 +1505,14 @@ export default {
   display: none !important;
 }
 
-/* 去掉固定列右侧分隔伪元素，避免在展开区覆盖出一条竖线 */
+/* Remove the fixed column right-side divider line to avoid overlay artifacts */
 ::v-deep .el-table__fixed::before {
   display: none !important;
 }
 </style>
+
 <style>
-/* Global, because el-popover content is appended to body */
+/* Global popover width */
 .single-column-pop {
   width: 300px !important;
 }
@@ -1571,7 +1527,7 @@ export default {
   white-space: normal;
 }
 
-/* Search toolbar collapsed-as-line UX */
+/* Search toolbar host */
 .ds-search-card {
   position: relative;
   z-index: 20;
@@ -1592,64 +1548,13 @@ export default {
   position: relative;
 }
 
-.search-toggle-outside {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: -24px;
-  /* outside, above the card */
-  /*z-index: 3000;*/
-  pointer-events: none;
-  /* only button receives events */
-}
-
-.search-toggle-outside .search-toggle-btn {
-  pointer-events: auto;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  /* circle */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--custom-border-color2);
-  background: var(--custom-background-color6);
-  color: var(--custom-font-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
-}
-
-.search-toggle-outside .search-toggle-btn i {
-  font-size: 12px;
-}
-
-.ds-search-card.collapsed .el-card__body {
-  /* ~5px height by padding */
-  padding-top: 1px !important;
-  padding-bottom: 1px !important;
-}
-
-.ds-search-card.collapsed .el-form-item {
-  margin-bottom: 0 !important;
-}
-
-/* Bottom-centered toggle that hugs the card edge */
-/* Right-aligned toggle link (original position) */
-/* Centered toggle on the fine line */
+/* Centered toggle above card */
 .toolbar-toggle-center {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: -10px;
-  /* place outside, above card */
-  z-index: 2000;
+  top: -25px;
   pointer-events: none;
-  /* only the pill receives clicks */
-}
-
-.toolbar-toggle-center::before,
-.toolbar-toggle-center::after {
-  display: none;
-  content: none;
 }
 
 .toolbar-toggle-center .toggle-pill {
@@ -1657,7 +1562,6 @@ export default {
   width: 28px;
   height: 24px;
   border-radius: 6px;
-  /* square with small rounding */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1666,7 +1570,7 @@ export default {
   color: var(--custom-font-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
   transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
-  z-index: 2001;
+  cursor: pointer;
 }
 
 .toolbar-toggle-center .toggle-pill i {
@@ -1678,7 +1582,18 @@ export default {
   box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
 }
 
-/* mount/unmount animation for the toggle */
+/* Collapsed state trims padding for a compact line */
+.ds-search-card.collapsed .el-card__body {
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+/* Form items compact when collapsed */
+.ds-search-card.collapsed .el-form-item {
+  margin-bottom: 0 !important;
+}
+
+/* Transition for mount/unmount nudge */
 .fade-bump-enter-active,
 .fade-bump-leave-active {
   transition: all .18s ease;
@@ -1694,7 +1609,7 @@ export default {
   transform: translateY(6px) scale(.92);
 }
 
-/* Subtle show/hide animation for toolbar body */
+/* Smooth show/hide for the toolbar body */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all .18s ease;

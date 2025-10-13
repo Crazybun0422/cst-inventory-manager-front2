@@ -14,7 +14,8 @@
         </el-button>
       </template>
     </PageHead>
-    <SearchCard>
+    <div class="search-toolbar-wrapper">
+      <SearchCard class="ds-search-card" :class="{ collapsed: searchCollapsed }">
       <el-form :inline="true" :model="queryData" class="demo-form-inline">
         <el-form-item>
           <el-select v-model="queryData.queryKeyWord" :placeholder="$t('common.pleaseSelect')">
@@ -59,26 +60,42 @@
           }}</el-button>
         </el-form-item>
         <el-form-item>
-          <el-radio-group v-model="objectSpanFlag" size="small" @input="onChangeFlag">
-            <el-radio-button :label="false">{{
-              $t('message.productManagement.classicList')
-            }}</el-radio-button>
-            <el-radio-button :label="true">{{
-              $t('message.productManagement.newList')
-            }}</el-radio-button>
+          <el-radio-group v-model="listMode" size="small" @input="onChangeListMode">
+            <el-radio-button label="classic">{{ $t('message.productManagement.classicList') }}</el-radio-button>
+            <el-radio-button label="new">{{ $t('message.productManagement.newList') }}</el-radio-button>
+            <el-radio-button label="standard">{{ $i18n && $i18n.te('message.productManagement.standardList') ? $t('message.productManagement.standardList') : '标准卡片' }}</el-radio-button>
           </el-radio-group>
         </el-form-item>
       </el-form>
-    </SearchCard>
+      </SearchCard>
+      <transition name="fade-bump">
+        <div class="toolbar-toggle-center" v-if="true">
+          <button class="toggle-pill" @click="searchCollapsed = !searchCollapsed" :title="$t(searchCollapsed ? 'common.expand' : 'common.collapse')">
+            <i :class="searchCollapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"></i>
+          </button>
+        </div>
+      </transition>
+    </div>
     <CstTableHead>
       <template slot="top-right">
         <el-button plain icon="el-icon-printer" @click="prnitProductTag">
           {{ $t('common.print') }}
         </el-button>
+        <el-popover placement="bottom-start" trigger="click" width="260" v-model="cardsSettingVisible" @show="ensureLoadCardsSettings">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="white-space:nowrap">{{ $t('common.setting') }}</span>
+            <el-input-number v-model="cardsPerRow" :min="1" :max="10" @change="onCardsPerRowChange"></el-input-number>
+            <span style="white-space:nowrap">/ {{ $t('message.productManagement.product') }}</span>
+          </div>
+          <div style="text-align:right;margin-top:8px">
+            <el-button size="mini" type="primary" @click="saveCardsPerRow">{{ $t('common.confirm') }}</el-button>
+          </div>
+          <el-button slot="reference" icon="el-icon-s-operation" circle size="mini" style="margin-left:8px" :title="$t('common.setting')"></el-button>
+        </el-popover>
       </template>
     </CstTableHead>
     <!-- 新表单 使用翻页-->
-    <div v-show="objectSpanFlag">
+    <div v-show="listMode === 'new'">
       <el-table :data="newTableData" style="width: 100%" :max-height="tableMaxHeight" :span-method="objectSpanMethod"
         size="small" @selection-change="oldHandleSelectionChange" :row-class-name="tableRowClassName"
         @cell-mouse-leave="cellMouseLeave" @cell-mouse-enter="cellMouseEnter">
@@ -253,7 +270,7 @@
       </el-row>
     </div>
     <!-- 经典表单  使用无限加载 -->
-    <div v-show="!objectSpanFlag">
+    <div v-show="listMode === 'classic'">
       <el-table ref="productTable" :data="newTableData" v-el-table-infinite-scroll="loadTableData"
         :infinite-scroll-disabled="newRowDisabled" :infinite-scroll-distance="5" size="small"
         :max-height="tableMaxHeight" highlight-current-row @select="handleSelectionChange"
@@ -434,6 +451,21 @@
       </el-table>
     </div>
 
+    <!-- 标准卡片视图 -->
+    <div v-show="listMode === 'standard'">
+      <ProductStandardCards
+        ref="standardCards"
+        :items="tableData"
+        :selectedProductIds="selectedProductIds"
+        :cardsPerRow="cardsPerRow"
+        :loading="scrollLoading"
+        @toggle-select="onToggleCardSelection"
+        @open-edit="showModal"
+        @open-detail="showDetail"
+        @load-more="onStandardLoadMore"
+      />
+    </div>
+
     <!-- 新增,修改产品 -->
     <EditProduct :visible="productVisible" :currentData="currentData" :originalDataArr="tableData" @close="onCloseModal"
       @confirm="onConfirm"></EditProduct>
@@ -458,6 +490,8 @@ import { copyData, getTagStyle } from '@/common/common-func'
 import EditProduct from '@/pages/product-manage/components/edit-product.vue'
 import ProductDetail from '@/pages/product-manage/components/product-detail.vue'
 import PrintProductTagDialog from '@/pages/product-manage/components/print-product-tag-dialog.vue'
+import ProductStandardCards from '@/pages/product-manage/components/product-standard-cards.vue'
+import { loadGlobalSettings, updateGlobalSettings } from '@/common/global-user-settings.js'
 import {
   productCategoryMap,
   productUnitMap,
@@ -480,7 +514,8 @@ export default {
     SearchCard,
     AuthImg,
     CstTableHead,
-    PrintProductTagDialog
+    PrintProductTagDialog,
+    ProductStandardCards
   },
   data() {
     return {
@@ -499,6 +534,8 @@ export default {
       productCategoryMap: productCategoryMap,
       productUnitMap: productUnitMap,
       productStatusMap: productStatusMap,
+      // 视图模式：classic/new/standard
+      listMode: 'new',
       objectSpanFlag: true, //true是新列表(合并的) false是经典列表(分裂的)
       tableData: [],
       newTableData: [],
@@ -520,6 +557,12 @@ export default {
         shop: 'ALL'
       },
       scrollLoading: false,
+      // 搜索卡片缩放
+      searchCollapsed: false,
+      // 标准卡片视图设置
+      cardsSettingVisible: false,
+      cardsPerRow: 4,
+      settingsLoaded: false,
       curRowArr: [],
       needSpanFields: [
         'operate',
@@ -536,6 +579,60 @@ export default {
   methods: {
     copyData,
     getTagStyle,
+    async ensureLoadCardsSettings () {
+      if (this.settingsLoaded) return
+      try {
+        const data = await loadGlobalSettings({ roleType: this.roleType })
+        const v = Number((data && (data.product_standard_cards_per_row || data['product_standard_cards_per_row'])) || 0)
+        if (v && v > 0) this.cardsPerRow = Math.max(1, Math.min(10, v))
+      } catch {}
+      this.settingsLoaded = true
+    },
+    async saveCardsPerRow () {
+      const n = Math.max(1, Math.min(10, Number(this.cardsPerRow) || 1))
+      this.cardsPerRow = n
+      try {
+        await updateGlobalSettings({ updates: { product_standard_cards_per_row: n }, roleType: this.roleType })
+      } catch {}
+      this.cardsSettingVisible = false
+      this.$nextTick(() => this.ensureStandardFill())
+    },
+    onCardsPerRowChange () {
+      this.$nextTick(() => this.ensureStandardFill())
+    },
+    onStandardLoadMore () {
+      if (this.listMode !== 'standard') return
+      if (this.tableData.length >= this.total || this.scrollLoading) return
+      this.curPage++
+      this.queryProduct(true, { cur_page: this.curPage })
+    },
+    onToggleCardSelection (product) {
+      const id = product && product.product_uuid
+      if (!id) return
+      const has = this.multipleSelection.some(x => x && x.product_uuid === id)
+      if (has) {
+        this.multipleSelection = this.multipleSelection.filter(x => x && x.product_uuid !== id)
+      } else {
+        this.multipleSelection = [...this.multipleSelection, { product_uuid: id }]
+      }
+    },
+    ensureStandardFill () {
+      if (this.listMode !== 'standard') return
+      const comp = this.$refs.standardCards
+      if (!comp || typeof comp.needsMoreToFill !== 'function') return
+      let guard = 0
+      const tryFill = () => {
+        if (guard++ > 5) return
+        if (this.tableData.length >= this.total) return
+        if (comp.needsMoreToFill()) {
+          if (this.scrollLoading) return
+          this.curPage += 1
+          this.queryProduct(true, { cur_page: this.curPage })
+          this.$nextTick(() => setTimeout(tryFill, 60))
+        }
+      }
+      setTimeout(tryFill, 0)
+    },
     prnitProductTag() {
       if (this.multipleSelection.length === 0) {
         this.$message({
@@ -550,7 +647,7 @@ export default {
       this.printProductTagDialogVisible = true
     },
     loadTableData() {
-      if (!this.objectSpanFlag) {
+      if (this.listMode === 'classic') {
         if (this.tableData.length >= this.total) {
           return
         }
@@ -569,7 +666,7 @@ export default {
       }
 
       this.multipleSelection = list
-      if (!objectSpanFlag) {
+      if (this.listMode === 'classic') {
         this.$refs.productTable.clearSelection()
         this.newTableData.forEach((ele) => {
           //这里的数据是从后端拿到后进行分裂处理的 不是直接拿来用的
@@ -607,15 +704,18 @@ export default {
     onConfirm() {
       this.productVisible = false
       this.objectSpanFlag = false
+      this.listMode = 'classic'
       this.curPage = 1
       this.queryProduct(false, { cur_page: this.curPage })
     },
-    onChangeFlag(val) {
+    onChangeListMode(val) {
+      this.objectSpanFlag = (val === 'new')
       this.curPage = 1
-      // this.newTableData = this.formatProductData(this.tableData)
-      // // 如果合并显示总数 如何不合并显示变种数
-      // this.total = this.newTableData.length
       this.queryProduct(false, { cur_page: this.curPage })
+      if (val === 'standard') {
+        this.ensureLoadCardsSettings()
+        this.$nextTick(() => this.ensureStandardFill())
+      }
     },
     // 对数据进行格式化  一个变种一行以 变种为维度
     formatProductData(data) {
@@ -721,6 +821,9 @@ export default {
         .finally(() => {
           this.loading = false
           this.scrollLoading = false
+          if (this.listMode === 'standard') {
+            this.$nextTick(() => this.ensureStandardFill())
+          }
           if (isScroll) {
             this.$nextTick(() => {
               this.$refs.productTable.clearSelection()
@@ -897,6 +1000,9 @@ export default {
     newRowDisabled() {
       return this.noMore
     },
+    selectedProductIds () {
+      return Array.from(new Set(this.multipleSelection.map(x => x && x.product_uuid).filter(Boolean)))
+    },
     shops() {
       let shopList = ['ALL']
       const strShopList = localStorage.getItem(this.config[this.roleType].shopList)
@@ -936,4 +1042,19 @@ export default {
 ::v-deep .high-row-class {
   background: #f5f7fa;
 }
+
+/* Search toolbar collapsed-as-line UX */
+.ds-search-card { position: relative; }
+.ds-search-card .el-form { transition: all .18s ease; }
+.ds-search-card .el-card__body { position: relative; overflow: visible; }
+.search-toolbar-wrapper { position: relative; }
+.toolbar-toggle-center { position: absolute; left: 50%; transform: translateX(-50%); top: -10px; z-index: 2000; pointer-events: none; }
+.toolbar-toggle-center .toggle-pill { pointer-events: auto; width: 28px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--custom-border-color2); background: var(--custom-background-color6); color: var(--custom-font-color); box-shadow: 0 2px 8px rgba(0,0,0,.28); transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; z-index: 2001; }
+.toolbar-toggle-center .toggle-pill i { font-size: 14px; }
+.toolbar-toggle-center .toggle-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+.fade-bump-enter-active, .fade-bump-leave-active { transition: all .18s ease; }
+.fade-bump-enter { opacity: 0; transform: translateY(-6px) scale(.92); }
+.fade-bump-leave-to { opacity: 0; transform: translateY(6px) scale(.92); }
+.ds-search-card.collapsed .el-card__body { padding-top: 1px !important; padding-bottom: 1px !important; }
+.ds-search-card.collapsed .el-form-item { margin-bottom: 0 !important; }
 </style>
