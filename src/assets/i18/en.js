@@ -255,6 +255,7 @@
       recipientIsCountry: "Recipient's country",
       generateDeliveryNote: 'Generate delivery note',
       qualityInspectionSynchronization: 'Quality inspection synchronization',
+      measurementSyncToProduct: 'Sync measurements to product',
       calculateShippingCosts: 'Calculate shipping costs',
       batchModifyWeight: 'Batch modify weight',
       productQuantity: 'Product quantity',

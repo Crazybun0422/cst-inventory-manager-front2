@@ -76,7 +76,7 @@ export default {
 }
 .base-layout {
   width: 100%;
-  height: 99vh;
+  height: 100vh;
   color: #333;
   .layout-header {
     display: flex;

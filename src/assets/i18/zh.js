@@ -115,6 +115,8 @@ const zh_cn = {
       googleProcessing: "谷歌登录中..."
     },
     signUp: {
+      initialPassword: '初始密码',
+      keepPasswordSafe: '请妥善保存该密码，仅此一次显示。',
       linkedExistingAccounts: "关联已有账号",
       linkedExistingAccountsDescription: "如果您已经有账号，请选择关联已有账号，以便于统一管理，否则请选择生成新账号。",
       generateNewAccount: "生成新账号",
@@ -252,6 +254,7 @@ const zh_cn = {
       recipientIsCountry: '收件人国家',
       generateDeliveryNote: '生成发货单',
       qualityInspectionSynchronization: '质检同步',
+      measurementSyncToProduct: '测量同步到产品',
       calculateShippingCosts: '计算运费',
       batchModifyWeight: '批量修改重量',
       productQuantity: '产品数量',
@@ -398,6 +401,7 @@ const zh_cn = {
       uploadCategoryPictures: '上传分类图片',
       classicList: '经典列表',
       newList: '新列表',
+      standardList: '标准卡片',
       specificDescription: '具体描述',
       product: '产品',
       productSelect: '请选择产品',
@@ -1052,6 +1056,8 @@ const zh_cn = {
     download: '下载',
     upload: "上传",
     tool: '工具',
+    expand: '展开',
+    collapse: '收起',
     batchModify: '批量修改',
     mark: '标记',
     describe: '描述',
@@ -1183,6 +1189,10 @@ const zh_cn = {
       pending_confirmation: '已找到货源并提供了报价，请展开对应条目查看并确认。',
       completed: '您已确认报价，我们将为您推进下一步服务。'
     },
+    // 待确认提醒
+    pendingConfirmTitle: '有待您确认的报价',
+    pendingConfirmMessage: '您有 {count} 条选品请求已生成报价，请查看并确认以继续。',
+    reviewNow: '立即查看',
   },
   dashboard: {
     daily: '每日订单',

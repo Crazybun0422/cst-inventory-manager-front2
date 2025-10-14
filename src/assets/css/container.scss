@@ -18,6 +18,8 @@
     /* Sidebar: round all corners; create 2px gap on right */
     border-radius: 24px;
     margin-right: 2px;
+    /* Keep scroll within sidebar; avoid scroll chaining to body */
+    overscroll-behavior-y: contain;
   }
 
   .el-main {

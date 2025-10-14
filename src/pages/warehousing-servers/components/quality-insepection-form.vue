@@ -197,6 +197,9 @@
                 <el-button type="primary" @click="submitData">
                   {{ $t('common.save') }}
                 </el-button>
+                <el-checkbox v-model="syncToProduct" style="margin-left: 16px">
+                  {{ $t('message.storage.measurementSyncToProduct') }}
+                </el-checkbox>
               </el-form-item>
             </el-form>
           </el-card>
@@ -278,6 +281,8 @@ export default {
       modalVisible: false,
       form: {
       },
+      // 是否将本次质检测量同步到产品（默认选中）
+      syncToProduct: true,
       inspectionInfo: {
       },
       appointmentInformation: {
@@ -326,6 +331,8 @@ export default {
             const res = await this.$ajax({
               method: 'put',
               url: '/api-prefix/api/storage-m/quality-check-one',
+              // 将是否同步到产品以查询参数形式传递
+              params: { sync_to_product: this.syncToProduct },
               data: this.form,
               roleType: this.roleType
             })
@@ -375,6 +382,8 @@ export default {
             inspection_weight: this.currentData?.measured_info?.inspection_weight ||
               this.currentData.quality_inspection_info?.quality_inspection_weight_kg || 0,
           }
+          // 每次打开弹窗默认勾选“同步到产品”
+          this.syncToProduct = true
           // 质检合格数量
           const qualified_quantity = this.currentData.quality_check ? this.qualifiedQuantityTotal(this.currentData.quality_check) : 0
           //质检不合格数量

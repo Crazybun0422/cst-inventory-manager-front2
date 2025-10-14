@@ -778,6 +778,52 @@ a,
   background: var(--custom-color-black2);
   color: var(--custom-font-color3);
 }
+
+/* Custom circular loader (Codex-like) for Element UI Loading */
+.cst-circular-loader .el-loading-spinner {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+}
+.cst-circular-loader .el-loading-spinner i,
+.cst-circular-loader .el-loading-spinner .circular,
+.cst-circular-loader .el-loading-spinner .path {
+  display: none !important; /* hide default spinner */
+}
+/* Ring track */
+.cst-circular-loader .el-loading-spinner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* subtle ring track using theme border color */
+  box-shadow: inset 0 0 0 4px var(--custom-border-color2, #ebeef5);
+}
+/* Rotating arc */
+.cst-circular-loader .el-loading-spinner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* 25% arc in primary color */
+  background: conic-gradient(var(--custom-color-primary, #409EFF) 0 25%, transparent 25% 100%);
+  /* carve thickness for the arc */
+  -webkit-mask: radial-gradient(circle calc(50% - 4px), transparent 99%, #000 100%);
+          mask: radial-gradient(circle calc(50% - 4px), transparent 99%, #000 100%);
+  animation: cst-rotate 1.1s linear infinite;
+}
+.cst-circular-loader .el-loading-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--custom-font-color, #303133);
+}
+@keyframes cst-rotate { to { transform: rotate(360deg); } }
 .status-tips-pop .ant-tooltip-inner { padding: 10px 12px; border-radius: 8px; }
 /* Allow width to expand to fit single-line items */
 .status-tips-pop .ant-tooltip-inner { max-width: none; }

@@ -1,27 +1,35 @@
 <template>
-  <div class="standard-cards-wrapper">
+  <div class="standard-cards-wrapper" ref="wrapper" :style="wrapperStyle">
     <div class="standard-cards-grid" :style="gridStyle" ref="grid">
       <div v-for="item in items" :key="item.product_uuid" class="standard-card">
         <div class="card-header">
           <el-checkbox :value="isSelected(item)" @change="() => toggleSelect(item)"></el-checkbox>
+          <div class="header-actions">
+            <a class="icon-btn" :title="$t('common.edit')" @click.prevent="$emit('open-edit', item)">
+              <i class="el-icon-edit"></i>
+            </a>
+            <a class="icon-btn" :title="$t('common.check')" @click.prevent="$emit('open-detail', item)">
+              <i class="el-icon-view"></i>
+            </a>
+          </div>
         </div>
         <div class="card-image">
-          <AuthImg :src="item.main_image_url || ''" :styleInfo="'width:100%;height:100%;object-fit:cover;'"></AuthImg>
+          <div class="image-square">
+            <AuthImg :src="item.main_image_url || ''" :styleInfo="'width:100%;height:100%;object-fit:cover;'"></AuthImg>
+          </div>
         </div>
         <div class="card-body">
           <div class="card-title" :title="titleOf(item)">{{ titleOf(item) }}</div>
-          <div class="card-actions">
-            <a @click.prevent="() => $emit('open-edit', item)">{{ $t('common.edit') }}</a>
-            <a @click.prevent="() => $emit('open-detail', item)">{{ $t('common.check') }}</a>
-          </div>
         </div>
       </div>
     </div>
     <div v-if="loading" class="loading-more">
       <i class="el-icon-loading"></i>
     </div>
+    <!-- Sentinel for IntersectionObserver-based infinite scroll -->
+    <div ref="sentinel" class="sentinel" aria-hidden="true"></div>
   </div>
-  
+
 </template>
 
 <script>
@@ -34,45 +42,84 @@ export default {
     items: { type: Array, default: () => [] },
     selectedProductIds: { type: Array, default: () => [] },
     cardsPerRow: { type: Number, default: 4 },
-    loading: { type: Boolean, default: false }
+    loading: { type: Boolean, default: false },
+    // 内部滚动开关与高度，确保滚动条显示在内容区域内
+    useInnerScroll: { type: Boolean, default: true },
+    scrollAreaHeight: { type: [String, Number], default: '80vh' }
   },
   computed: {
-    gridStyle () {
+    gridStyle() {
       const n = Math.max(1, Math.min(10, Number(this.cardsPerRow) || 1))
       return { gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }
+    },
+    wrapperStyle() {
+      if (!this.useInnerScroll) return {}
+      const h = typeof this.scrollAreaHeight === 'number' ? `${this.scrollAreaHeight}px` : this.scrollAreaHeight
+      return {
+        maxHeight: h,
+        overflowY: 'auto',
+        overscrollBehavior: 'contain'
+      }
     }
   },
-  mounted () {
+  mounted() {
     this._onScroll = this.onScroll.bind(this)
-    window.addEventListener('scroll', this._onScroll, { passive: true })
+    const el = this.useInnerScroll ? this.$refs.wrapper : window
+    if (el && el.addEventListener) el.addEventListener('scroll', this._onScroll, { passive: true })
+    // Also observe a sentinel for robust infinite scrolling (works with wheel and drag)
+    if ('IntersectionObserver' in window) {
+      const rootEl = this.useInnerScroll ? this.$refs.wrapper : null
+      this._observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) this.$emit('load-more')
+        })
+      }, { root: rootEl, rootMargin: '400px 0px', threshold: 0 })
+      if (this.$refs.sentinel) this._observer.observe(this.$refs.sentinel)
+    }
   },
-  beforeDestroy () {
-    window.removeEventListener('scroll', this._onScroll)
+  beforeDestroy() {
+    const el = this.useInnerScroll ? this.$refs.wrapper : window
+    if (el && el.removeEventListener) el.removeEventListener('scroll', this._onScroll)
+    if (this._observer && this.$refs.sentinel) this._observer.unobserve(this.$refs.sentinel)
+    if (this._observer) this._observer.disconnect()
   },
   methods: {
-    isSelected (item) {
+    isSelected(item) {
       if (!item || !item.product_uuid) return false
       return this.selectedProductIds.includes(item.product_uuid)
     },
-    toggleSelect (item) {
+    toggleSelect(item) {
       this.$emit('toggle-select', item)
     },
-    titleOf (item) {
+    titleOf(item) {
       if (!item) return ''
       const lang = this.$languageType || this.$i18n && this.$i18n.locale
       if (lang === 'zh_cn') return item.chinese_name || ''
       return item.english_name || ''
     },
-    onScroll () {
+    onScroll() {
       // When user scrolls near bottom, ask parent to load more
-      const scrollPos = window.scrollY + window.innerHeight
-      const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
-      if (docHeight - scrollPos < 300) this.$emit('load-more')
+      if (this.useInnerScroll) {
+        const el = this.$refs.wrapper
+        if (!el) return
+        const remain = el.scrollHeight - el.scrollTop - el.clientHeight
+        if (remain < 300) this.$emit('load-more')
+      } else {
+        const scrollPos = window.scrollY + window.innerHeight
+        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
+        if (docHeight - scrollPos < 300) this.$emit('load-more')
+      }
     },
-    needsMoreToFill () {
-      // Public method: whether grid height fills viewport
-      const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
-      return h < window.innerHeight - 80
+    needsMoreToFill() {
+      // Public method: whether grid height fills viewport/container
+      if (this.useInnerScroll) {
+        const el = this.$refs.wrapper
+        if (!el) return false
+        return el.scrollHeight <= el.clientHeight
+      } else {
+        const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
+        return h < window.innerHeight - 80
+      }
     }
   }
 }
@@ -82,37 +129,70 @@ export default {
 .standard-cards-wrapper {
   width: 100%;
 }
+
 .standard-cards-grid {
   display: grid;
   grid-gap: 12px;
 }
+
 .standard-card {
-  border: 1px solid var(--custom-border-color2, #ebeef5);
+  /*border: 1px solid var(--custom-border-color2, #ebeef5);*/
   border-radius: 8px;
-  background: var(--custom-background-color6, #fff);
+  background: transparent;
+  /* make card background transparent */
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 220px;
 }
+
 .card-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   padding: 6px 8px 0 8px;
 }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-actions .icon-btn {
+  color: var(--custom-color-primary);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-actions .icon-btn i {
+  font-size: 16px;
+}
+
+.header-actions .icon-btn:hover {
+  filter: brightness(1.1);
+}
+
 .card-image {
   width: 100%;
   padding: 8px;
   box-sizing: border-box;
-  height: 140px;
 }
+
+.image-square {
+  width: 100%;
+  /* Keep image area square */
+  aspect-ratio: 1 / 1;
+}
+
 .card-body {
   padding: 6px 10px 12px 10px;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
 }
+
 .card-title {
   font-size: 13px;
   line-height: 1.4;
@@ -120,19 +200,12 @@ export default {
   margin-bottom: 6px;
   min-height: 18px;
 }
-.card-actions {
-  margin-top: auto;
-  display: flex;
-  gap: 12px;
-}
-.card-actions a {
-  color: var(--custom-primary-color, #409EFF);
-  cursor: pointer;
-}
+
+/* (legacy body actions removed; now using header icon actions) */
+
 .loading-more {
   text-align: center;
   padding: 8px;
   color: var(--custom-font-color2, #909399);
 }
 </style>
-
