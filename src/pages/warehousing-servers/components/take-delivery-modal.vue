@@ -83,7 +83,7 @@
         </el-col>
         <el-col :span="10">
           <div>
-            <div v-loading="loading">
+            <div v-loading="loading" element-loading-custom-class="cst-circular-loader" element-loading-text="1">
               <el-card class="box-card card-height">
                 <div slot="header" class="clearfix">
                   <span>{{ $t('common.takeDelivery') }}</span>
@@ -400,20 +400,20 @@ export default {
   },
   computed: {
     maxLandedQuantity () {
-      if (!this.currentData?.product_info &&
-        !Array.isArray(this.currentData.product_info)) return 0
+      // 保护：product_info 必须是数组
+      const list = (this.currentData && Array.isArray(this.currentData.product_info))
+        ? this.currentData.product_info
+        : []
       // 产品总数计算
-      const sumQuantity = this.currentData.product_info.reduce((acc, cur) => {
-        return acc + cur.quantity
+      const sumQuantity = list.reduce((acc, cur) => {
+        return acc + Number((cur && cur.quantity) || 0)
       }, 0)
-      // 收货列表的总数
-      const takeDeliverySumQuantity = this.takeDeliveryList.reduce((acc, cur) => {
-        return acc + cur.landed_quantity
+      // 收货列表的总数（保护 reduce 目标为数组）
+      const delivered = Array.isArray(this.takeDeliveryList) ? this.takeDeliveryList : []
+      const takeDeliverySumQuantity = delivered.reduce((acc, cur) => {
+        return acc + Number((cur && cur.landed_quantity) || 0)
       }, 0)
-      // const sumQuantity = this.currentData.product_info.reduce((acc, cur) => {
-      //   return acc + cur.quantity
-      // }, 0)
-      return sumQuantity - takeDeliverySumQuantity
+      return Math.max(0, sumQuantity - takeDeliverySumQuantity)
     },
     // ...mapState('warehousing', ['warehousingInfoList'])
     unitMapOptions () {
@@ -479,38 +479,53 @@ export default {
     onSubmit () {
       this.$refs.modalForm.validate((valid) => {
         if (valid) {
-          // this.addWarehousing()
-          this.getTakeDeliveryList()
+          this.receiptGoods()
         } else {
           return false
         }
       })
     },
-    // receiptGoods () {
-    //   this.loading = true
-    //   this.$ajax({
-    //     url: '/api-prefix/api/storage-m/receive-goods',
-    //     method: 'put',
-    //     roleType: this.roleType,
-    //     data: this.modalForm
-    //   })
-    //     .then((res) => {
-    //       if (this.$isRequestSuccessful(res.code)) {
-    //         this.$message.success(this.$t('common.operationSuccessful'))
-    //         this.isRefresh = true
-    //         this.$refs.modalForm.resetFields()
-    //         this.modalForm = Object.assign({}, undefined)
-    //         this.getTakeDeliveryList()
-    //         // this.$emit('close', true)
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.log(error)
-    //     })
-    //     .finally(() => {
-    //       this.loading = false
-    //     })
-    // },
+    receiptGoods () {
+      this.loading = true
+      // 发送收货请求
+      const payload = {
+        ...this.modalForm,
+        // 兜底：确保必要字段存在
+        receive_type: this.modalForm.receive_type ?? 0,
+        target_number: this.modalForm.target_number || this.currentData.system_number
+      }
+      // 限制卸载数量不超过上限
+      if (typeof this.maxLandedQuantity === 'number' && payload.landed_quantity > this.maxLandedQuantity) {
+        payload.landed_quantity = this.maxLandedQuantity
+      }
+      this.$ajax({
+        url: '/api-prefix/api/storage-m/receive-goods',
+        method: 'put',
+        roleType: this.roleType,
+        data: payload
+      })
+        .then((res) => {
+          if (this.$isRequestSuccessful(res.code)) {
+            this.$message.success(this.$t('common.operationSuccessful'))
+            this.isRefresh = true
+            // 重置表单并刷新收货记录
+            if (this.$refs.modalForm) this.$refs.modalForm.resetFields()
+            this.modalForm = Object.assign({}, undefined)
+            this.getTakeDeliveryList()
+          } else {
+            // 接口返回非成功码时提示
+            const msg = (res && (res.message || res.msg)) || this.$t('common.operationFailed')
+            this.$message.error(msg)
+          }
+        })
+        .catch((error) => {
+          console.error(error)
+          this.$message.error(this.$t('common.operationFailed'))
+        })
+        .finally(() => {
+          this.loading = false
+        })
+    },
     handlerClose () {
       this.$refs.modalForm.resetFields()
       this.modalVisible = false

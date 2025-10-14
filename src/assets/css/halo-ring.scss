@@ -1,0 +1,132 @@
+/* Cursor-like button and frame styles (color-agnostic structure) */
+
+@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Button variant: add outer hairline ring + animated halo without touching fill colors */
+.cursor-btn {
+  --btn-radius: 12px;
+  --ring-w: 1px;
+  --ring-gap: 6px;
+  --ring-color: var(--cursor-ring-color, rgba(255,255,255,0.85));
+  --glow-1: var(--cursor-glow-1, rgba(255,255,255,0.28));
+  --glow-2: var(--cursor-glow-2, rgba(255,255,255,0.16));
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--btn-radius);
+  z-index: 0;
+}
+
+/* Animated halo on hover/focus */
+.cursor-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--btn-radius) + 4px);
+  background: conic-gradient(from var(--angle), var(--glow-1), var(--glow-2), var(--glow-1));
+  filter: blur(14px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity .25s ease, filter .25s ease;
+}
+
+/* Hairline outer ring separated by a transparent gap */
+.cursor-btn::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--ring-gap));
+  border-radius: calc(var(--btn-radius) + var(--ring-gap));
+  border: var(--ring-w) solid var(--ring-color);
+  box-sizing: border-box;
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cursor-btn:hover::before {
+  opacity: .9;
+  animation: cursorGlowRotate 6s linear infinite;
+}
+
+.cursor-btn:hover::after {
+  opacity: 1;
+}
+
+@keyframes cursorGlowRotate { to { --angle: 360deg; } }
+
+/* Make sure ElementUI buttons pick up rounding */
+.el-button.cursor-btn { border-radius: var(--btn-radius) !important; overflow: visible; }
+
+/* Primary variant hook (kept minimal to avoid color conflicts) */
+.cursor-btn--primary { --btn-radius: 12px; }
+.cursor-btn--sm { --btn-radius: 10px; --ring-gap: 5px; }
+
+/* Generic frame wrapper to halo any block (e.g., login card) */
+.cursor-frame {
+  --frame-radius: 16px;
+  --ring-w: 1px;
+  --ring-gap: 8px;
+  --ring-color: var(--cursor-ring-color, rgba(255,255,255,0.85));
+  --glow-1: var(--cursor-glow-1, rgba(255,255,255,0.28));
+  --glow-2: var(--cursor-glow-2, rgba(255,255,255,0.16));
+
+  position: relative;
+  border-radius: var(--frame-radius);
+  z-index: 0;
+}
+
+.cursor-frame::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: calc(var(--frame-radius) + 6px);
+  background: conic-gradient(from var(--angle), var(--glow-1), var(--glow-2), var(--glow-1));
+  filter: blur(18px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity .25s ease, filter .25s ease;
+}
+
+.cursor-frame::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--ring-gap));
+  border-radius: calc(var(--frame-radius) + var(--ring-gap));
+  border: var(--ring-w) solid var(--ring-color);
+  box-sizing: border-box;
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cursor-frame:hover::before {
+  opacity: .95;
+  animation: cursorGlowRotate 6s linear infinite;
+}
+
+.cursor-frame:hover::after {
+  opacity: 1;
+}
+
+/* Stronger preset for key surfaces like login card */
+.cursor-frame--strong {
+  --ring-gap: 10px;
+  --ring-w: 2px;
+}
+
+/* If outer frame ring is showing, suppress inner button rings */
+.cursor-frame:hover .cursor-btn::before,
+.cursor-frame:hover .cursor-btn::after {
+  opacity: 0 !important;
+  animation: none !important;
+}

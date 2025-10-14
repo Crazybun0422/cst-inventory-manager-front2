@@ -57,7 +57,14 @@
         </div>
 
         <div class="footer">
-            <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
+            <template v-if="isERP">
+                <span class="brand">{{ brandName }}</span>
+                <span class="separator">|</span>
+                <a :href="policyPath" @click.prevent="$router.push(policyPath)">{{$t('footer.pp')}}</a>
+            </template>
+            <template v-else>
+                <a href="https://beian.miit.gov.cn/" target="_blank">湘ICP备2023017609号-1</a>
+            </template>
         </div>
     </div>
 </template>
@@ -101,6 +108,15 @@ export default {
         currentLang() {
             this.$store.state.init
             return this.$i18n.locale;
+        },
+        isERP() {
+            return this.$store.state.init?.mainFunction === 'Business ERP'
+        },
+        brandName() {
+            return this.$i18n.locale === 'en_us' ? this.$store.state.init?.titleEnus : this.$store.state.init?.titleZhcn
+        },
+        policyPath() {
+            return config.privatePolicy
         },
         transitionName() {
             return this.slideDirection === 'next' ? 'slide-next' : 'slide-prev';
@@ -418,5 +434,9 @@ export default {
 
 .footer a:hover {
     text-decoration: underline;
+}
+
+.footer .separator {
+    margin: 0 6px;
 }
 </style>

@@ -2,6 +2,7 @@
   background-color: var(--custom-background-color6);
   color: var(--custom-font-color);
   font-family: 'NunitoSans', sans-serif;
+  border-radius: 12px; /* keep inputs pill-ish by default */
 }
 
 .el-input {
@@ -25,4 +26,24 @@
       @extend .cst-input-style;
     }
   }
+}
+
+/* Ensure ElementUI date editors keep rounded corners */
+.el-date-editor.el-input__inner,
+.el-range-editor.el-input__inner,
+.el-date-editor.el-input {
+  border-radius: 12px !important;
+}
+
+/* For range pickers, keep the rounding on the container only */
+.el-date-editor.el-range-editor {
+  border: 1px solid var(--custom-border-color) !important;
+}
+.el-date-editor.el-range-editor .el-range-input {
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.el-date-editor.el-range-editor .el-range-separator {
+  color: var(--custom-font-color2);
 }

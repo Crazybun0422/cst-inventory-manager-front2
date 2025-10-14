@@ -28,7 +28,7 @@
         <template slot-scope="scope">
           <div class="product-info">
             <AuthImg
-              :src="scope.row?.sub_image_url"
+              :src="scope.row?.sub_image_url || scope.row?.main_image_url"
               :styleInfo="'width:50px;height:50px;margin-right:8px'"
             ></AuthImg>
             <div>

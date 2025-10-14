@@ -25,11 +25,15 @@ import en_us from '@/assets/i18/en'
 import store from './store'
 import 'default-passive-events'
 import JsonViewer from 'vue-json-viewer'
-import './assets/css/global.scss'
 import './styles/element-variables.scss'
 import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/antd.css';
+import './assets/css/global.scss'
 import { initPermission } from './permission'
+import sourcingWS from '@/common/ws-notify'
+import { getRoleTypeForP } from '@/common/common-func'
+import { config, dropShipper } from '@/common/commonconfig'
+import bus, { EVENTS } from '@/common/event-bus'
 
 function changeFavicon(newIconURL) {
   let link = document.querySelector('link[rel="icon"]');
@@ -84,6 +88,13 @@ async function init() {
 
   }
   initPermission()
+  // Init WS notifications after permissions are set
+  try {
+    let role = getRoleType(window.location.pathname) || dropShipper
+    if (role === config.provider.role) role = getRoleTypeForP()
+    // DS 端已有头部的 WebSocket，实现统一的 bus 转发；此处仅在 P 端启动全局 WS
+    if (role !== dropShipper) sourcingWS.start()
+  } catch (e) { /* ignore */ }
 
   // 继续创建 Vue 实例
   new Vue({
@@ -93,11 +104,42 @@ async function init() {
     i18n,
     created() {
       this.setTheme();
-      const userLanguage = this.$store.state.user.defaultLanguage || data.locale;
+      const userLanguage = this.$store.state.user.defaultLanguage || data.locale || this.$i18n.locale;
       this.$i18n.locale = userLanguage;
       changeFavicon(data.homepage_icon);
       document.title = this.$i18n.locale === "en_us" ? data.homepage_title_en : data.homepage_title;
+      // P 端：监听并在右下角弹出通知；DS 端走 Header 内置逻辑
+      try {
+        let role = getRoleType(window.location.pathname) || dropShipper
+        if (role === config.provider.role) role = getRoleTypeForP()
+        if (role !== dropShipper) {
+          this._pBusNotify = (msgData) => {
+            if (!msgData) return
+            // 仅处理选品通知
+            if (msgData.type === EVENTS.SOURCING_NOTIFICATION || msgData.event === EVENTS.SOURCING_NOTIFICATION || (msgData.sourcing_id && msgData.status)) {
+              const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
+              const en = { submitted: 'Submitted', sourcing: 'Sourcing', pending_confirmation: 'Pending confirmation', completed: 'Completed' }
+              const dict = this.$i18n.locale === 'zh_cn' ? zh : en
+              const label = dict[msgData.status] || msgData.status
+              const title = this.$t('navigate.sourcing')
+              const content = `${this.$t('sourcing.sourcingId') || 'ID'}: ${msgData.sourcing_id || ''} · ${label}`
+              this.$notify({
+                title,
+                message: this.$createElement('i', {
+                  style: 'color: teal; cursor: pointer;',
+                  on: { click: () => { this.$router.push({ name: 'p-sourcing' }); window.focus() } }
+                }, content),
+                duration: 0,
+                offset: 100,
+                type: 'success'
+              })
+            }
+          }
+          bus.$on(EVENTS.SOURCING_NOTIFICATION, this._pBusNotify)
+        }
+      } catch (e) { /* ignore */ }
     },
+    beforeDestroy() { if (this._pBusNotify) bus.$off(EVENTS.SOURCING_NOTIFICATION, this._pBusNotify) },
     methods: {
       setTheme() {
         const currentTheme = localStorage.getItem('theme') || 'defaultTheme';

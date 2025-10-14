@@ -2,8 +2,11 @@
 .el-loading-mask {
   background-color: rgba(255, 255, 255, 0.4) !important;
 }
+
 .base-layout {
-  border: 1px solid var(--custom-border-color);
+  /* Remove overall border to avoid an outer frame when zoomed */
+  border: 0;
+
   .el-aside {
     background-color: var(--custom-background-color);
     color: var(--custom-font-color);
@@ -12,8 +15,13 @@
     text-align: left;
     overflow-y: auto;
     overflow-x: hidden;
-    border-radius: 24px 0 0 24px;
+    /* Sidebar: round all corners; create 2px gap on right */
+    border-radius: 24px;
+    margin-right: 2px;
+    /* Keep scroll within sidebar; avoid scroll chaining to body */
+    overscroll-behavior-y: contain;
   }
+
   .el-main {
     background-color: var(--custom-background-color);
     color: var(--custom-font-color);
@@ -23,21 +31,26 @@
     border-bottom: 0;
     padding: 10px 15px;
     box-sizing: border-box;
-    border-radius: 0 0 24px 0;
+    /* Content: add rounded top corners */
+    border-radius: 24px 24px 24px 24px;
   }
 
   .el-menu {
     background-color: var(--custom-background-color);
     border-right: 0;
+
     .el-menu-item {
       margin: 2px 0;
     }
+
     .el-menu-item.is-active {
       border-radius: 12px;
     }
+
     .el-submenu__title:hover {
       border-radius: 12px !important;
     }
+
     .el-menu-item:hover,
     .el-menu-item:focus {
       border-radius: 12px !important;
@@ -50,16 +63,64 @@
       height: 50px;
       line-height: 50px;
     }
+
+    &.el-menu--collapse {
+      .el-menu-item span,
+      .el-submenu__title span {
+        display: none !important; /* collapse 时隐藏文字 */
+      }
+      .el-submenu__icon-arrow {
+        display: none !important; /* 隐藏子菜单箭头 */
+      }
+      .el-menu-item i,
+      .el-submenu__title i {
+        margin: 0 !important; /* 仅显示图标时居中显示 */
+      }
+    }
+    /* Popup submenu when collapsed: ensure arrow doesn't overlap text */
+    /* moved popup-specific rules to global scope below because popup is appended to body */
   }
+
   .el-header {
     background-color: var(--custom-background-color);
     height: 68px;
     line-height: 68px;
-    border-radius: 0 24px 0 0;
-    border-bottom: 1px solid var(--custom-border-color);
+    /* Topbar: also round bottom corners; add 2px gap below */
+    border-radius: 24px 24px 24px 24px;
+    margin-bottom: 2px;
+    /* Remove header bottom border to avoid a bright line above the gap */
+    border-bottom: 0 !important;
     color: var(--custom-font-color);
+
     .el-input__inner {
       border: 1px solid var(--custom-background-color);
     }
+  }
+}
+
+/* Global: popup submenu appended to body (not inside .base-layout .el-menu) */
+.el-menu--popup {
+  .el-submenu__title,
+  .el-menu-item {
+    display: flex;
+    align-items: center;
+    height: 50px; /* keep same height as main menu */
+    line-height: 50px;
+    padding-right: 20px !important; /* room for arrow */
+  }
+  /* Right arrow icon in popup submenu title */
+  .el-submenu__title .el-submenu__icon-arrow,
+  .el-submenu__title .el-icon-arrow-right {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 50px; line-height: 50px;
+    vertical-align: middle;
+    margin-top: 2px; /* nudge down a bit to visually center with text */
+    margin-left: auto !important;
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    pointer-events: none; /* avoid intercepting text clicks */
   }
 }

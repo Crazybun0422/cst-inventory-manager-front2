@@ -6,15 +6,16 @@
 !-->
 <template>
   <div id="signin-form" class="signin-form">
-    <el-form :model="loginFrom" :rules="rules" ref="loginFrom" class="demo-loginFrom"
+    <el-form :model="loginFrom" :rules="rules" ref="loginFrom" class="demo-loginFrom" autocomplete="on"
       @keyup.enter.native="submitForm('loginFrom')">
       <el-form-item prop="username">
         <el-input ref="userNameRef" prefix-icon="el-icon-user" :placeholder="$t('message.login.username')"
-          :disabled="isLoggingIn" v-model.lazy.trim="loginFrom.username"></el-input>
+          :disabled="isLoggingIn" v-model.trim="loginFrom.username" name="username" autocomplete="username"
+          autocapitalize="off" autocorrect="off" spellcheck="false"></el-input>
       </el-form-item>
       <el-form-item prop="password">
         <el-input prefix-icon="el-icon-lock" :disabled="isLoggingIn" :placeholder="$t('message.login.password')"
-          v-model.lazy="loginFrom.password" show-password></el-input>
+          v-model="loginFrom.password" show-password name="password" autocomplete="current-password"></el-input>
       </el-form-item>
       <el-form-item>
         <CaptchaView :showCaptcha="showCaptcha" @captchaCancel="showCaptcha = false" :captchaData="captchaData">
@@ -25,9 +26,9 @@
           }}</a>
         </div>
         <div class="login-button">
-          <el-button style="width: 100%" type="primary" @click="submitForm('loginFrom')" :loading="isLoggingIn">
+          <el-button class="cursor-btn cursor-btn--primary" style="width: 100%" type="primary" @click="submitForm('loginFrom')" :loading="isLoggingIn">
             {{ $t('message.login.login') }}</el-button>
-        </div>
+          </div>
       </el-form-item>
     </el-form>
     <ForgetPassword :visible.sync="emailFormVisible" @close="handleCloseForm" />
@@ -96,6 +97,16 @@ export default {
     loadHomeData,
     getCsrfTokenFromServer,
     getWarehouseRelatedInfo,
+    async tryStoreCredentials(username, password) {
+      try {
+        if ('credentials' in navigator && window.PasswordCredential) {
+          const cred = new window.PasswordCredential({ id: username, name: username, password });
+          await navigator.credentials.store(cred);
+        }
+      } catch (e) {
+        // Silently ignore if not supported or blocked (e.g., non-HTTPS)
+      }
+    },
     getRelatedInfo() {
       return this.getWarehouseRelatedInfo()
         .then((resData) => {
@@ -171,9 +182,30 @@ export default {
                 this.captchaData = response.data
                 this.showCaptcha = true
                 return Promise.reject(new Error('login error'))
+              } else {
+                // 其他失败场景，统一抛错，避免后续 then 收到 undefined
+                return Promise.reject(new Error('login error'))
               }
             })
-            .then((resData) => {
+            .then(async (resData) => {
+              // Attempt to store credentials for browser password managers (inline to avoid method binding issues)
+              try {
+                if (navigator.credentials && navigator.credentials.create) {
+                  const cred = await navigator.credentials.create({
+                    password: {
+                      id: this.loginFrom.username,
+                      name: this.loginFrom.username,
+                      password: this.loginFrom.password,
+                    }
+                  })
+                  if (cred) {
+                    await navigator.credentials.store(cred)
+                  }
+                }
+              } catch (e) { /* ignore unsupported or insecure context */ }
+              if (!resData || !resData.user) {
+                throw new Error('home data invalid')
+              }
               const { user, avatar_base64, shops, default_settings } = resData
               // 可能需要将 角色信息存到cookie 或者localstorage
               localStorage.setItem(
@@ -224,6 +256,7 @@ export default {
             })
             .catch((error) => {
               console.error(error)
+              this.$message && this.$message.error(this.$t ? this.$t('message.login.login') + ' failed' : 'Login failed')
             })
             .finally(() => {
               this.$forceUpdate()
@@ -256,7 +289,7 @@ export default {
     display: flex;
     justify-content: center;
     // width: 200px;
-    height: 40px;
+    min-height: 48px; /* allow outer ring halo without clipping */
     font-size: 60px;
     padding: 0;
 

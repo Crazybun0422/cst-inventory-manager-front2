@@ -1,0 +1,221 @@
+{
+    "code": 23000,
+    "msg": {
+        "zh_cn": "仪表盘操作成功",
+        "en_us": "Dashboard operation successful"
+    },
+    "data": {
+        "orders": {
+            "today_total": 3,
+            "processing_total": 0,
+            "delivered_total": 0,
+            "daily_trend": [
+                {
+                    "date": "2025-09-30",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-01",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-02",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-03",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-04",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-05",
+                    "count": 0
+                },
+                {
+                    "date": "2025-10-06",
+                    "count": 3
+                }
+            ],
+            "monthly_trend": [
+                {
+                    "month": "2025-05",
+                    "count": 0
+                },
+                {
+                    "month": "2025-06",
+                    "count": 0
+                },
+                {
+                    "month": "2025-07",
+                    "count": 0
+                },
+                {
+                    "month": "2025-08",
+                    "count": 0
+                },
+                {
+                    "month": "2025-09",
+                    "count": 0
+                },
+                {
+                    "month": "2025-10",
+                    "count": 3
+                }
+            ]
+        },
+        "products": {
+            "low_stock": {
+                "total": 27,
+                "page": 1,
+                "page_size": 10,
+                "items": [
+                    {
+                        "product_uuid": "972abc87-d19e-47d2-9784-beb7e7989ebe",
+                        "variant_id": "58c54d0a-80c9-4123-a29e-50fb51ee8f85",
+                        "sku": "sku-untracked-1",
+                        "barcode": "45181684449441",
+                        "name": "Default Title",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/snowboard_purple_hydrogen.png?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "1d4ec307-a710-48c3-a0ec-e7c1941c1035",
+                        "variant_id": "ab713e6e-28fe-45f9-99da-19958c3f8d98",
+                        "sku": "GiftCardShopify45181684482209",
+                        "barcode": "45181684482209",
+                        "name": "$10",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/gift_card.png?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "1d4ec307-a710-48c3-a0ec-e7c1941c1035",
+                        "variant_id": "9d63a156-052f-4975-a243-7e726a7a275d",
+                        "sku": "GiftCardShopify45181684514977",
+                        "barcode": "45181684514977",
+                        "name": "$25",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/gift_card.png?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "1d4ec307-a710-48c3-a0ec-e7c1941c1035",
+                        "variant_id": "21b9fdb4-724a-4516-a1df-c9b7601034d2",
+                        "sku": "GiftCardShopify45181684547745",
+                        "barcode": "45181684547745",
+                        "name": "$50",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/gift_card.png?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "1d4ec307-a710-48c3-a0ec-e7c1941c1035",
+                        "variant_id": "dbe903fc-e1c6-414b-a2d4-dffd01f18d32",
+                        "sku": "GiftCardShopify45181684580513",
+                        "barcode": "45181684580513",
+                        "name": "$100",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/gift_card.png?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "27a3ada7-5c16-453b-915f-9565fe1d500b",
+                        "variant_id": "591d3cf8-3cb3-4c35-99b7-434919210648",
+                        "sku": "TheDraftSnShopify45181684711585",
+                        "barcode": "45181684711585",
+                        "name": "Default Title",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/Main_5127218a-8f6c-498f-b489-09242c0fab0a.jpg?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "40a5178c-8249-464b-a729-aa13702b7de4",
+                        "variant_id": "aad8d279-3526-4957-b915-0fc37091be00",
+                        "sku": "TheOutofStShopify45181684744353",
+                        "barcode": "45181684744353",
+                        "name": "Default Title",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/Main_f44a9605-cd62-464d-b095-d45cdaa0d0d7.jpg?v=1759480116",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "bb532d48-8500-4ed9-a2e9-5b000633bf03",
+                        "variant_id": "055d99dd-07f4-40d9-be74-ba8fd5222151",
+                        "sku": "TheArchiveShopify45181684678817",
+                        "barcode": "45181684678817",
+                        "name": "Default Title",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/Main_52f8e304-92d9-4a36-82af-50df8fe31c69.jpg?v=1759480116",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "bbdba1b7-1554-4093-86f3-ca697712625c",
+                        "variant_id": "719805a9-085a-4334-9324-26fb2c5c65ef",
+                        "sku": "TheCollectShopify45181684646049",
+                        "barcode": "45181684646049",
+                        "name": "Default Title",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/Main_0a40b01b-5021-48c1-80d1-aa8ab4876d3d.jpg?v=1759480116",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    },
+                    {
+                        "product_uuid": "e9639440-e1d2-4b83-b6d4-878c61aedf52",
+                        "variant_id": "04d165d9-fe0b-4295-b988-3a88722de68c",
+                        "sku": "TheCompletShopify45181684809889",
+                        "barcode": "45181684809889",
+                        "name": "Ice",
+                        "alarm_number": 100,
+                        "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/Main_589fc064-24a2-4236-9eaf-13b2bd35d21d.jpg?v=1759480117",
+                        "variant_image_url": null,
+                        "available": 0,
+                        "shortage": 100
+                    }
+                ]
+            },
+            "top_sales": [
+                {
+                    "product_uuid": "4e3ae6d8-dc75-47d7-abdf-d547207bcf18",
+                    "variant_id": "9e40c174-6f13-4926-8cd5-cc4e1bf69ae9",
+                    "sku": "test-0-soup",
+                    "barcode": "1111111111111",
+                    "name": "Default Title",
+                    "quantity": 2,
+                    "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/soap-image-1.png?v=1759480108",
+                    "variant_image_url": null
+                },
+                {
+                    "product_uuid": "16e347e3-9b35-4a3c-9049-96547053a38b",
+                    "variant_id": "8f8277bc-e415-4ef4-aad8-83b0b82de177",
+                    "sku": "SellingPlaShopify45181685006497",
+                    "barcode": "45181685006497",
+                    "name": "Selling Plans Ski Wax",
+                    "quantity": 1,
+                    "main_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/snowboard_wax.png?v=1759480117",
+                    "variant_image_url": "https://cdn.shopify.com/s/files/1/0676/8371/3185/files/snowboard_wax.png?v=1759480117"
+                }
+            ]
+        }
+    }
+}

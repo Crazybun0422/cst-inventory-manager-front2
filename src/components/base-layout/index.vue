@@ -16,6 +16,7 @@
     >
       <Navigate
         @loading="(loading) => (containerLoading = loading)"
+        @toggle-collapse="toggleExpand"
         :isCollapse="isCollapse"
       >
       </Navigate>
@@ -23,11 +24,6 @@
 
     <el-container class="container-main">
       <el-header class="layout-header">
-        <i
-          @click="toggleExpand"
-          style="margin-left: 10px; font-size: 22px; cursor: pointer"
-          :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"
-        ></i>
         <HomeHeader></HomeHeader>
       </el-header>
       <el-main>
@@ -80,7 +76,7 @@ export default {
 }
 .base-layout {
   width: 100%;
-  height: 99vh;
+  height: 100vh;
   color: #333;
   .layout-header {
     display: flex;
@@ -92,6 +88,8 @@ export default {
     padding: 0px 0px;
     // background-color: #f7fafc;
     min-height: calc(100vh - 120px);
+    border-radius: 12px;
+    overflow: hidden; /* Ensure inner content (tabs/pages/backgrounds) clip to rounded corners */
   }
   .layout-footer {
     border-top: 1px solid #ebebeb;

@@ -14,7 +14,8 @@ const mutations = {
     state.visitedViews.push(Object.assign({}, view))
   },
   ADD_P_DS_VISITED_VIEW: (state, view) => {
-    if (config.roles.includes(view.roleType)) {
+    // Only push to P tabs for provider/operator
+    if (config.pRoleList.includes(view.roleType)) {
       if (state.pVisitedViews.some((v) => v.name === view.name)) return
       state.pVisitedViews.push(Object.assign({}, view))
 

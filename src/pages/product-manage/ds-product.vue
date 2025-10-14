@@ -1,10 +1,4 @@
-<!--
-* @Description: 产品
-* @Author: tj
-* @Date: 2022
-* @LastEditors: tj
-* @LastEditTime: 2022
--->
+<!-- Product list (DS) -->
 <template>
   <div v-loading="loading">
     <PageHead :title="$t('message.productManagement.product')">
@@ -14,71 +8,97 @@
         </el-button>
       </template>
     </PageHead>
-    <SearchCard>
-      <el-form :inline="true" :model="queryData" class="demo-form-inline">
-        <el-form-item>
-          <el-select v-model="queryData.queryKeyWord" :placeholder="$t('common.pleaseSelect')">
-            <el-option v-for="item in fieldOptions" :key="item.value" :label="item.label[$languageType]"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="queryData.remoteQuerySelect" filterable remote reserve-keyword style="width: 240px"
-            :placeholder="$t('common.pleaseInput') + ' ' + queryKeyWordValue" :remote-method="remoteQueryMethod"
-            :loading="remoteLoading" :loading-text="$t('common.loading')" clearable>
-            <el-option v-for="item in remoteQueryOptions" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
+    <div class="search-toolbar-wrapper">
+      <SearchCard class="ds-search-card" :class="{ collapsed: searchCollapsed }">
+      <el-form :inline="true" :model="queryData" class="demo-form-inline" v-show="!searchCollapsed">
+          <transition name="fade-slide">
+            <div class="toolbar-body">
+              <el-form-item>
+                <el-select v-model="queryData.queryKeyWord" :placeholder="$t('common.pleaseSelect')">
+                  <el-option v-for="item in fieldOptions" :key="item.value" :label="item.label[$languageType]"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.remoteQuerySelect" filterable remote reserve-keyword style="width: 240px"
+                  :placeholder="$t('common.pleaseInput') + ' ' + queryKeyWordValue" :remote-method="remoteQueryMethod"
+                  :loading="remoteLoading" :loading-text="$t('common.loading')" clearable>
+                  <el-option v-for="item in remoteQueryOptions" :key="item.value" :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </el-form-item>
 
-        <el-form-item>
-          <el-select v-model="queryData.category" :placeholder="$t('common.classification')">
-            <el-option v-for="(item, key) in productCategoryMap" :key="key" :label="item[$languageType]"
-              :value="key"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="queryData.shop" :placeholder="$t('message.storeSettings.pleaseSelectShop')" filterable
-            style="width: 230px">
-            <el-option v-for="item in shops" :key="item" :label="item" :value="item">
-              <span class="custom-select-option-left">{{ item }}</span>
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-date-picker v-model="queryData.date" type="daterange" :range-separator="$t('common.to')"
-            :start-placeholder="$t('common.startTime')" :end-placeholder="$t('common.endTime')" format="yyyy-MM-dd"
-            value-format="yyyy-MM-dd">
-          </el-date-picker>
-        </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.category" :placeholder="$t('common.classification')">
+                  <el-option v-for="(item, key) in productCategoryMap" :key="key" :label="item[$languageType]"
+                    :value="key"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-select v-model="queryData.shop" :placeholder="$t('message.storeSettings.pleaseSelectShop')"
+                  filterable style="width: 230px">
+                  <el-option v-for="item in shops" :key="item" :label="item" :value="item">
+                    <span class="custom-select-option-left">{{ item }}</span>
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-date-picker v-model="queryData.date" type="daterange" :range-separator="$t('common.to')"
+                  :start-placeholder="$t('common.startTime')" :end-placeholder="$t('common.endTime')"
+                  format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+                </el-date-picker>
+              </el-form-item>
 
-        <el-form-item>
-          <el-button icon="el-icon-search" @click="queryProduct(false)">{{
-            $t('common.search')
-          }}</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-radio-group v-model="objectSpanFlag" size="small" @input="onChangeFlag">
-            <el-radio-button :label="false">{{
-              $t('message.productManagement.classicList')
-            }}</el-radio-button>
-            <el-radio-button :label="true">{{
-              $t('message.productManagement.newList')
-            }}</el-radio-button>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-    </SearchCard>
+              <el-form-item>
+                <el-button icon="el-icon-search" @click="queryProduct(false)">{{
+                  $t('common.search')
+                }}</el-button>
+              </el-form-item>
+              <el-form-item>
+                <el-radio-group v-model="listMode" size="small" @input="onChangeListMode">
+                  <el-radio-button label="classic">{{ $t('message.productManagement.classicList') }}</el-radio-button>
+                  <el-radio-button label="new">{{ $t('message.productManagement.newList') }}</el-radio-button>
+                  <el-radio-button label="standard">{{ $i18n && $i18n.te('message.productManagement.standardList') ?
+                    $t('message.productManagement.standardList') : '标准卡片' }}</el-radio-button>
+                </el-radio-group>
+              </el-form-item>
+            </div>
+          </transition>
+</el-form>
+      </SearchCard>
+      <transition name="fade-bump">
+        <div class="toolbar-toggle-center">
+          <button class="toggle-pill" @click="searchCollapsed = !searchCollapsed"
+            :title="$t(searchCollapsed ? 'common.expand' : 'common.collapse')">
+            <i :class="searchCollapsed ? 'el-icon-caret-bottom' : 'el-icon-caret-top'"></i>
+          </button>
+        </div>
+      </transition>
+    </div>
     <CstTableHead>
       <template slot="top-right">
         <el-button plain icon="el-icon-printer" @click="prnitProductTag">
           {{ $t('common.print') }}
         </el-button>
+        <el-popover placement="bottom-start" trigger="click" width="260" v-model="cardsSettingVisible"
+          @show="ensureLoadCardsSettings">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="white-space:nowrap">{{ $t('common.setting') }}</span>
+            <el-input-number v-model="cardsPerRow" :min="1" :max="10" @change="onCardsPerRowChange"></el-input-number>
+            <span style="white-space:nowrap">/ {{ $t('message.productManagement.product') }}</span>
+          </div>
+          <div style="text-align:right;margin-top:8px">
+            <el-button size="mini" type="primary" @click="saveCardsPerRow">{{ $t('common.confirm') }}</el-button>
+          </div>
+          <el-button slot="reference" icon="el-icon-s-operation" circle size="mini" style="margin-left:8px"
+            :title="$t('common.setting')"></el-button>
+        </el-popover>
       </template>
     </CstTableHead>
-    <!-- 新表单 使用翻页-->
-    <div v-show="objectSpanFlag">
+    <!-- 新表?使用翻页-->
+    <div v-show="listMode === 'new'">
       <el-table :data="newTableData" style="width: 100%" :max-height="tableMaxHeight" :span-method="objectSpanMethod"
         size="small" @selection-change="oldHandleSelectionChange" :row-class-name="tableRowClassName"
         @cell-mouse-leave="cellMouseLeave" @cell-mouse-enter="cellMouseEnter">
@@ -253,7 +273,7 @@
       </el-row>
     </div>
     <!-- 经典表单  使用无限加载 -->
-    <div v-show="!objectSpanFlag">
+    <div v-show="listMode === 'classic'">
       <el-table ref="productTable" :data="newTableData" v-el-table-infinite-scroll="loadTableData"
         :infinite-scroll-disabled="newRowDisabled" :infinite-scroll-distance="5" size="small"
         :max-height="tableMaxHeight" highlight-current-row @select="handleSelectionChange"
@@ -434,6 +454,13 @@
       </el-table>
     </div>
 
+    <!-- 标准卡片视图 -->
+    <div v-show="listMode === 'standard'">
+      <ProductStandardCards ref="standardCards" :items="tableData" :selectedProductIds="selectedProductIds"
+        :cardsPerRow="cardsPerRow" :loading="scrollLoading" @toggle-select="onToggleCardSelection"
+        @open-edit="showModal" @open-detail="showDetail" @load-more="onStandardLoadMore" />
+    </div>
+
     <!-- 新增,修改产品 -->
     <EditProduct :visible="productVisible" :currentData="currentData" :originalDataArr="tableData" @close="onCloseModal"
       @confirm="onConfirm"></EditProduct>
@@ -458,6 +485,8 @@ import { copyData, getTagStyle } from '@/common/common-func'
 import EditProduct from '@/pages/product-manage/components/edit-product.vue'
 import ProductDetail from '@/pages/product-manage/components/product-detail.vue'
 import PrintProductTagDialog from '@/pages/product-manage/components/print-product-tag-dialog.vue'
+import ProductStandardCards from '@/pages/product-manage/components/product-standard-cards.vue'
+import { loadGlobalSettings, updateGlobalSettings } from '@/common/global-user-settings.js'
 import {
   productCategoryMap,
   productUnitMap,
@@ -480,7 +509,8 @@ export default {
     SearchCard,
     AuthImg,
     CstTableHead,
-    PrintProductTagDialog
+    PrintProductTagDialog,
+    ProductStandardCards
   },
   data() {
     return {
@@ -499,7 +529,9 @@ export default {
       productCategoryMap: productCategoryMap,
       productUnitMap: productUnitMap,
       productStatusMap: productStatusMap,
-      objectSpanFlag: true, //true是新列表(合并的) false是经典列表(分裂的)
+      // 视图模式：classic/new/standard
+      listMode: 'standard',
+      objectSpanFlag: true, //true是新列表(合并? false是经典列?分裂?
       tableData: [],
       newTableData: [],
       curPage: 1,
@@ -520,6 +552,12 @@ export default {
         shop: 'ALL'
       },
       scrollLoading: false,
+      // 搜索卡片缩放
+      searchCollapsed: true,
+      // 标准卡片视图设置
+      cardsSettingVisible: false,
+      cardsPerRow: 4,
+      settingsLoaded: false,
       curRowArr: [],
       needSpanFields: [
         'operate',
@@ -536,6 +574,71 @@ export default {
   methods: {
     copyData,
     getTagStyle,
+    getCardsPerRowLocal () {
+      const k1 = 'product_standard_cards_per_row'
+      const v = Number(localStorage.getItem(k1) || 0)
+      if (!isNaN(v) && v > 0) return Math.max(1, Math.min(10, v))
+      return 0
+    },
+    setCardsPerRowLocal (n) {
+      const k1 = 'product_standard_cards_per_row'
+      try { localStorage.setItem(k1, String(n)) } catch (e) {}
+    },
+    async ensureLoadCardsSettings() {
+      if (this.settingsLoaded) return
+      try {
+        const data = await loadGlobalSettings({ roleType: this.roleType })
+        const v = Number((data && (data.product_standard_cards_per_row || data['product_standard_cards_per_row'])) || 0)
+        if (v && v > 0) this.cardsPerRow = Math.max(1, Math.min(10, v)); this.setCardsPerRowLocal(this.cardsPerRow)
+      } catch { }
+      this.settingsLoaded = true
+    },
+    async saveCardsPerRow() {
+      const n = Math.max(1, Math.min(10, Number(this.cardsPerRow) || 1))
+      this.cardsPerRow = n
+      try {
+        await updateGlobalSettings({ updates: { product_standard_cards_per_row: n }, roleType: this.roleType })
+      } catch { }
+      this.setCardsPerRowLocal(n)
+      this.cardsSettingVisible = false
+      this.$nextTick(() => this.ensureStandardFill())
+    },
+    onCardsPerRowChange() {
+      this.$nextTick(() => this.ensureStandardFill())
+    },
+    onStandardLoadMore() {
+      if (this.listMode !== 'standard') return
+      if (this.tableData.length >= this.total || this.scrollLoading) return
+      this.curPage++
+      this.queryProduct(true, { cur_page: this.curPage })
+    },
+    onToggleCardSelection(product) {
+      const id = product && product.product_uuid
+      if (!id) return
+      const has = this.multipleSelection.some(x => x && x.product_uuid === id)
+      if (has) {
+        this.multipleSelection = this.multipleSelection.filter(x => x && x.product_uuid !== id)
+      } else {
+        this.multipleSelection = [...this.multipleSelection, { product_uuid: id }]
+      }
+    },
+    ensureStandardFill () {
+      if (this.listMode !== 'standard') return
+      let loops = 0
+      const run = () => {
+        if (loops++ > 50) return
+        if (this.tableData.length >= this.total) return
+        const comp = this.$refs.standardCards
+        const need = comp && typeof comp.needsMoreToFill === 'function' ? comp.needsMoreToFill() : false
+        if (need) {
+          if (this.scrollLoading) { setTimeout(run, 80); return }
+          this.curPage += 1
+          this.queryProduct(true, { cur_page: this.curPage })
+          setTimeout(run, 120)
+        }
+      }
+      setTimeout(run, 0)
+    },
     prnitProductTag() {
       if (this.multipleSelection.length === 0) {
         this.$message({
@@ -550,7 +653,7 @@ export default {
       this.printProductTagDialogVisible = true
     },
     loadTableData() {
-      if (!this.objectSpanFlag) {
+      if (this.listMode === 'classic') {
         if (this.tableData.length >= this.total) {
           return
         }
@@ -569,10 +672,10 @@ export default {
       }
 
       this.multipleSelection = list
-      if (!objectSpanFlag) {
+      if (this.listMode === 'classic') {
         this.$refs.productTable.clearSelection()
         this.newTableData.forEach((ele) => {
-          //这里的数据是从后端拿到后进行分裂处理的 不是直接拿来用的
+          //这里的数据是从后端拿到后进行分裂处理?不是直接拿来用的
           if (ele.variant_id === row.variant_id) {
             this.$refs.productTable.toggleRowSelection(ele, true)
             this.multipleSelection = [ele]
@@ -607,17 +710,20 @@ export default {
     onConfirm() {
       this.productVisible = false
       this.objectSpanFlag = false
+      this.listMode = 'classic'
       this.curPage = 1
       this.queryProduct(false, { cur_page: this.curPage })
     },
-    onChangeFlag(val) {
+    onChangeListMode(val) {
+      this.objectSpanFlag = (val === 'new')
       this.curPage = 1
-      // this.newTableData = this.formatProductData(this.tableData)
-      // // 如果合并显示总数 如何不合并显示变种数
-      // this.total = this.newTableData.length
       this.queryProduct(false, { cur_page: this.curPage })
+      if (val === 'standard') {
+        this.ensureLoadCardsSettings()
+        this.$nextTick(() => this.ensureStandardFill())
+      }
     },
-    // 对数据进行格式化  一个变种一行以 变种为维度
+    // 对数据进行格式化  一个变种一行以 变种为维?
     formatProductData(data) {
       const formattedData = []
       data.forEach((item) => {
@@ -645,10 +751,10 @@ export default {
             ...variant
           }
           if (this.objectSpanFlag) {
-            // 如果合并 每一条都是全部变种信息
+            // 如果合并 每一条都是全部变种信?
             newVariant.product_variants = item.product_variants
           } else {
-            //如果不合并 每个变种都只有单个变种信息
+            //如果不合?每个变种都只有单个变种信?
             newVariant.product_variants = [variant]
           }
           formattedData.push(newVariant)
@@ -692,9 +798,9 @@ export default {
             // this.newTableData = this.formatProductData(res.data.result)
             // this.total = res.data.total
             // this.objectSpanFlag = false
-            // 如果是无限加载 则后面追加数据
+            // 如果是无限加?则后面追加数?
             if (isScroll) {
-              // 经典列表  分裂数据的形式
+              // 经典列表  分裂数据的形?
               // this.objectSpanFlag = false
               this.tableData = this.tableData.concat(
                 utils.deepClone(res.data.result)
@@ -703,7 +809,7 @@ export default {
                 this.formatProductData(utils.deepClone(res.data.result))
               )
             } else {
-              // 新列表  合并数据的形式
+              // 新列? 合并数据的形?
               // this.objectSpanFlag = true
               this.tableData = utils.deepClone(res.data.result)
               this.getRowCount()
@@ -721,6 +827,9 @@ export default {
         .finally(() => {
           this.loading = false
           this.scrollLoading = false
+          if (this.listMode === 'standard') {
+            this.$nextTick(() => this.ensureStandardFill())
+          }
           if (isScroll) {
             this.$nextTick(() => {
               this.$refs.productTable.clearSelection()
@@ -746,7 +855,7 @@ export default {
       this.curPage = val
       this.queryProduct(false, { cur_page: this.curPage })
     },
-    // 标记需要合并的行
+    // 标记需要合并的?
     getRowCount() {
       this.tableData.forEach((el, index) => {
         el.rowspan = el.product_variants.length
@@ -854,7 +963,7 @@ export default {
     //   this.filteredOptions = this.remoteQueryOptions.filter(option =>
     //     option.label.toLowerCase().includes(value.toLowerCase())
     //   );
-    //   //保留输入的值
+    //   //保留输入的?
     //   console.log('value: ', value);
     //   this.queryData.remoteQuerySelect = value
     // },
@@ -868,12 +977,12 @@ export default {
         return 'high-row-class'
       }
     },
-    // 鼠标移入单元格时触发的方法
+    // 鼠标移入单元格时触发的方?
     cellMouseEnter(row, column, cell, event) {
       this.curRowArr = [row]
     },
 
-    // 鼠标移出单元格时触发的方法
+    // 鼠标移出单元格时触发的方?
     cellMouseLeave(row, column, cell, event) {
       this.curRowArr = []
     }
@@ -881,10 +990,20 @@ export default {
 
   mounted() {
     this.curPage = 1
-    this.queryProduct(false, { cur_page: this.curPage })
+    const after = () => {
+      this.queryProduct(false, { cur_page: this.curPage })
+    }
+    try {
+      const p = this.ensureLoadCardsSettings && this.ensureLoadCardsSettings()
+      if (p && typeof p.then === 'function') {
+        p.finally(after)
+      } else {
+        after()
+      }
+    } catch (e) { after() }
   },
   computed: {
-    //计算queryKeyWord的value值
+    //计算queryKeyWord的value?
     queryKeyWordValue() {
       return this.fieldOptions.find(
         (item) => item.value === this.queryData.queryKeyWord
@@ -896,6 +1015,9 @@ export default {
 
     newRowDisabled() {
       return this.noMore
+    },
+    selectedProductIds() {
+      return Array.from(new Set(this.multipleSelection.map(x => x && x.product_uuid).filter(Boolean)))
     },
     shops() {
       let shopList = ['ALL']
@@ -910,7 +1032,7 @@ export default {
       return shopList
     },
     tableMaxHeight() {
-      // 视窗高度-(头部-搜索框)-(分页-底部)  通用列表自适应视窗高度
+      // 视窗高度-(头部-搜索?-(分页-底部)  通用列表自适应视窗高度
       return window.innerHeight - 290 - 90
     }
   },
@@ -926,8 +1048,10 @@ export default {
     }
   },
   created() {
+    const v = this.getCardsPerRowLocal()
+    if (v) this.cardsPerRow = v
     //增加防抖节流 规避滑动加载短时间内多次触发
-    this.loadTableData = throttle(this.loadTableData, 3000) // 例如，每3秒触发一次
+    this.loadTableData = throttle(this.loadTableData, 3000) // 例如，每3秒触发一?
   }
 }
 </script>
@@ -935,5 +1059,182 @@ export default {
 <style scoped lang="scss">
 ::v-deep .high-row-class {
   background: #f5f7fa;
+}
+
+/* Search toolbar collapsed-as-line UX */
+.ds-search-card {
+  position: relative;
+}
+
+.ds-search-card .el-form {
+  transition: all .18s ease;
+}
+
+.ds-search-card .el-card__body {
+  position: relative;
+  overflow: visible;
+}
+
+.search-toolbar-wrapper {
+  position: relative;
+}
+
+.toolbar-toggle-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -25px;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.toolbar-toggle-center .toggle-pill {
+  pointer-events: auto;
+  width: 28px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--custom-border-color2);
+  background: var(--custom-background-color6);
+  color: var(--custom-font-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  z-index: 2001;
+}
+
+.toolbar-toggle-center .toggle-pill i {
+  font-size: 14px;
+}
+
+.toolbar-toggle-center .toggle-pill {
+  cursor: pointer;
+}
+
+.toolbar-toggle-center .toggle-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+}
+
+.fade-bump-enter-active,
+.fade-bump-leave-active {
+  transition: all .18s ease;
+}
+
+.fade-bump-enter {
+  opacity: 0;
+  transform: translateY(-6px) scale(.92);
+}
+
+.fade-bump-leave-to {
+  opacity: 0;
+  transform: translateY(6px) scale(.92);
+}
+
+.ds-search-card.collapsed .el-card__body {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.ds-search-card.collapsed .el-form-item {
+  margin-bottom: 0 !important;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all .18s ease;
+}
+
+.fade-slide-enter,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>
+
+<style>
+/* Make search toolbar collapse behavior global (match ds-order) */
+.ds-search-card {
+  position: relative;
+  z-index: 20;
+}
+
+.ds-search-card .el-form {
+  display: flex;
+  align-items: center;
+}
+
+.ds-search-card .el-card__body {
+  position: relative;
+  overflow: visible;
+}
+
+.search-toolbar-wrapper {
+  position: relative;
+}
+
+.toolbar-toggle-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -25px;
+  pointer-events: none;
+}
+
+.toolbar-toggle-center .toggle-pill {
+  pointer-events: auto;
+  width: 28px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--custom-border-color2);
+  background: var(--custom-background-color6);
+  color: var(--custom-font-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  cursor: pointer;
+}
+
+.toolbar-toggle-center .toggle-pill i {
+  font-size: 14px;
+}
+
+.toolbar-toggle-center .toggle-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+}
+
+/* Collapsed state trims padding for a compact line */
+.ds-search-card.collapsed .el-card__body {
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+/* Ensure inner form shrinks to 1px when collapsed */
+.ds-search-card.collapsed .demo-form-inline {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+/* Form items compact when collapsed */
+.ds-search-card.collapsed .el-form-item {
+  margin-bottom: 0 !important;
+}
+
+/* Smooth show/hide for the toolbar body */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all .18s ease;
+}
+
+.fade-slide-enter,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

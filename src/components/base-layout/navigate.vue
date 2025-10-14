@@ -8,9 +8,15 @@
 <template>
   <div class="navigate-style">
     <div>
-      <div class="cst-logo">
+      <div
+        class="cst-logo"
+        role="button"
+        tabindex="0"
+        @click="onToggle"
+        @keydown.enter.prevent="onToggle"
+      >
         <img src="../../assets/logo-no-background.svg" alt style="height: 50px; line-height: 50px" />
-        <span>Wing DropShip</span>
+        <span v-show="!isCollapse">Wing DropShip</span>
       </div>
 
     </div>
@@ -94,13 +100,13 @@ export default {
   methods: {
     shopifyDirectAuth,
     getWarehouseRelatedInfo,
+    onToggle () {
+      this.$emit('toggle-collapse')
+    },
     handleSelect(index) {
       console.log('选择了菜单项，索引为:', index);
     },
-    toggleExpand() {
-      this.isCollapse = !this.isCollapse;
-      this.$emit('update:collapse', this.isCollapse);
-    },
+    // toggleExpand 留空以避免修改 Prop；改为通过上面的 onToggle 通知父组件
     // 获取店铺
     getShopList() {
       this.$emit('loading', true)
@@ -204,7 +210,7 @@ export default {
 .cst-logo span {
   font-size: 18px;
   font-weight: bold;
-  margin-left: 10px;
+  margin-left: 5px;
   /* 让文字与图片保持适当间距 */
   background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
   /* 渐变色 */
@@ -212,4 +218,5 @@ export default {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
+.cst-logo { cursor: pointer; user-select: none; }
 </style>

@@ -19,6 +19,14 @@ function isShopifyExpandable() {
 }
 export const navigationDataProvider = [
   {
+    title: 'navigate.sourcing',
+    name: 'p-sourcing',
+    path: '/p/sourcing',
+    icon: 'el-icon-search',
+    component: 'sourcing/p-sourcing.vue',
+    role: ['Provider', 'Operator']
+  },
+  {
     title: 'navigate.myInventory',
     name: 'myinventory',
     path: '',
@@ -171,6 +179,7 @@ export const navigationDataProvider = [
       },
     ]
   },
+
   {
     title: 'navigate.storeManagement',
     name: 'p-store-management',
@@ -275,6 +284,21 @@ export const navigationDataProvider = [
   }
 ]
 export const navigationDataDs = [
+  {
+    title: 'navigate.dashboard',
+    name: 'ds-dashboard',
+    path: '/ds/home',
+    icon: 'el-icon-s-data',
+    role: ['Drop shipper']
+  },
+  {
+    title: 'navigate.sourcing',
+    name: 'ds-sourcing',
+    path: '/ds/sourcing',
+    icon: 'el-icon-search',
+    role: ['Drop shipper'],
+    component: 'sourcing/ds-sourcing.vue'
+  },
   {
     title: 'navigate.myInventory',
     name: 'myinventory',

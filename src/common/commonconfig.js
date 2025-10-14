@@ -95,6 +95,7 @@ export const config = {
   signUpPath: '/signup',
   toolsConfig: '/tools/config',
   privatePolicy: '/private-policy',
+  priceTag: '/price-tag',
   estyTermsOfService: '/esty-collector-tos',
   estyPrivacyPolicy: '/esty-collector-pp',
   mainPage: '/',

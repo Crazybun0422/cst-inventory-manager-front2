@@ -1,5 +1,11 @@
 <template>
   <div class="erp-login">
+    <WorldFlightBackground :lang="$i18n.locale" :flight-count="4" :feather-density="24" :feather-scale="1.15" />
+    <div class="brand-logo">
+      <img src="@/assets/logo-no-background.svg" alt="logo" />
+      <div class="brand-logo-text">Wing Dropship</div>
+    </div>
+    <div class="top-hint"><span class="gradient-text flicker">Authorizing…</span></div>
     <div class="progress-bar" :style="{ width: progress + '%' }" v-if="isVerifying"></div>
     <!-- 自定义顶部进度条 -->
     <el-container class="erp-login-container">
@@ -20,9 +26,11 @@ import {
   shopifyDirectAuth,
 } from '@/common/common-func'
 import { dropShipper, config } from '@/common/commonconfig'
+import WorldFlightBackground from '@/components/world-flight-background.vue'
 
 export default {
   name: 'erp-login',
+  components: { WorldFlightBackground },
   data() {
     return {
       isVerifying: false, // 控制进度条显示
@@ -208,5 +216,104 @@ export default {
   /* 平滑增加宽度 */
   z-index: 9999;
   /* 保证进度条在最上方 */
+}
+
+.erp-login {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background-color: transparent;
+}
+
+.erp-login-container {
+  position: relative;
+  z-index: 2;
+}
+
+.brand-logo {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  z-index: 4000;
+}
+
+.brand-logo img {
+  width: 120px;
+  height: 120px;
+  display: block;
+  top: -24px;
+  margin-left: 30px;
+
+}
+
+.brand-logo-text {
+  position: absolute;
+  top: 120px;
+  left: 8px;
+  font-size: 28px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.top-hint {
+  position: fixed;
+  top: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 3500;
+  font-size: 14px;
+}
+
+.top-hint .flicker {
+  animation: blinkGlow 1.2s ease-in-out infinite;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Overrides for progress bar look */
+.progress-bar {
+  height: 4px !important;
+  background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500) !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 14px rgba(255, 140, 0, 0.45);
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFF6B3 0%, #FFD700 40%, rgba(255, 69, 0, 0.0) 70%);
+  filter: blur(0.4px);
+}
+
+/* Larger hint font */
+.top-hint {
+  font-size: 16px !important;
+}
+
+@keyframes blinkGlow {
+
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.45), 0 0 18px rgba(255, 140, 0, 0.35);
+  }
+
+  50% {
+    opacity: 0.5;
+    text-shadow: 0 0 22px rgba(255, 215, 0, 0.85), 0 0 36px rgba(255, 140, 0, 0.65);
+  }
 }
 </style>

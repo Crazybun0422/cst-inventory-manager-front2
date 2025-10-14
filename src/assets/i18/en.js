@@ -1,4 +1,4 @@
-const en_us = {
+﻿const en_us = {
   "logoText": "Continuserv",
   "slogan": "Boost your business through tech",
   "ourProducts": "Our Products",
@@ -35,25 +35,25 @@ const en_us = {
     faq: { title: "Frequently Asked Questions" }
   },
   features: {
-    item1: "★ Download and save reviews from Etsy product listings.",
-    item2: "★ Export reviews from individual items or entire shops.",
-    item3: "★ Sort reviews by rating, date, helpful count, and author.",
-    item4: "★ Export data in XLSX and CSV formats.",
-    item5: "★ View and analyze reviews on a user-friendly dashboard."
+    item1: "鈽?Download and save reviews from Etsy product listings.",
+    item2: "鈽?Export reviews from individual items or entire shops.",
+    item3: "鈽?Sort reviews by rating, date, helpful count, and author.",
+    item4: "鈽?Export data in XLSX and CSV formats.",
+    item5: "鈽?View and analyze reviews on a user-friendly dashboard."
   },
   pricing: {
     free: {
       title: "Free",
-      item1: "★ Export up to 88 reviews with one click.",
-      item2: "★ Unlimited downloads per month.",
-      item3: "★ Export data as Excel & CSV."
+      item1: "鈽?Export up to 88 reviews with one click.",
+      item2: "鈽?Unlimited downloads per month.",
+      item3: "鈽?Export data as Excel & CSV."
     },
     pro: {
       title: "Pro",
       recommended: "RECOMMENDED",
-      item1: "★ One-click export for unlimited reviews.",
-      item2: "★ Unlimited downloads per month.",
-      item3: "★ Export data as Excel & CSV.",
+      item1: "鈽?One-click export for unlimited reviews.",
+      item2: "鈽?Unlimited downloads per month.",
+      item3: "鈽?Export data as Excel & CSV.",
       price: "$8.88 per Month"
     }
   },
@@ -80,12 +80,21 @@ const en_us = {
     },
     q6: {
       title: "Why am I getting a 403 error when using the extension?",
-      answer: "A 403 error might occur due to Etsy’s risk control mechanisms. To resolve this issue:\n- Increase the request interval in the extension settings (e.g., 4~8 seconds).\n- Try refreshing the Dashboard multiple times.\n- If the issue persists, wait for a short period and try again later.\nIf none of these solutions work, please contact our support team for further assistance."
+      answer: "A 403 error might occur due to Etsy鈥檚 risk control mechanisms. To resolve this issue:\n- Increase the request interval in the extension settings (e.g., 4~8 seconds).\n- Try refreshing the Dashboard multiple times.\n- If the issue persists, wait for a short period and try again later.\nIf none of these solutions work, please contact our support team for further assistance."
     }
   },
   footer: {
     tos: "Terms of Service",
     pp: "Privacy Policy"
+  },
+  tasks: {
+    centerTitle: 'Tasks',
+    taskName: 'Task',
+    progress: 'Progress',
+    exportToXls: 'Export Orders to XLSX',
+    fulfillOrders: 'Fulfill Orders',
+    exportShopifyOrders: 'Export Shopify Orders',
+    syncProducts: 'Sync Products'
   },
   message: {
 
@@ -107,6 +116,8 @@ const en_us = {
       googleProcessing: 'Google Signing in...',
     },
     signUp: {
+      initialPassword: 'Initial Password',
+      keepPasswordSafe: 'Please save this password; it is shown only once.',
       linkedExistingAccounts: "Link Existed Accounts",
       linkedExistingAccountsDescription: "If you already have an account, please choose to associate it with an existing account for unified management. Otherwise, please choose to generate a new account.",
       generateNewAccount: "Generate new account",
@@ -244,6 +255,7 @@ const en_us = {
       recipientIsCountry: "Recipient's country",
       generateDeliveryNote: 'Generate delivery note',
       qualityInspectionSynchronization: 'Quality inspection synchronization',
+      measurementSyncToProduct: 'Sync measurements to product',
       calculateShippingCosts: 'Calculate shipping costs',
       batchModifyWeight: 'Batch modify weight',
       productQuantity: 'Product quantity',
@@ -391,6 +403,7 @@ const en_us = {
       uploadCategoryPictures: 'Upload category pictures',
       classicList: 'Classic list',
       newList: 'New list',
+      standardList: 'Standard cards',
       specificDescription: 'Specific description',
       product: 'Product',
       productSelect: 'Please select product',
@@ -645,6 +658,9 @@ const en_us = {
       copyOrder: "Copy order",
       clickToSelectProduct: "Click to select product",
       submitConfirmation: 'Submit confirmation',
+      enableStatusFilter: 'Use status filter',
+      disableStatusFilter: 'Disable status filter',
+      keywordPlaceholder: 'Please input Tracking Number/Reference/Order ID/SKU',
       returnTtoDraft: 'Return to draft',
       cutOffOrders: 'Cut off orders',
       productImages: 'Product images',
@@ -695,7 +711,7 @@ const en_us = {
       notesList: "Notes list",
       packageVolume: "Package volume(L*W*H)[CBM]",
     },
-    // 订单信息
+    // 璁㈠崟淇℃伅
     orderInfo: {
       severalPerTicket: 'Several per ticket',
       salesman: 'Salesman',
@@ -737,7 +753,7 @@ const en_us = {
       unfulfilled: 'Unfinished',
       partiallyFulfilled: 'Partially Completed',
 
-      // 订单信息 - 子表
+      // 璁㈠崟淇℃伅 - 瀛愯〃
       emailLabel: 'Email',
       emailPlaceholder: 'Please enter email',
       phoneLabel: 'Phone',
@@ -775,7 +791,7 @@ const en_us = {
       orderDetails: "Order details",
       printOrderDetails: "Print order details",
     },
-    // 产品信息
+    // 浜у搧淇℃伅
     productInfo: {
       firstSku: 'First SKU',
       price: 'Price',
@@ -786,7 +802,7 @@ const en_us = {
       productDetail: 'Product detail',
       editProductDetail: 'Edit Product Details',
 
-      // 产品信息 - 编辑产品详情
+      // 浜у搧淇℃伅 - 缂栬緫浜у搧璇︽儏
       productVariantTitle: 'Product Variant',
       barcode: 'Barcode',
       barcodePlaceholder: 'Please enter barcode',
@@ -794,7 +810,7 @@ const en_us = {
       compareAtPrice: 'Compare At Price',
       formRulesTitle: 'Title cannot be empty'
     },
-    // 用户信息
+    // 鐢ㄦ埛淇℃伅
     userInfo: {
       preferenceSettings: 'Preference Settings',
       defaultLanguage: 'Default Language',
@@ -816,7 +832,7 @@ const en_us = {
       userName: 'User Name',
       editUserInfo: 'Edit User Information',
 
-      // 编辑用户信息弹窗
+      // 缂栬緫鐢ㄦ埛淇℃伅寮圭獥
       formLabelShopUrl: 'Shop URL',
       formLabelUserCode: 'User Code',
       formLabelUserName: 'User Name',
@@ -835,15 +851,15 @@ const en_us = {
       delay2Hours: '2 Hours',
       delay3Hours: '3 Hours',
       delay4Hours: '4 Hours',
-      // 新增翻译
+      // 鏂板缈昏瘧
       logisticIncludeCountries: 'Logistics Include Countries:',
       logisticExcludeCountries: 'Logistics Exclude Countries:',
 
-      // 上传弹窗
+      // 涓婁紶寮圭獥
       shopSelectPlaceholder: 'Please select shop',
       uploadFilePlaceholder: 'Please upload file',
     },
-    // 店铺管理
+    // 搴楅摵绠＄悊
     storeSettings: {
       startSyncProducts: 'Start Sync Products',
       startSyncProductsMessage: "Syncing products...",
@@ -883,6 +899,7 @@ const en_us = {
   },
   navigate: {
     home: 'Home',
+    dashboard: 'Dashboard',
     myInventory: 'My Inventory',
     storeManagement: 'Store Management',
     warehousingServices: 'Warehousing Services',
@@ -928,6 +945,7 @@ const en_us = {
     stockAdjustment: "Stock Adjustment",
     customerManagement: "Customer Management",
     customer: "Customer",
+    sourcing: 'Sourcing',
   },
   common: {
     exportedEntries: "Exported Entries",
@@ -970,6 +988,8 @@ const en_us = {
     pleaseInput: 'Please input',
     loading: 'Loading...',
     add: 'Add',
+    submit: 'Submit',
+    history: 'History',
     to: 'To',
     search: 'Search',
     reset: 'Reset',
@@ -1031,6 +1051,8 @@ const en_us = {
     download: 'Download',
     upload: "Upload",
     tool: 'Tool',
+    expand: 'Expand',
+    collapse: 'Collapse',
     batchModify: 'Batch modify',
     mark: 'Mark',
     describe: 'Describe',
@@ -1101,6 +1123,89 @@ const en_us = {
     setting: "Setting",
     rescan: "Rescan",
     creator: "Creator",
+    tips: "Tips",
+    start: "Start",
+    inquiryConfirmation: "Confirm quote",
+  },
+  sourcing: {
+    heroTitle: 'Quick Sourcing',
+    productUrlOrKeyword: 'Product link or keywords',
+    urlPlaceholder: 'Paste product URL or enter keywords',
+    expectedPrice: 'Expected price',
+    pricePlaceholder: 'e.g. 9.99',
+    purchaseReason: 'Purchase reason',
+    lowestPrice: 'Lowest price',
+    purchaseReasonPlaceholder: 'Optional note for this request',
+    moreOptions: 'More options',
+    // Options (copy update): first card should be concise
+    inputImageDescPrice: 'Image',
+    inputImageDescPriceDesc: 'Describe what you want and your target price',
+    existingProducts: 'Sourcing existing products',
+    existingProductsDesc: 'Use an internal product ID to request a quote',
+    imageUrl: 'Image URL',
+    imageUrlPlaceholder: 'https://example.com/image.png',
+    descriptionPlaceholder: 'Describe the product, size, color, etc.',
+    productId: 'Product ID',
+    productIdPlaceholder: 'e.g. PD-10001',
+    historyTitle: 'Sourcing History',
+    confirmStart: 'Start sourcing now? (This will notify the customer)',
+    sourcingId: 'Sourcing ID',
+    itemsCount: 'Items',
+    urlRequired: 'Link or keywords are required',
+    urlInvalid: 'Please enter a valid URL starting with http:// or https:// (e.g. https://domain.com/path or http://sub.domain.com/product?id=123)',
+    priceRequired: 'Expected price is required',
+    imageUrlRequired: 'Image URL is required',
+    imageRequired: 'Please upload an image',
+    descRequired: 'Description is required',
+    productIdRequired: 'Product ID is required',
+    // URL mode banner + input
+    insertLinkTitle: 'Insert a link',
+    acceptableLinksIntro: 'Acceptable links are',
+    aliexpress: 'Aliexpress',
+    alibaba: 'Alibaba',
+    amazon: 'Amazon',
+    detailsLinkText: 'Details',
+    etcSuffix: 'etc.',
+    supportItemsTitle: 'Sourcing Support Items',
+    insertUrlPlaceholder: 'Insert your url',
+    feedbackQuote: 'Supplier quote',
+    partUrlPlaceholder: 'Enter part of the URL',
+    adminSearchPlaceholder: 'URL / user code / sourcing ID',
+    disableStatusFilter: 'Disable status filter',
+    enableStatusFilter: 'Use status filter',
+    showAll: 'Show all (disable status filter)',
+    urlExistsTitle: 'This link already exists',
+    urlExistsMessage: 'We have found sourcing records for this URL. Do you still want to submit a new request? You can also view existing records:',
+    viewExistingRecords: 'View existing records',
+    submitSuccessTitle: 'Request submitted',
+    submitSuccessMsg: 'Your sourcing request has been submitted. You can review it in History:',
+    openHistory: 'Open History',
+    statusTips: {
+      submitted: 'Your sourcing request has been received. Service has not started yet.',
+      sourcing: 'Our team is actively sourcing items for you. Results will be available shortly.',
+      pending_confirmation: 'A supplier and quote have been provided. Expand the item to review the quote and confirm.',
+      completed: 'You have confirmed the quote. We are preparing the next steps of the service.'
+    },
+    // Reminder for pending confirmations
+    pendingConfirmTitle: 'Quotes awaiting your confirmation',
+    pendingConfirmMessage: 'You have {count} sourcing request(s) with quotes ready. Please review and confirm to proceed.',
+    reviewNow: 'Review now'
+  },
+  dashboard: {
+    daily: 'Daily',
+    processing: 'Processing',
+    delivered: 'Delivered',
+    ordersTrend: 'Orders Trend',
+    day: 'Day',
+    month: 'Month',
+    lowStockTitle: 'Low-stock Products',
+    salesTitle: 'Top Sales',
+    image: 'Image',
+    name: 'Product',
+    shortage: 'Shortage',
+    sales: 'Sales',
+    noData: 'No data',
+    available: 'Available'
   },
   date: {
     year: "Year",
@@ -1124,3 +1229,4 @@ const en_us = {
 }
 
 export default en_us
+

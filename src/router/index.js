@@ -13,6 +13,7 @@ export const mainPageRoutes = [
     path: config.mainPage,
     component: () => import('@/pages/main-page/mainPage.vue'),
   },
+
   {
     path: config.checkout, // Dynamic route parameter `planId`
     name: 'checkout',
@@ -80,7 +81,11 @@ export const constantRoutes = [
     name: 'private-policy',
     component: () => import('@/pages/components/private-policy.vue')
   },
-
+  {
+    path: config.priceTag,
+    name: 'price-tag',
+    component: () => import('@/pages/price-tag.vue')
+  },
   // erp-login 页面路由，使用 dropShipperConfig.erpLoginPath
   {
     path: `${dropShipperConfig.erpLoginPath}`,
@@ -117,6 +122,11 @@ export const constantRoutes = [
     path: `${dropShipperConfig.forgotPasswordPath}`,
     name: 'ds-turn-the-table',
     component: () => import('@/pages/forget-password')
+  },
+  {
+    path: '/price-tag',
+    name: 'price-tag',
+    component: () => import('@/pages/price-tag.vue')
   },
   {
     path: '/404',
@@ -162,7 +172,7 @@ export const asyncRoutes = [
         name: 'ds-home',
         component: () => import('@/pages/home/home-page.vue'),
         meta: {
-          title: 'navigate.home',
+          title: 'navigate.dashboard',
           roles: ['Drop shipper']
         }
       },
