@@ -202,25 +202,25 @@
         <el-table-column :label="$t('message.productManagement.qualityInspectionWeight') + '[KG]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_weight_kg }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_weight_kg') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionLength') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_length_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_length_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionWidth') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_width_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_width_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionHeight') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_height_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_height_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column label="operate" fixed="left" width="100" prop="operate">
@@ -474,6 +474,7 @@ export default {
           if (!variant) {
             return
           }
+
           if (index === 0) {
             variant.rowspan = item.rowspan
           } else {
@@ -552,6 +553,7 @@ export default {
       this.tableData.forEach((el, index) => {
         const variants = Array.isArray(el.product_variants)
           ? el.product_variants.filter((variantItem) => variantItem)
+
           : []
         el.rowspan = variants.length
       })
@@ -704,6 +706,7 @@ export default {
           }
         }
       })
+
     }
   },
 
