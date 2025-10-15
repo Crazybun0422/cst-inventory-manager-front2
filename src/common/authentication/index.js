@@ -48,7 +48,7 @@ export function loadHomeData(roleType = null) {
 // home信息存储和相关操作
 export function storeHomeData(resData, roleType = null) {
   return (() => {
-    const { user, avatar_base64, shops, default_settings } = resData
+    const { user, user_avatar_url, shops, default_settings } = resData
     // 可能需要将 角色信息存到cookie 或者localstorage
     localStorage.setItem(
       this.config[this.roleType].userName,
@@ -61,10 +61,6 @@ export function storeHomeData(resData, roleType = null) {
     localStorage.setItem(
       this.config[this.roleType].userRelatedId,
       user.user_related_id
-    )
-    localStorage.setItem(
-      this.config[this.roleType].avatarBase64,
-      avatar_base64
     )
     // 保存店铺信息
     localStorage.setItem(

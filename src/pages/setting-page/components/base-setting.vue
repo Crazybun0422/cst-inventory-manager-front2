@@ -25,7 +25,7 @@
           <el-col :span="12">
             <el-form-item :label="$t('message.myAccount.avatar')">
               <el-avatar
-                :size="100"
+                :size="140"
                 shape="circle"
                 @error="errorHandler"
                 :src="imageSrc"
@@ -39,6 +39,7 @@
                 :before-upload="beforeProductUpload"
                 :on-success="handleProductSuccess"
                 :show-file-list="false"
+                :disabled="avatarUploading"
               >
                 <el-button icon="el-icon-upload">{{
                   $t('message.myAccount.change')
@@ -86,13 +87,48 @@
           }}</el-button>
         </el-form-item>
       </el-form>
+      <el-dialog
+        :visible.sync="showAvatarCropper"
+        :title="$t('message.myAccount.avatar')"
+        width="520px"
+        :close-on-click-modal="!avatarUploading"
+        :close-on-press-escape="!avatarUploading"
+        :show-close="!avatarUploading"
+        @closed="onCropperClosed"
+      >
+        <div class="avatar-cropper-wrapper" v-loading="avatarUploading">
+          <div class="avatar-cropper-stage">
+            <img
+              v-if="cropperImageUrl"
+              ref="avatarCropperImage"
+              :src="cropperImageUrl"
+              alt="avatar preview"
+              class="avatar-cropper-image"
+            />
+          </div>
+        </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="onCropperCancel" :disabled="avatarUploading">{{
+            $t('common.cancel')
+          }}</el-button>
+          <el-button
+            type="primary"
+            @click="onCropperConfirm"
+            :loading="avatarUploading"
+          >
+            {{ $t('common.confirm') }}
+          </el-button>
+        </span>
+      </el-dialog>
     </div>
   </div>
 </template>
 
 <script>
 import PageHead from '@/components/page-head.vue'
-import { getGlobalHeaders, loadHomeData } from '@/common/common-func'
+import { getGlobalHeaders } from '@/common/common-func'
+import Cropper from 'cropperjs'
+import 'cropperjs/dist/cropper.css'
 export default {
   name: 'base-setting',
   props: {
@@ -105,6 +141,11 @@ export default {
       imageSrc: '',
       picturePreviewList: [],
       uploadReqestHeader: {},
+      showAvatarCropper: false,
+      cropperImageUrl: '',
+      cropperInstance: null,
+      pendingAvatarFile: null,
+      avatarUploading: false,
       baseSettingForm: {
         email: '',
         phone_number: '',
@@ -134,7 +175,6 @@ export default {
     errorHandler () {
       return true
     },
-    loadHomeData,
     getGlobalHeaders,
     // 图片上传
     handleProductSuccess (res, file, fileList) {
@@ -150,15 +190,130 @@ export default {
     beforeProductUpload (file) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
       const isAllowedType = allowedTypes.includes(file.type)
-      const isLt2M = file.size / 1024 / 1024 < 2;
-
+      const isLt2M = file.size / 1024 / 1024 < 2
       if (!isAllowedType) {
-        this.$message.error(this.$t('message.signUp.imgFormatError'));
+        this.$message.error(this.$t('message.signUp.imgFormatError'))
       }
       if (!isLt2M) {
-        this.$message.error(this.$t('message.signUp.imgSizeLimitError'));
+        this.$message.error(this.$t('message.signUp.imgSizeLimitError'))
       }
-      return isAllowedType && isLt2M;
+      if (!isAllowedType || !isLt2M) {
+        return false
+      }
+      this.prepareAvatarCropper(file)
+      return false
+    },
+    prepareAvatarCropper (file) {
+      this.destroyCropper()
+      this.pendingAvatarFile = file
+      this.cropperImageUrl = URL.createObjectURL(file)
+      this.showAvatarCropper = true
+      this.$nextTick(() => {
+        const image = this.$refs.avatarCropperImage
+        if (!image) {
+          return
+        }
+        this.cropperInstance = new Cropper(image, {
+          viewMode: 1,
+          aspectRatio: 1,
+          dragMode: 'move',
+          autoCropArea: 1,
+          background: false,
+          guides: false,
+          movable: true,
+          zoomable: true,
+          scalable: false,
+          rotatable: false,
+          cropBoxResizable: false,
+          cropBoxMovable: false,
+          minContainerWidth: 360,
+          minContainerHeight: 360
+        })
+      })
+    },
+    onCropperCancel () {
+      if (this.avatarUploading) {
+        return
+      }
+      this.showAvatarCropper = false
+    },
+    onCropperClosed () {
+      this.destroyCropper()
+    },
+    async onCropperConfirm () {
+      if (!this.cropperInstance) {
+        this.$message.error(this.$t('common.operationFailed'))
+        return
+      }
+      const canvas = this.cropperInstance.getCroppedCanvas({
+        width: 400,
+        height: 400,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      })
+      if (!canvas) {
+        this.$message.error(this.$t('common.operationFailed'))
+        return
+      }
+      const mimeType = (this.pendingAvatarFile && this.pendingAvatarFile.type) || 'image/png'
+      this.avatarUploading = true
+      try {
+        const blob = await this.getCanvasBlob(canvas, mimeType)
+        await this.uploadCroppedAvatar(blob)
+        this.showAvatarCropper = false
+      } catch (error) {
+        console.error('Failed to crop or upload avatar', error)
+        this.$message.error(this.$t('common.operationFailed'))
+      } finally {
+        this.avatarUploading = false
+      }
+    },
+    getCanvasBlob (canvas, mimeType) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error('Canvas to blob conversion failed'))
+          }
+        }, mimeType)
+      })
+    },
+    async uploadCroppedAvatar (blob) {
+      const fileName = this.pendingAvatarFile ? this.pendingAvatarFile.name : `avatar-${Date.now()}.png`
+      const formData = new FormData()
+      formData.append('files', blob, fileName)
+      const res = await this.$ajax({
+        url: '/api-prefix/api/upload-img',
+        method: 'POST',
+        data: formData,
+        roleType: this.roleType,
+        customHeaders: this.uploadReqestHeader
+      })
+      if (!this.$isRequestSuccessful(res.code)) {
+        if (res.msg && res.msg[this.$languageType]) {
+          this.$message.error(res.msg[this.$languageType])
+        } else {
+          this.$message.error(this.$t('common.operationFailed'))
+        }
+        throw new Error('Avatar upload failed')
+      }
+      const file = {
+        file_url: res.data && res.data[0] ? res.data[0] : '',
+        raw: blob
+      }
+      this.handleProductSuccess(res, file)
+    },
+    destroyCropper () {
+      if (this.cropperInstance) {
+        this.cropperInstance.destroy()
+        this.cropperInstance = null
+      }
+      if (this.cropperImageUrl) {
+        URL.revokeObjectURL(this.cropperImageUrl)
+        this.cropperImageUrl = ''
+      }
+      this.pendingAvatarFile = null
     },
     handleAvatarSuccess (res, file) {
       this.baseSettingForm.user_avatar_url = URL.createObjectURL(file.raw);
@@ -176,17 +331,7 @@ export default {
             if (this.$isRequestSuccessful(res.code)) {
               this.$message.success(this.$t('common.operationSuccessful'))
               this.getBaseSetting()
-              this.loadHomeData().then((res) => {
-                if (this.$isRequestSuccessful(res.code)) {
-                  const { avatar_base64 } = res.data
-                  localStorage.setItem('avatarBase64', avatar_base64)
-                  //刷新页面
-                  window.location.reload()
-                }
-                // 统一拦截里面做了其他code的处理
-              }).catch((error) => {
-                console.error(error);
-              })
+              window.dispatchEvent(new CustomEvent('personal-info-updated'))
 
             }
           }).catch((error) => {
@@ -219,7 +364,7 @@ export default {
       }).then(res => {
         const href = URL.createObjectURL(res);//转成url格式
         if (href !== null && href !== undefined) {
-          // 给变量赋值
+          // 给变量赋�?
           this.imageSrc = href
         }
       })
@@ -245,8 +390,11 @@ export default {
   },
   mounted () {
     this.uploadReqestHeader = this.getGlobalHeaders(this.roleType)
-    // 获取用户基础设置 并赋值
+    // 获取用户基础设置 并赋�?
     this.getBaseSetting()
+  },
+  beforeDestroy () {
+    this.destroyCropper()
   },
   watch: {
     "baseSettingForm.user_avatar_url": {
@@ -264,5 +412,53 @@ export default {
 .flex-container {
   display: flex;
   flex-direction: column;
+}
+
+.avatar {
+  margin-bottom: 16px;
+}
+
+.avatar-uploader {
+  margin-top: 8px;
+}
+
+.avatar-cropper-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 360px;
+}
+
+.avatar-cropper-stage {
+  position: relative;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+}
+
+.avatar-cropper-image {
+  display: block;
+  max-width: 100%;
+}
+
+::v-deep .avatar-cropper-stage .cropper-container,
+::v-deep .avatar-cropper-stage .cropper-canvas {
+  border-radius: 50%;
+}
+
+::v-deep .avatar-cropper-stage .cropper-view-box,
+::v-deep .avatar-cropper-stage .cropper-face {
+  border-radius: 50%;
+}
+
+::v-deep .avatar-cropper-stage .cropper-view-box {
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.45);
+  border: 2px solid #fff;
+}
+
+::v-deep .avatar-cropper-stage .cropper-dashed {
+  border-color: transparent;
 }
 </style>

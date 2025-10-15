@@ -408,6 +408,27 @@ import utils from '@/utils/index'
 import { getLanguage } from '@/common/language'
 import { warehousingTypeList, productUnitMap, entryCategoryList, packingTypeList, deliveryMethodList } from "@/common/field-maping"
 import ProductPage from '@/pages/warehousing-servers/components/product-page.vue'
+
+const createInitialAddWarehousingForm = () => ({
+  storage_uuid: '',
+  entry_type: '',
+  delivery_method: '',
+  packing_type: '',
+  entry_category: '',
+  shipment_number: "",
+  return_order_number: "",
+  product_info: {
+    box_number: "",
+    quantity: "",
+    shipment_number: "",
+    unit: "",
+    product_detail: {
+      product_uuid: "",
+      variant_id: ""
+    }
+  },
+  reference_number: ''
+})
 export default {
   name: 'edit-addwarehousing',
   components: {
@@ -428,26 +449,7 @@ export default {
       searchProductVisible: false,
       multipleSelection: [],
       tableData: [],
-      addWarehousingForm: {
-        storage_uuid: '',
-        entry_type: '',
-        delivery_method: '',
-        packing_type: '',
-        entry_category: '',
-        shipment_number: "",
-        return_order_number: "",
-        product_info: {
-          box_number: "",
-          quantity: "",
-          shipment_number: "",
-          unit: "",
-          product_detail: {
-            product_uuid: "",
-            variant_id: ""
-          }
-        },
-        reference_number: ''
-      },
+      addWarehousingForm: createInitialAddWarehousingForm(),
       productForm: {
         box_number: '',
         quantity: 1,
@@ -497,6 +499,30 @@ export default {
   },
 
   methods: {
+    resetAddWarehousingForm () {
+      Object.assign(this.addWarehousingForm, createInitialAddWarehousingForm())
+      this.setDefaultSelectValues()
+    },
+    setDefaultSelectValues () {
+      if (this.operationType !== 'add') {
+        return
+      }
+      if (!this.addWarehousingForm.storage_uuid && this.storageList?.length) {
+        this.addWarehousingForm.storage_uuid = this.storageList[0].value
+      }
+      if (!this.addWarehousingForm.packing_type && this.packingTypeList?.length) {
+        this.addWarehousingForm.packing_type = this.packingTypeList[0].value
+      }
+      if (!this.addWarehousingForm.entry_type && this.warehousingTypeList?.length) {
+        this.addWarehousingForm.entry_type = this.warehousingTypeList[0].value
+      }
+      if (!this.addWarehousingForm.delivery_method && this.deliveryMethodList?.length) {
+        this.addWarehousingForm.delivery_method = this.deliveryMethodList[0].value
+      }
+      if (!this.addWarehousingForm.entry_category && this.entryCategoryList?.length) {
+        this.addWarehousingForm.entry_category = this.entryCategoryList[0].value
+      }
+    },
     formatUnit (row, column) {
       // 在这里执行单位映射操作
 
@@ -672,16 +698,30 @@ export default {
         this.modalVisible = newValue
         this.tableData = []
         this.$refs.modalForm?.resetFields()
-        if (this.operationType == 'edit') {
-          // 这里需要吧当前数据赋值给两个表单
-          this.addWarehousingForm = utils.deepClone(this.currentData)
-          this.tableData = utils.deepClone(this.currentData.product_info)
-        } else {
-          this.modalForm = { product_variants: [] }
+        if (newValue) {
+          if (this.operationType == 'edit') {
+            // 这里需要吧当前数据赋值给两个表单
+            this.addWarehousingForm = utils.deepClone(this.currentData)
+            this.tableData = utils.deepClone(this.currentData.product_info)
+          } else {
+            this.resetAddWarehousingForm()
+            this.modalForm = { product_variants: [] }
+            this.$nextTick(() => {
+              this.$refs.addWarehousingForm?.clearValidate()
+            })
+          }
+        } else if (this.operationType === 'add') {
+          this.resetAddWarehousingForm()
         }
 
       },
       immediate: true
+    },
+    storageList: {
+      handler () {
+        this.setDefaultSelectValues()
+      },
+      deep: true
     }
 
   }

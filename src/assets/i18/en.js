@@ -894,7 +894,20 @@
     inventory: {
       totalStock: 'Total Stock',
       locationStock: 'Stock By Location',
-      customerStock: 'Stock By Customer'
+      customerStock: 'Stock By Customer',
+      availableStock: 'Available stock',
+      draftOccupied: 'Draft occupied',
+      unpickedOccupied: 'Unpicked occupied',
+      pickingOccupied: 'Picking occupied',
+      locationStockQuantity: 'Location stock',
+      entryNumbers: 'Entry numbers',
+      batchNumbers: 'Batch numbers',
+      productionDate: 'Production date',
+      expirationDate: 'Expiration date',
+      inboundTime: 'Inbound time',
+      ownerCode: 'Owner code',
+      columnSettings: 'Column settings',
+      searchPlaceholder: 'Name/Product barcode/SKU'
     }
   },
   navigate: {
@@ -971,6 +984,8 @@
     outputFormat: 'Output format',
     numberType: 'Number type',
     number: 'Number',
+    pageNumber: 'Page number',
+    pageSize: 'Page size',
     toExamine: 'To examine',
     noDataAvailable: 'No data available',
     import: 'Import',
