@@ -141,7 +141,6 @@ export default {
         localStorage.setItem(this.config.dropShipper.accessToken, access)
         localStorage.setItem(this.config.dropShipper.userName, username)
         localStorage.setItem(this.config.dropShipper.userRole, 'Drop shipper')
-        localStorage.setItem(this.config.dropShipper.avatarBase64, null)
       }
       if (shop_url) this.shopUrl = shop_url
       if (password && !duplicateUsername) {

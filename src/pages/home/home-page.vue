@@ -21,7 +21,8 @@ import {
   provider,
   dropShipper,
   providerName,
-  dropShipperName
+  dropShipperName,
+  config
 } from '@/common/commonconfig'
 import PHome from '@/pages/home/p-home.vue'
 import DsHome from '@/pages/home/ds-home.vue'
@@ -45,27 +46,25 @@ export default {
   methods: {
     loadHomeData,
     loadAndSaveHomeData() {
-      this.loadHomeData()
+      const routeRoleKey = this.$route?.path?.startsWith(config.provider.pathPrefix)
+        ? config.provider.role
+        : config.dropShipper.role
+      this.loadHomeData(routeRoleKey)
         .then((res) => {
-          const { user, avatar_base64, shops } = res
+          const { user, user_avatar_url, shops } = res
           if (user.user_role === this.providerName) {
             localStorage.setItem('pUserName', user.username)
             localStorage.setItem('pUserRole', user.user_role)
             localStorage.setItem('pUserRelatedId', user.user_related_id)
-            localStorage.setItem('pAvatarBase64', avatar_base64)
+            localStorage.setItem(config.provider.shopList, JSON.stringify(shops || []))
           } else {
             localStorage.setItem('userName', user.username)
             localStorage.setItem('userRole', user.user_role)
             localStorage.setItem('userRelatedId', user.user_related_id)
-            localStorage.setItem('avatarBase64', avatar_base64)
+            localStorage.setItem(config.dropShipper.shopList, JSON.stringify(shops || []))
           }
-          // 保存店铺信息
-          console.log(res)
-          localStorage.setItem(this.config[this.roleType].shopList, JSON.stringify(shops))
-
-          // 统一拦截里面做了其他code的处理
         })
-        .catch((error) => { })
+        .catch(() => { })
     }
   },
   computed: {},

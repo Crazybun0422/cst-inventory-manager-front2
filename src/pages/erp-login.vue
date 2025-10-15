@@ -140,7 +140,6 @@ export default {
                     localStorage.setItem(config[dropShipper].userName, username)
                     localStorage.setItem(config[dropShipper].userRole, user_role)
                     // localStorage.setItem(this.config.userRelatedId, user.user_related_id);
-                    localStorage.setItem(config[dropShipper].avatarBase64, null)
                     // 如果token有值 需要判断是否已关联仓储
                     this.getWarehouseRelatedInfo()
                       .then((resData) => {

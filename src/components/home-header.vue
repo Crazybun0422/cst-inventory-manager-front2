@@ -307,6 +307,7 @@ export default {
       userName: '',
       addOperatorFormVisible: false,
       avatarBase64: require('../assets/notImg.png'),
+      avatarObjectUrl: null,
       websocketId: '',
       websocketUrl: getWebSocketUrl(), // 现有的 WebSocket URL
       websock: null,
@@ -334,6 +335,76 @@ export default {
     getAlarmList,
     getWarehouseRelatedInfo,
     get_unread_message_count,
+    normalizeAvatarSrc(rawValue) {
+      if (!rawValue && rawValue !== 0) {
+        return { type: 'fallback' }
+      }
+      const trimmed = String(rawValue).trim()
+      if (!trimmed) {
+        return { type: 'fallback' }
+      }
+      if (/^data:image\//i.test(trimmed) || /^(https?:)?\/\//i.test(trimmed)) {
+        return { type: 'direct', value: trimmed }
+      }
+      if (/^[A-Za-z0-9+/=]+$/.test(trimmed) && trimmed.length > 100) {
+        return { type: 'direct', value: `data:image/png;base64,${trimmed}` }
+      }
+      const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+      return { type: 'fetch', value: path }
+    },
+    async fetchAvatarFromProfile() {
+      try {
+        const res = await this.$ajax({
+          url: '/api-prefix/api/customer-settings/personal_info',
+          method: 'GET',
+          roleType: this.roleType
+        })
+        if (this.$isRequestSuccessful(res.code)) {
+          const avatarUrl = res.data?.user_avatar_url || ''
+          await this.applyAvatarSource(avatarUrl)
+          return
+        }
+      } catch (error) {
+        console.error('Failed to fetch personal info', error)
+      }
+      await this.applyAvatarSource('')
+    },
+    async applyAvatarSource(rawValue) {
+      const normalized = this.normalizeAvatarSrc(rawValue)
+      if (this.avatarObjectUrl) {
+        URL.revokeObjectURL(this.avatarObjectUrl)
+        this.avatarObjectUrl = null
+      }
+      if (normalized.type === 'direct') {
+        this.avatarBase64 = normalized.value
+        return
+      }
+      if (normalized.type === 'fetch') {
+        try {
+          const blob = await this.$ajax({
+            url: `/api-prefix/api/img${normalized.value}`,
+            method: 'GET',
+            headers: {
+              'Content-Type': 'image'
+            },
+            roleType: this.roleType,
+            responseType: 'blob'
+          })
+          if (blob) {
+            const href = URL.createObjectURL(blob)
+            this.avatarObjectUrl = href
+            this.avatarBase64 = href
+            return
+          }
+        } catch (error) {
+          console.error('Failed to load avatar image', error)
+        }
+      }
+      this.avatarBase64 = require('../assets/images/defaultAbstract.png')
+    },
+    handlePersonalInfoUpdated() {
+      this.fetchAvatarFromProfile()
+    },
     themeChange(val) {
       localStorage.setItem('theme', val)
       this.$store.dispatch('user/changeSetting', {
@@ -851,13 +922,9 @@ export default {
       this.getAlarm()
     }
     this.userName = localStorage.getItem(this.config[this.roleType].userName)
-    this.avatarBase64 = localStorage.getItem(this.config[this.roleType].avatarBase64) ?
-      ('data:image/png;base64,' +
-        localStorage.getItem(this.config[this.roleType].avatarBase64)) : require('../assets/images/defaultAbstract.png')
+    this.fetchAvatarFromProfile()
+    window.addEventListener('personal-info-updated', this.handlePersonalInfoUpdated)
     document.addEventListener('click', this.handleOutsideClick)
-  },
-  beforeDestroy() {
-    document.removeEventListener('click', this.handleOutsideClick)
   },
   computed: {
     ...mapGetters(['shouldRefreshEmails'])
@@ -886,6 +953,12 @@ export default {
     }
   },
   beforeDestroy() {
+    if (this.avatarObjectUrl) {
+      URL.revokeObjectURL(this.avatarObjectUrl)
+      this.avatarObjectUrl = null
+    }
+    document.removeEventListener('click', this.handleOutsideClick)
+    window.removeEventListener('personal-info-updated', this.handlePersonalInfoUpdated)
     if (this.socket) {
       this.socket.close()
     }

@@ -408,11 +408,10 @@ export default {
     loadAndSaveHomeData() {
       this.loadHomeData()
         .then((resData) => {
-          const { user, avatar_base64, shops, default_settings } = resData
+          const { user, user_avatar_url, shops, default_settings } = resData
           localStorage.setItem(this.config[this.roleType].userName, user.username)
           localStorage.setItem(this.config[this.roleType].userRole, user.user_role)
           localStorage.setItem(this.config[this.roleType].userRelatedId, user.user_related_id)
-          localStorage.setItem(this.config[this.roleType].avatarBase64, avatar_base64)
           localStorage.setItem(this.config[this.roleType].shopList, JSON.stringify(shops))
           this.$store.dispatch('tagsView/delAllPDSViews')
 
