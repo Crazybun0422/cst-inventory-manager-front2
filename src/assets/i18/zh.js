@@ -898,7 +898,20 @@ const zh_cn = {
     inventory: {
       totalStock: '总库存',
       locationStock: '库位库存',
-      customerStock: '分仓库存'
+      customerStock: '分仓库存',
+      availableStock: '可用库存',
+      draftOccupied: '草稿占用',
+      unpickedOccupied: '未拣占用',
+      pickingOccupied: '拣货占用',
+      locationStockQuantity: '库位库存数量',
+      entryNumbers: '入库单号',
+      batchNumbers: '批次号',
+      productionDate: '生产日期',
+      expirationDate: '过期日期',
+      inboundTime: '入库时间',
+      ownerCode: '客户代码',
+      columnSettings: '列设置',
+      searchPlaceholder: '名称/产品条码/SKU'
     }
   },
   navigate: {
@@ -977,6 +990,8 @@ const zh_cn = {
     outputFormat: '输出格式',
     numberType: '号码类型',
     number: '序号',
+    pageNumber: '页码',
+    pageSize: '每页条数',
     toExamine: '审核',
     noDataAvailable: '暂无数据',
     import: '导入',
