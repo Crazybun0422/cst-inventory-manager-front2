@@ -236,6 +236,7 @@
           size="small"
           style="width: 100%"
           :empty-text="$t('common.noDataAvailable')"
+          :span-method="locationSpanMethod"
         >
           <el-table-column
             v-if="isColumnVisible('image')"
@@ -382,6 +383,7 @@
           size="small"
           style="width: 100%"
           :empty-text="$t('common.noDataAvailable')"
+          :span-method="customerSpanMethod"
         >
           <el-table-column
             v-if="isColumnVisible('image')"
@@ -848,16 +850,19 @@ export default {
         const results = rawData.results && typeof rawData.results === 'object' ? rawData.results : {}
         Object.keys(results).forEach(locationKey => {
           const items = Array.isArray(results[locationKey]) ? results[locationKey] : []
-          items.forEach(item => {
+          const normalizedItems = items.length ? items : [{ location: locationKey }]
+          normalizedItems.forEach((item, idx) => {
             rows.push({
               ...item,
-              location: item.location || locationKey
+              location: item.location || locationKey,
+              __locationRowspan: idx === 0 ? normalizedItems.length : 0
             })
           })
         })
+        const effectiveTotal = total > rows.length ? total : rows.length
         return {
           rows,
-          total: total || rows.length
+          total: effectiveTotal
         }
       }
       if (this.activeTab === 'customer') {
@@ -865,16 +870,19 @@ export default {
         const results = rawData.results && typeof rawData.results === 'object' ? rawData.results : {}
         Object.keys(results).forEach(userKey => {
           const items = Array.isArray(results[userKey]) ? results[userKey] : []
-          items.forEach(item => {
+          const normalizedItems = items.length ? items : [{ user_code: userKey }]
+          normalizedItems.forEach((item, idx) => {
             rows.push({
               ...item,
-              user_code: item.user_code || userKey
+              user_code: item.user_code || userKey,
+              __ownerRowspan: idx === 0 ? normalizedItems.length : 0
             })
           })
         })
+        const effectiveTotal = total > rows.length ? total : rows.length
         return {
           rows,
-          total: total || rows.length
+          total: effectiveTotal
         }
       }
       return fallback
@@ -996,6 +1004,30 @@ export default {
               : this.$refs.customerTable
         tableRef && tableRef.doLayout && tableRef.doLayout()
       })
+    },
+    locationSpanMethod({ row, column }) {
+      if (column.property === 'location') {
+        const span = row.__locationRowspan
+        if (typeof span === 'number') {
+          if (span > 0) {
+            return { rowspan: span, colspan: 1 }
+          }
+          return { rowspan: 0, colspan: 0 }
+        }
+      }
+      return { rowspan: 1, colspan: 1 }
+    },
+    customerSpanMethod({ row, column }) {
+      if (column.property === 'user_code') {
+        const span = row.__ownerRowspan
+        if (typeof span === 'number') {
+          if (span > 0) {
+            return { rowspan: span, colspan: 1 }
+          }
+          return { rowspan: 0, colspan: 0 }
+        }
+      }
+      return { rowspan: 1, colspan: 1 }
     },
     resetColumnSelection() {
       const defaults = this.getDefaultVisibleColumns(this.activeTab)
