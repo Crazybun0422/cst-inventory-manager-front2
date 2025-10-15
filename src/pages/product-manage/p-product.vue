@@ -468,9 +468,13 @@ export default {
           shop: item.shop
         }
         const variants = Array.isArray(item.product_variants)
-          ? item.product_variants
+          ? item.product_variants.filter((variantItem) => variantItem)
           : []
         variants.forEach((variant, index) => {
+          if (!variant) {
+            return
+          }
+
           if (index === 0) {
             variant.rowspan = item.rowspan
           } else {
@@ -548,7 +552,8 @@ export default {
     getRowCount() {
       this.tableData.forEach((el, index) => {
         const variants = Array.isArray(el.product_variants)
-          ? el.product_variants
+          ? el.product_variants.filter((variantItem) => variantItem)
+
           : []
         el.rowspan = variants.length
       })
@@ -690,32 +695,18 @@ export default {
         'quality_inspection_width_cm',
         'quality_inspection_height_cm'
       ]
-      const qualityInfo = source?.quality_inspection_info
+      const qualityInfo = source && source.quality_inspection_info
+      if (!qualityInfo) {
+        return
+      }
       fieldKeys.forEach((key) => {
         if (target[key] === undefined || target[key] === null) {
-          if (qualityInfo && qualityInfo[key] !== undefined && qualityInfo[key] !== null) {
+          if (qualityInfo[key] !== undefined && qualityInfo[key] !== null) {
             target[key] = qualityInfo[key]
-          } else if (source && source[key] !== undefined && source[key] !== null) {
-            target[key] = source[key]
           }
         }
       })
-    },
-    getQualityInspectionField(row, key) {
-      if (!row) {
-        return ''
-      }
-      if (row[key] !== undefined && row[key] !== null) {
-        return row[key]
-      }
-      if (
-        row.quality_inspection_info &&
-        row.quality_inspection_info[key] !== undefined &&
-        row.quality_inspection_info[key] !== null
-      ) {
-        return row.quality_inspection_info[key]
-      }
-      return ''
+
     }
   },
 
