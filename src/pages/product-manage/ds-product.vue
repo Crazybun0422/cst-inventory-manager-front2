@@ -52,13 +52,12 @@
               </el-form-item>
 
               <el-form-item>
-                <el-button icon="el-icon-search" @click="queryProduct(false)">{{
+                <el-button icon="el-icon-search" @click="queryProduct()">{{
                   $t('common.search')
                 }}</el-button>
               </el-form-item>
               <el-form-item>
                 <el-radio-group v-model="listMode" size="small" @input="onChangeListMode">
-                  <el-radio-button label="classic">{{ $t('message.productManagement.classicList') }}</el-radio-button>
                   <el-radio-button label="new">{{ $t('message.productManagement.newList') }}</el-radio-button>
                   <el-radio-button label="standard">{{ $i18n && $i18n.te('message.productManagement.standardList') ?
                     $t('message.productManagement.standardList') : '标准卡片' }}</el-radio-button>
@@ -97,7 +96,7 @@
         </el-popover>
       </template>
     </CstTableHead>
-    <!-- 新表?使用翻页-->
+    <!-- 新表单 使用翻页 -->
     <div v-show="listMode === 'new'">
       <el-table :data="newTableData" style="width: 100%" :max-height="tableMaxHeight" :span-method="objectSpanMethod"
         size="small" @selection-change="oldHandleSelectionChange" :row-class-name="tableRowClassName"
@@ -272,188 +271,6 @@
         </el-pagination>
       </el-row>
     </div>
-    <!-- 经典表单  使用无限加载 -->
-    <div v-show="listMode === 'classic'">
-      <el-table ref="productTable" :data="newTableData" v-el-table-infinite-scroll="loadTableData"
-        :infinite-scroll-disabled="newRowDisabled" :infinite-scroll-distance="5" size="small"
-        :max-height="tableMaxHeight" highlight-current-row @select="handleSelectionChange"
-        @select-all="handleSelectAll">
-        <el-table-column type="selection" width="55" align="center">
-        </el-table-column>
-        <el-table-column prop="main_image_url" :label="$t('message.productManagement.productImage')"
-          column-key="main_image_url" width="120">
-          <template slot-scope="scope">
-            <AuthImg :src="scope.row.sub_image_url
-              ? scope.row.sub_image_url
-              : scope.row.main_image_url
-              " :styleInfo="'width:50px;height:50px;'"></AuthImg>
-          </template>
-        </el-table-column>
-
-        <el-table-column v-if="$languageType == 'zh_cn'" prop="chinese_name"
-          :label="$t('message.productManagement.chineseName')" show-overflow-tooltip width="180">
-          <template slot-scope="scope">
-            <span>{{
-              scope.row.chinese_name + '-' + scope.row.sub_chinese_name
-            }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column v-else prop="english_name" :label="$t('message.productManagement.englishName')"
-          show-overflow-tooltip width="180">
-          <template slot-scope="scope">
-            <span>{{
-              scope.row.english_name + '-' + scope.row.sub_english_name
-            }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip prop="category" :label="$t('common.classification')" width="120">
-          <template slot-scope="scope">
-            {{
-              scope.row.category
-                ? productCategoryMap[scope.row.category]?.[$languageType]
-                : ''
-            }}
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('common.source')" width="100" show-overflow-tooltip align="center">
-          <template slot-scope="scope">
-            <el-tooltip :content="$t('common.source') + ':' + scope.row?.shop" placement="bottom"
-              v-if="scope.row.source !== 0">
-              <el-tag effect="plain" :style="getTagStyle(scope.row.source, sourceColorMap)" class="status-tag">
-                {{ souringMap[scope.row.source]?.[$languageType] }}
-              </el-tag>
-            </el-tooltip>
-            <el-tag effect="plain" :style="getTagStyle(scope.row.source, sourceColorMap)" class="status-tag" v-else>
-              {{ souringMap[scope.row.source]?.[$languageType] }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.subclassName')" width="120">
-          <template slot-scope="scope">
-            <span v-if="$languageType == 'zh_cn'">{{
-              scope.row.sub_chinese_name
-            }}</span>
-            <span v-else>{{ scope.row.sub_english_name }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('message.productManagement.productCode')" show-overflow-tooltip width="180">
-          <template slot-scope="scope">
-            <a @click="
-              copyData(
-                scope.row.product_code_sku,
-                $t('message.productManagement.productCode')
-              )
-              ">{{ scope.row.product_code_sku }}</a>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('message.productManagement.productBarcode')" show-overflow-tooltip width="180">
-          <template slot-scope="scope">
-            <a @click="
-              copyData(
-                scope.row.product_barcode,
-                $t('message.productManagement.productBarcode')
-              )
-              ">{{ scope.row.product_barcode }}</a>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip prop="price" :label="$t('message.productManagement.price')" width="120">
-          <template slot-scope="scope">
-            {{
-              scope.row.price
-                ? currencySymbolMap[scope.row.unit] + scope.row.price
-                : ''
-            }}
-          </template>
-        </el-table-column>
-
-        <el-table-column show-overflow-tooltip :label="$t('message.productManagement.productStock')" width="120">
-          <template slot-scope="scop">
-            <el-tag size="small" v-if="scop.row.stock >= 5000" type="success">
-              {{ scop.row.stock }}
-            </el-tag>
-            <el-tag size="small" v-else-if="scop.row.stock >= 1000 && scop.row.stock < 5000" type="warning">
-              {{ scop.row.stock }}
-            </el-tag>
-            <el-tag size="small" v-else type="danger">
-              {{ scop.row.stock }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip prop="product_unit" :label="$t('message.productManagement.productUnit')"
-          width="120">
-          <template slot-scope="scope">
-            {{
-              scope.row.product_unit
-                ? productUnitMap[scope.row.product_unit]?.[$languageType]
-                : ''
-            }}
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('common.status')" width="90" show-overflow-tooltip>
-          <template slot-scope="scope">
-            <el-tag type="success" effect="plain" v-if="scope.row.status === 1" class="status-tag">
-              {{
-                scope.row.status
-                  ? productStatusMap[scope.row.status]?.[$languageType]
-                  : ''
-              }}
-            </el-tag>
-            <el-tag type="danger" effect="plain" v-else-if="scope.row.status === 2" class="status-tag">
-              {{
-                scope.row.status
-                  ? productStatusMap[scope.row.status]?.[$languageType]
-                  : ''
-              }}
-            </el-tag>
-            <el-tag type="danger" effect="plain" v-else class="status-tag">
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="$t('common.auditStatus')" width="100">
-          -
-        </el-table-column>
-        <el-table-column prop="create_time" show-overflow-tooltip sortable :label="$t('common.createTime')" width="160">
-        </el-table-column>
-        <el-table-column width="220" show-overflow-tooltip :label="$t('message.productManagement.qualityInspectionWeight') + '[KG]'
-          ">
-          <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_weight_kg }}</p>
-          </template>
-        </el-table-column>
-        <el-table-column width="220" show-overflow-tooltip :label="$t('message.productManagement.qualityInspectionLength') + '[CM]'
-          ">
-          <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_length_cm }}</p>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip width="220" :label="$t('message.productManagement.qualityInspectionWidth') + '[CM]'
-          ">
-          <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_width_cm }}</p>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip width="220" :label="$t('message.productManagement.qualityInspectionHeight') + '[CM]'
-          ">
-          <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_height_cm }}</p>
-          </template>
-        </el-table-column>
-        <el-table-column show-overflow-tooltip :label="$t('common.operation')" fixed="left" width="100" prop="operate">
-          <template slot-scope="scope">
-            <a @click="showDetail(scope.row)" size="small">
-              {{ $t('common.check') }}
-            </a>
-            <a size="small" @click="showModal(scope.row)">
-              {{ $t('common.edit') }}
-            </a>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
     <!-- 标准卡片视图 -->
     <div v-show="listMode === 'standard'">
       <ProductStandardCards ref="standardCards" :items="tableData" :selectedProductIds="selectedProductIds"
@@ -477,8 +294,6 @@
 <script>
 import PageHead from '@/components/page-head.vue'
 import SearchCard from '@/components/search-card.vue'
-import { throttle } from 'lodash'
-import ElTableInfiniteScroll from 'el-table-infinite-scroll'
 import AuthImg from '@/components/auth-img.vue'
 import CstTableHead from '@/components/cst-table-head/index.vue'
 import { copyData, getTagStyle } from '@/common/common-func'
@@ -499,9 +314,6 @@ import {
 import utils from '@/utils/index'
 export default {
   name: 'product',
-  directives: {
-    'el-table-infinite-scroll': ElTableInfiniteScroll
-  },
   components: {
     EditProduct,
     PageHead,
@@ -529,9 +341,9 @@ export default {
       productCategoryMap: productCategoryMap,
       productUnitMap: productUnitMap,
       productStatusMap: productStatusMap,
-      // 视图模式：classic/new/standard
+      // 视图模式：new/standard
       listMode: 'standard',
-      objectSpanFlag: true, //true是新列表(合并? false是经典列?分裂?
+      objectSpanFlag: true, // 控制表格行合并显示
       tableData: [],
       newTableData: [],
       curPage: 1,
@@ -652,41 +464,11 @@ export default {
       )
       this.printProductTagDialogVisible = true
     },
-    loadTableData() {
-      if (this.listMode === 'classic') {
-        if (this.tableData.length >= this.total) {
-          return
-        }
-        this.curPage++
-        this.queryProduct(true, { cur_page: this.curPage })
-      }
-    },
     onClosePrintProductTagDialog() {
       this.product_uuids = []
       this.printProductTagDialogVisible = false
     },
-    handleSelectionChange(list, row) {
-      if (list.length === 0) {
-        this.multipleSelection = []
-        return
-      }
-
-      this.multipleSelection = list
-      if (this.listMode === 'classic') {
-        this.$refs.productTable.clearSelection()
-        this.newTableData.forEach((ele) => {
-          //这里的数据是从后端拿到后进行分裂处理?不是直接拿来用的
-          if (ele.variant_id === row.variant_id) {
-            this.$refs.productTable.toggleRowSelection(ele, true)
-            this.multipleSelection = [ele]
-          }
-        })
-      }
-    },
     oldHandleSelectionChange(selection) {
-      this.multipleSelection = selection
-    },
-    handleSelectAll(selection) {
       this.multipleSelection = selection
     },
     showDetail(row) {
@@ -709,8 +491,8 @@ export default {
     },
     onConfirm() {
       this.productVisible = false
-      this.objectSpanFlag = false
-      this.listMode = 'classic'
+      this.objectSpanFlag = true
+      this.listMode = 'new'
       this.curPage = 1
       this.queryProduct(false, { cur_page: this.curPage })
     },
@@ -817,7 +599,6 @@ export default {
                 utils.deepClone(this.tableData)
               )
             }
-            // this.objectSpanFlag = false
             this.total = res.data.total
           }
         })
@@ -829,20 +610,6 @@ export default {
           this.scrollLoading = false
           if (this.listMode === 'standard') {
             this.$nextTick(() => this.ensureStandardFill())
-          }
-          if (isScroll) {
-            this.$nextTick(() => {
-              this.$refs.productTable.clearSelection()
-              this.newTableData.forEach((item) => {
-                if (
-                  this.multipleSelection.some(
-                    (selection) => selection.variant_id === item.variant_id
-                  )
-                ) {
-                  this.$refs.productTable.toggleRowSelection(item, true)
-                }
-              })
-            })
           }
         })
     },
@@ -1009,13 +776,6 @@ export default {
         (item) => item.value === this.queryData.queryKeyWord
       ).label[this.$languageType]
     },
-    noMore() {
-      return this.tableData.length >= this.total
-    },
-
-    newRowDisabled() {
-      return this.noMore
-    },
     selectedProductIds() {
       return Array.from(new Set(this.multipleSelection.map(x => x && x.product_uuid).filter(Boolean)))
     },
@@ -1050,8 +810,6 @@ export default {
   created() {
     const v = this.getCardsPerRowLocal()
     if (v) this.cardsPerRow = v
-    //增加防抖节流 规避滑动加载短时间内多次触发
-    this.loadTableData = throttle(this.loadTableData, 3000) // 例如，每3秒触发一?
   }
 }
 </script>
