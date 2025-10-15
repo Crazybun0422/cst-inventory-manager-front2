@@ -14,12 +14,14 @@
       class="el-aside-transition"
       :width="isCollapse ? '78px' : collapseWidth"
     >
-      <Navigate
-        @loading="(loading) => (containerLoading = loading)"
-        @toggle-collapse="toggleExpand"
-        :isCollapse="isCollapse"
-      >
-      </Navigate>
+      <div class="sidebar-scroll-area">
+        <Navigate
+          @loading="(loading) => (containerLoading = loading)"
+          @toggle-collapse="toggleExpand"
+          :isCollapse="isCollapse"
+        >
+        </Navigate>
+      </div>
     </el-aside>
 
     <el-container class="container-main">

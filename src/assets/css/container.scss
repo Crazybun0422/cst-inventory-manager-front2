@@ -13,11 +13,19 @@
     height: 100%;
     border-right: 1px solid var(--custom-border-color);
     text-align: left;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden; /* outer shell clips inner scrollbars */
     /* Sidebar: round all corners; create 2px gap on right */
     border-radius: 24px;
     margin-right: 2px;
+    position: relative;
+  }
+
+  .el-aside .sidebar-scroll-area {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 10px 24px;
+    box-sizing: border-box;
     /* Keep scroll within sidebar; avoid scroll chaining to body */
     overscroll-behavior-y: contain;
   }
