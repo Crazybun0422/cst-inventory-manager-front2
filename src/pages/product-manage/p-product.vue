@@ -202,25 +202,25 @@
         <el-table-column :label="$t('message.productManagement.qualityInspectionWeight') + '[KG]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_weight_kg }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_weight_kg') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionLength') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_length_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_length_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionWidth') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_width_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_width_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column :label="$t('message.productManagement.qualityInspectionHeight') + '[CM]'"
           " width="210">
           <template slot-scope="scope">
-            <p>{{ scope.row.quality_inspection_height_cm }}</p>
+            <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_height_cm') }}</p>
           </template>
         </el-table-column>
         <el-table-column label="operate" fixed="left" width="100" prop="operate">
@@ -450,6 +450,9 @@ export default {
     // 对数据进行格式化  一个变种一行以 变种为维度
     formatProductData(data) {
       const formattedData = []
+      if (!Array.isArray(data)) {
+        return formattedData
+      }
       data.forEach((item) => {
         const parentData = {
           product_uuid: item.product_uuid,
@@ -464,7 +467,10 @@ export default {
           source: item.source,
           shop: item.shop
         }
-        item.product_variants.forEach((variant, index) => {
+        const variants = Array.isArray(item.product_variants)
+          ? item.product_variants
+          : []
+        variants.forEach((variant, index) => {
           if (index === 0) {
             variant.rowspan = item.rowspan
           } else {
@@ -474,9 +480,10 @@ export default {
             ...parentData,
             ...variant
           }
+          this.fillQualityInspectionFields(newVariant, variant)
           if (this.objectSpanFlag) {
             // 如果合并 每一条都是全部变种信息
-            newVariant.product_variants = item.product_variants
+            newVariant.product_variants = variants
           } else {
             //如果不合并 每个变种都只有单个变种信息
             newVariant.product_variants = [variant]
@@ -513,7 +520,7 @@ export default {
       })
         .then((res) => {
           if (this.$isRequestSuccessful(res.code)) {
-            this.tableData = utils.deepClone(res.data.result)
+            this.tableData = utils.deepClone(res.data.result || [])
             this.getRowCount()
             this.newTableData = this.formatProductData(
               utils.deepClone(this.tableData)
@@ -540,7 +547,10 @@ export default {
     // 标记需要合并的行
     getRowCount() {
       this.tableData.forEach((el, index) => {
-        el.rowspan = el.product_variants.length
+        const variants = Array.isArray(el.product_variants)
+          ? el.product_variants
+          : []
+        el.rowspan = variants.length
       })
     },
     objectSpanMethod({ row, column, rowIndex, columnIndex }) {
@@ -672,6 +682,40 @@ export default {
     // 鼠标移出单元格时触发的方法
     cellMouseLeave(row, column, cell, event) {
       this.curRowArr = []
+    },
+    fillQualityInspectionFields(target, source) {
+      const fieldKeys = [
+        'quality_inspection_weight_kg',
+        'quality_inspection_length_cm',
+        'quality_inspection_width_cm',
+        'quality_inspection_height_cm'
+      ]
+      const qualityInfo = source?.quality_inspection_info
+      fieldKeys.forEach((key) => {
+        if (target[key] === undefined || target[key] === null) {
+          if (qualityInfo && qualityInfo[key] !== undefined && qualityInfo[key] !== null) {
+            target[key] = qualityInfo[key]
+          } else if (source && source[key] !== undefined && source[key] !== null) {
+            target[key] = source[key]
+          }
+        }
+      })
+    },
+    getQualityInspectionField(row, key) {
+      if (!row) {
+        return ''
+      }
+      if (row[key] !== undefined && row[key] !== null) {
+        return row[key]
+      }
+      if (
+        row.quality_inspection_info &&
+        row.quality_inspection_info[key] !== undefined &&
+        row.quality_inspection_info[key] !== null
+      ) {
+        return row.quality_inspection_info[key]
+      }
+      return ''
     }
   },
 
