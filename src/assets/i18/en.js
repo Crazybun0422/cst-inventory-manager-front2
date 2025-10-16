@@ -1184,6 +1184,7 @@
     supportItemsTitle: 'Sourcing Support Items',
     insertUrlPlaceholder: 'Insert your url',
     feedbackQuote: 'Supplier quote',
+    variantInfoUnavailable: 'Product variant details are unavailable',
     partUrlPlaceholder: 'Enter part of the URL',
     adminSearchPlaceholder: 'URL / user code / sourcing ID',
     disableStatusFilter: 'Disable status filter',

@@ -27,12 +27,19 @@
         </a-form-model-item>
       </a-form-model>
 
-      <a-table :data-source="table.items" :loading="loading" :pagination="false" size="small">
+      <a-table :data-source="table.items" :loading="loading" :pagination="false" size="small"
+        :expandedRowKeys="expandedRowKeys" @expand="handleExpand" :rowKey="sourcingRowKey">
         <template slot="expandedRowRender" slot-scope="record">
           <div class="his-item-list">
             <div class="his-item" v-for="(it, idx) in (record.items || [])" :key="it.item_id || idx">
               <div class="his-item__preview">
-                <AuthImg v-if="it.source_type === 'image' && it.image" :src="it.image"
+                <template v-if="it.source_type === 'product'">
+                  <a-spin v-if="isVariantInfoLoading(it)" size="small" />
+                  <AuthImg v-else-if="getVariantImage(it)" :src="getVariantImage(it)"
+                    :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
+                  <a-icon v-else type="shopping" class="his-item__icon" />
+                </template>
+                <AuthImg v-else-if="it.source_type === 'image' && it.image" :src="it.image"
                   :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
                 <a-icon v-else-if="it.source_type === 'url'" type="link" class="his-item__icon" />
                 <a-icon v-else type="shopping" class="his-item__icon" />
@@ -40,11 +47,30 @@
               <div class="his-item__meta">
                 <div class="his-item__line">
                   <a-tag color="blue" size="small">{{ it.source_type }}</a-tag>
-                  <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
-                    rel="noopener">{{ it.source_url }}</a>
-                  <span v-else-if="it.source_type === 'product'" class="his-item__text">{{ it.product_id }}</span>
+                  <template v-if="it.source_type === 'url'">
+                    <a class="his-item__link" :href="it.source_url" target="_blank" rel="noopener">{{ it.source_url }}</a>
+                  </template>
+                  <template v-else-if="it.source_type === 'product'">
+                    <a v-if="getVariantMeta(it) && getVariantMeta(it).product" class="his-item__link"
+                      href="javascript:void(0)" @click="openProductDetail(getVariantMeta(it).product)">
+                      {{ getVariantTitle(it) }}
+                    </a>
+                    <span v-else-if="isVariantInfoLoading(it)" class="his-item__text">{{ $t('common.loading') }}</span>
+                    <span v-else-if="isVariantInfoError(it)" class="his-item__text">{{ $t('sourcing.variantInfoUnavailable') }}</span>
+                    <span v-else class="his-item__text">{{ it.product_id }}</span>
+                  </template>
                   <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
                 </div>
+                <template v-if="it.source_type === 'product'">
+                  <div class="his-item__sub product-sub">
+                    <span v-if="getVariantSku(it)">
+                      {{ $t('message.productManagement.productSku') }}: {{ getVariantSku(it) }}
+                    </span>
+                    <span v-if="getVariantPrice(it)">
+                      {{ $t('message.productManagement.price') }}: {{ getVariantPrice(it) }}
+                    </span>
+                  </div>
+                </template>
                 <div class="his-item__sub">
                   <span v-if="it.quote">{{ $t('sourcing.expectedPrice') }}: {{ currencySymbol }} {{ it.quote }}</span>
                   <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{
@@ -83,17 +109,21 @@
       :visible="quoteModalVisible" @ok="confirmQuote" @cancel="closeQuoteModal">
       <a-input v-model="quoteInput" :placeholder="currencySymbol + ' 0.00'" />
     </a-modal>
+    <ProductDetail :visible="productDetailVisible" :currentData="productDetailData || {}"
+      :originalDataArr="productDetailData ? [productDetailData] : []" @close="closeProductDetail" />
   </div>
 </template>
 
 <script>
 import PageHead from '@/components/page-head.vue'
 import AuthImg from '@/components/auth-img.vue'
+import ProductDetail from '@/pages/product-manage/components/product-detail.vue'
 import { Modal, message } from 'ant-design-vue'
 import bus, { EVENTS } from '@/common/event-bus'
+import { currencySymbolMap } from '@/common/field-maping'
 export default {
   name: 'PSourcing',
-  components: { PageHead, AuthImg },
+  components: { PageHead, AuthImg, ProductDetail },
   data() {
     return {
       loading: false,
@@ -106,9 +136,16 @@ export default {
       _searchDebounce: null,
       disableStatusFilter: false,
       _toggleLock: false,
+      expandedRowKeys: [],
+      itemVariantInfo: {},
+      itemVariantLoading: {},
+      productDetailVisible: false,
+      productDetailData: null,
+      currencySymbolMap
     }
   },
   computed: {
+    langType() { return this.$i18n.locale },
     currencySymbol() { return '$' },
     statusTabs() {
       const zh = { submitted: '已提交', sourcing: '选品中', pending_confirmation: '待确认', completed: '已完成' }
@@ -163,6 +200,9 @@ export default {
         if (this.$isRequestSuccessful(res.code)) {
           const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }
           this.table = { items: data.items || [], total: data.total || 0, page_number: data.page_number || 1, page_size: data.page_size || 10 }
+          this.expandedRowKeys = []
+          this.itemVariantInfo = {}
+          this.itemVariantLoading = {}
         }
       } finally { this.loading = false }
     },
@@ -173,6 +213,121 @@ export default {
       this.disableStatusFilter = !this.disableStatusFilter
       this.loadList(1)
       setTimeout(() => { this._toggleLock = false }, 500)
+    },
+    sourcingRowKey(record) {
+      if (!record) return ''
+      return record.sourcing_id || record.id || record._id || ''
+    },
+    variantInfoKey(item) {
+      if (!item) return ''
+      if (item.item_id) return `item-${item.item_id}`
+      const pid = item.product_id || ''
+      const vid = item.variant_id || ''
+      if (!pid && !vid) return ''
+      return `pv-${pid}__${vid}`
+    },
+    getVariantMeta(item) {
+      const key = this.variantInfoKey(item)
+      if (!key) return null
+      return this.itemVariantInfo[key] || null
+    },
+    isVariantInfoLoading(item) {
+      const key = this.variantInfoKey(item)
+      if (!key) return false
+      return !!this.itemVariantLoading[key]
+    },
+    isVariantInfoError(item) {
+      const meta = this.getVariantMeta(item)
+      return !!(meta && meta.error)
+    },
+    getVariantImage(item) {
+      const meta = this.getVariantMeta(item)
+      if (!meta) return ''
+      const variantImage = meta.variant && meta.variant.sub_image_url
+      const productImage = meta.product && meta.product.main_image_url
+      return variantImage || productImage || ''
+    },
+    getVariantTitle(item) {
+      const meta = this.getVariantMeta(item)
+      if (!meta || !meta.product) return ''
+      const { product, variant } = meta
+      const langZh = this.langType === 'zh_cn'
+      const productName = langZh ? (product.chinese_name || product.english_name || '') : (product.english_name || product.chinese_name || '')
+      const subName = langZh ? ((variant && (variant.sub_chinese_name || variant.sub_english_name)) || '') : ((variant && (variant.sub_english_name || variant.sub_chinese_name)) || '')
+      if (productName && subName) return `${productName} - ${subName}`
+      return productName || subName || ''
+    },
+    getVariantSku(item) {
+      const meta = this.getVariantMeta(item)
+      return meta && meta.variant ? (meta.variant.product_code_sku || '') : ''
+    },
+    getVariantPrice(item) {
+      const meta = this.getVariantMeta(item)
+      if (!meta || !meta.variant) return ''
+      const price = meta.variant.price
+      if (price === undefined || price === null || price === '') return ''
+      const unit = meta.variant.unit
+      const symbol = (unit && this.currencySymbolMap[unit]) || this.currencySymbol
+      return `${symbol}${price}`
+    },
+    async ensureVariantInfo(item) {
+      const key = this.variantInfoKey(item)
+      if (!key || this.itemVariantInfo[key] || this.itemVariantLoading[key]) return
+      this.$set(this.itemVariantLoading, key, true)
+      try {
+        if (!item.product_id || !item.variant_id) {
+          this.$set(this.itemVariantInfo, key, { product: null, variant: null })
+          return
+        }
+        const params = { product_id: item.product_id, variant_id: item.variant_id }
+        if (this.providerUuidBySelectStore) params.provider_uuid = this.providerUuidBySelectStore
+        const res = await this.$ajax({ url: '/api/product/product-variant-info', method: 'get', params, roleType: this.roleType })
+        if (this.$isRequestSuccessful(res.code)) {
+          const data = res.data || {}
+          const product = data.product || null
+          let variant = data.variant || null
+          if (!variant && product && Array.isArray(product.product_variants)) {
+            variant = product.product_variants[0] || null
+          }
+          if (product && variant) {
+            if (!Array.isArray(product.product_variants) || !product.product_variants.length) {
+              product.product_variants = [variant]
+            }
+          }
+          this.$set(this.itemVariantInfo, key, { product, variant })
+        } else {
+          this.$set(this.itemVariantInfo, key, { product: null, variant: null, error: true })
+        }
+      } catch (error) {
+        this.$set(this.itemVariantInfo, key, { product: null, variant: null, error: true })
+      } finally {
+        this.$delete(this.itemVariantLoading, key)
+      }
+    },
+    async preloadVariantInfo(record) {
+      const items = (record.items || []).filter(item => item.source_type === 'product')
+      if (!items.length) return
+      await Promise.all(items.map(item => this.ensureVariantInfo(item)))
+    },
+    handleExpand(expanded, record) {
+      const key = record && (record.sourcing_id || record.id || record._id)
+      const next = new Set(this.expandedRowKeys || [])
+      if (expanded && key !== undefined) {
+        next.add(key)
+        this.preloadVariantInfo(record)
+      } else if (!expanded && key !== undefined) {
+        next.delete(key)
+      }
+      this.expandedRowKeys = Array.from(next)
+    },
+    openProductDetail(product) {
+      if (!product) return
+      this.productDetailData = product
+      this.productDetailVisible = true
+    },
+    closeProductDetail() {
+      this.productDetailVisible = false
+      this.productDetailData = null
     },
     onPageSizeChange(current, size) {
       this.table.page_size = size
@@ -249,6 +404,7 @@ export default {
   width: 64px;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .his-item__icon {
@@ -283,5 +439,11 @@ export default {
 .his-item__sub {
   color: var(--custom-font-color2);
   font-size: 12px;
+}
+
+.product-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 </style>

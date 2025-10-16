@@ -1187,6 +1187,7 @@ const zh_cn = {
     supportItemsTitle: 'Sourcing 支持项',
     insertUrlPlaceholder: '输入您的链接',
     feedbackQuote: '返回报价',
+    variantInfoUnavailable: '产品变体信息暂不可用',
     partUrlPlaceholder: '请输入部分URL',
     adminSearchPlaceholder: 'URL/用户编码/选品单号',
     disableStatusFilter: '禁用状态筛选',

@@ -115,9 +115,9 @@
             }}</a-button>
         </div>
       </div>
-      <div v-else-if="moreStep === 'product'">
+      <div v-else-if="moreStep === 'product'" class="product-step">
         <!-- search bar (Ant Design Vue) -->
-        <a-form-model layout="inline" :model="productQuery" class="mb-24 modal-inline-form">
+        <a-form-model layout="inline" :model="productQuery" class="mb-24 modal-inline-form product-search-form">
           <a-form-model-item>
             <a-input v-model="productQuery.name" :allowClear="true"
               :placeholder="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
@@ -134,39 +134,86 @@
         </a-form-model>
 
         <!-- product table (Ant Design Vue) -->
-        <a-table :data-source="productTable.items" :loading="productLoading" :rowKey="formatProductValue"
-          :row-selection="productRowSelection" :pagination="false" size="small" :scroll="{ x: true }">
-          <a-table-column :title="$t('dashboard.image')" key="image" width="90">
-            <template slot-scope="text, record">
-              <AuthImg :src="record.sub_image_url ? record.sub_image_url : record.main_image_url"
-                :styleInfo="'width:48px;height:48px;'" />
+        <div class="product-table-wrapper">
+          <a-table class="product-table" :data-source="productTable.items" :loading="productLoading"
+            :rowKey="formatProductValue" :pagination="false" size="small" :scroll="productTableScroll"
+            :expandedRowKeys="productExpandedKeys" @expand="handleProductExpand">
+            <a-table-column key="select" width="50" align="center">
+              <template slot-scope="text, record">
+                <a-checkbox :disabled="!hasSelectableVariants(record)" :indeterminate="isProductIndeterminate(record)"
+                  :checked="isProductFullySelected(record)"
+                  @change="onToggleProduct(record, $event.target.checked)" />
+              </template>
+            </a-table-column>
+            <a-table-column :title="$t('dashboard.image')" key="image" width="90">
+              <template slot-scope="text, record">
+                <AuthImg :src="record.sub_image_url ? record.sub_image_url : record.main_image_url"
+                  :styleInfo="'width:48px;height:48px;'" />
+              </template>
+            </a-table-column>
+            <a-table-column
+              :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+              key="name" :ellipsis="true">
+              <template slot-scope="text, record">
+                <span>{{ formatProductTitle(record) }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column :title="$t('message.productManagement.productSku')" key="sku">
+              <template slot-scope="text, record">
+                <span class="sku-cell">{{ (record.product_variants || []).map(v => v.product_code_sku).join(', ') }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
+              <template slot-scope="text, record">
+                <span>{{ formatProductPrice(record) }}</span>
+              </template>
+            </a-table-column>
+            <template slot="expandedRowRender" slot-scope="record">
+              <a-table class="variant-table" :data-source="getProductVariants(record)" :rowKey="variantRowKey"
+                :pagination="false" size="small">
+                <a-table-column key="select" width="50" align="center">
+                  <template slot-scope="text, variant">
+                    <a-checkbox :checked="isVariantSelected(record, variant)"
+                      @change="onToggleVariant(record, variant, $event.target.checked)" />
+                  </template>
+                </a-table-column>
+                <a-table-column :title="$t('dashboard.image')" key="image" width="90">
+                  <template slot-scope="text, variant">
+                    <AuthImg :src="variantImage(record, variant)" :styleInfo="'width:48px;height:48px;'" />
+                  </template>
+                </a-table-column>
+                <a-table-column
+                  :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+                  key="name" :ellipsis="true">
+                  <template slot-scope="text, variant">
+                    <span>{{ formatVariantTitle(record, variant) }}</span>
+                  </template>
+                </a-table-column>
+                <a-table-column :title="$t('message.productManagement.productSku')" key="sku">
+                  <template slot-scope="text, variant">
+                    <span>{{ variant.product_code_sku }}</span>
+                  </template>
+                </a-table-column>
+                <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
+                  <template slot-scope="text, variant">
+                    <span>{{ formatVariantPrice(variant) }}</span>
+                  </template>
+                </a-table-column>
+              </a-table>
             </template>
-          </a-table-column>
-          <a-table-column
-            :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
-            key="name" :ellipsis="true">
-            <template slot-scope="text, record">
-              <span v-if="langType === 'zh_cn'">{{ (record.chinese_name || '') + (record.sub_chinese_name ? '-' +
-                record.sub_chinese_name : '') }}</span>
-              <span v-else>{{ (record.english_name || '') + (record.sub_english_name ? ' - ' + record.sub_english_name :
-                '') }}</span>
-            </template>
-          </a-table-column>
-          <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :ellipsis="false">
-            <template slot-scope="text, record">
-              <span class="sku-cell">{{(record.product_variants || []).map(v => v.product_code_sku).join(', ')
-                }}</span>
-            </template>
-          </a-table-column>
-        </a-table>
-        <div class="mt-16" style="text-align:right">
-          <a-pagination show-quick-jumper :pageSize="productTable.page_size" :current="productTable.page_number"
-            :total="productTable.total" @change="loadProductList" />
+          </a-table>
         </div>
-        <div class="dialog-actions">
-          <a-button @click="backMore">{{ $t('common.back') }}</a-button>
-          <a-button type="primary" :loading="submittingProduct" @click="submitProduct">{{ $t('common.submit')
-            }}</a-button>
+        <div class="product-footer">
+          <div class="product-pagination">
+            <a-pagination show-quick-jumper :pageSize="productTable.page_size" :current="productTable.page_number"
+              :total="productTable.total" @change="loadProductList" />
+          </div>
+          <div class="dialog-actions product-actions">
+            <a-button @click="backMore">{{ $t('common.back') }}</a-button>
+            <a-button type="primary" :disabled="!totalSelectedVariants" :loading="submittingProduct"
+              @click="submitProduct">{{ $t('common.submit')
+              }}</a-button>
+          </div>
         </div>
       </div>
     </a-modal>
@@ -190,12 +237,19 @@
         </a-form-model-item>
       </a-form-model>
 
-      <a-table :data-source="history.items" :loading="historyLoading" :pagination="false" size="small">
+      <a-table :data-source="history.items" :loading="historyLoading" :pagination="false" size="small"
+        :rowKey="historyRowKey" :expandedRowKeys="historyExpandedKeys" @expand="handleHistoryExpand">
         <template slot="expandedRowRender" slot-scope="record">
           <div class="his-item-list">
             <div class="his-item" v-for="(it, idx) in (record.items || [])" :key="it.item_id || idx">
               <div class="his-item__preview">
-                <AuthImg v-if="it.source_type === 'image' && it.image" :src="it.image"
+                <template v-if="it.source_type === 'product'">
+                  <a-spin v-if="isHistoryVariantLoading(it)" size="small" />
+                  <AuthImg v-else-if="getHistoryVariantImage(it)" :src="getHistoryVariantImage(it)"
+                    :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
+                  <a-icon v-else type="shopping" class="his-item__icon" />
+                </template>
+                <AuthImg v-else-if="it.source_type === 'image' && it.image" :src="it.image"
                   :styleInfo="'width:56px;height:56px;border-radius:6px;'" />
                 <a-icon v-else-if="it.source_type === 'url'" type="link" class="his-item__icon" />
                 <a-icon v-else type="shopping" class="his-item__icon" />
@@ -205,9 +259,24 @@
                   <a-tag color="blue" size="small">{{ it.source_type }}</a-tag>
                   <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
                     rel="noopener">{{ it.source_url }}</a>
-                  <span v-else-if="it.source_type === 'product'" class="his-item__text">{{ it.product_id }}</span>
+                  <template v-else-if="it.source_type === 'product'">
+                    <span v-if="getHistoryVariantTitle(it)" class="his-item__text">{{ getHistoryVariantTitle(it) }}</span>
+                    <span v-else-if="isHistoryVariantLoading(it)" class="his-item__text">{{ $t('common.loading') }}</span>
+                    <span v-else-if="isHistoryVariantError(it)" class="his-item__text">{{ $t('sourcing.variantInfoUnavailable') }}</span>
+                    <span v-else class="his-item__text">{{ it.product_id }}</span>
+                  </template>
                   <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
                 </div>
+                <template v-if="it.source_type === 'product'">
+                  <div class="his-item__sub product-sub">
+                    <span v-if="getHistoryVariantSku(it)">
+                      {{ $t('message.productManagement.productSku') }}: {{ getHistoryVariantSku(it) }}
+                    </span>
+                    <span v-if="getHistoryVariantPrice(it)">
+                      {{ $t('message.productManagement.price') }}: {{ getHistoryVariantPrice(it) }}
+                    </span>
+                  </div>
+                </template>
                 <div class="his-item__sub">
                   <span v-if="it.quote">{{ $t('sourcing.expectedPrice') }}: {{ currencySymbol }} {{ it.quote }}</span>
                   <span v-if="it.feedback_quote" style="margin-left:12px">{{ $t('sourcing.feedbackQuote') }}: {{
@@ -269,6 +338,7 @@ import AuthImg from '@/components/auth-img.vue'
 import { message, Modal } from 'ant-design-vue'
 import { getGlobalHeaders } from '@/common/common-func'
 import bus, { EVENTS } from '@/common/event-bus'
+import { currencySymbolMap } from '@/common/field-maping'
 export default {
   name: 'DsSourcing',
   components: { PageHead, AuthImg, WorldMagnifierBackground },
@@ -301,11 +371,16 @@ export default {
       productLoading: false,
       productQuery: { name: '', sku: '' },
       productTable: { items: [], total: 0, page_number: 1, page_size: 10 },
-      selectedProductIds: [],
+      selectedVariantsMap: {},
+      productExpandedKeys: [],
+      productTableScrollY: 360,
       historyVisible: false,
       historyLoading: false,
       historyQuery: { status: '', keyword: '' },
       history: { items: [], total: 0, page_number: 1, page_size: 10 },
+      historyExpandedKeys: [],
+      historyVariantInfo: {},
+      historyVariantLoading: {},
       _historyDebounce: null,
       // inline support banner state
       pauseScroll: false,
@@ -313,7 +388,8 @@ export default {
       marqueeBlock: [],
       bannerHeight: 100,
       scrollerGap: 24,
-      marqueeBlockWidth: 0
+      marqueeBlockWidth: 0,
+      currencySymbolMap
     }
   },
   computed: {
@@ -330,13 +406,20 @@ export default {
       ]
     },
     currencySymbol() { return '$' },
-    productRowSelection() {
-      return { selectedRowKeys: this.selectedProductIds, onChange: this.onProductSelectionChangeKeys }
+    productTableScroll() {
+      return { x: 'max-content', y: this.productTableScrollY }
     },
     duplicatedSupportItems() {
       // two identical blocks to enable seamless looping at -50%
       const block = this.marqueeBlock.length ? this.marqueeBlock : this.supportItems
       return [...block, ...block]
+    },
+    totalSelectedVariants() {
+      const map = this.selectedVariantsMap || {}
+      return Object.values(map).reduce((sum, list) => {
+        if (Array.isArray(list)) return sum + list.length
+        return sum
+      }, 0)
     }
   },
   created() {
@@ -410,7 +493,219 @@ export default {
       const name = this.langType === 'zh_cn' ? (cn || en) : (en || cn)
       return skuCount ? `${name} (${skuCount})` : name
     },
+    formatProductTitle(product) {
+      if (!product) return ''
+      const primary = this.langType === 'zh_cn'
+        ? (product.chinese_name || '')
+        : (product.english_name || '')
+      const secondary = this.langType === 'zh_cn'
+        ? (product.english_name || '')
+        : (product.chinese_name || '')
+      return primary || secondary || ''
+    },
     formatProductValue(p) { return p.product_uuid || p.product_id || p.system_number },
+    productKey(product) {
+      const raw = this.formatProductValue(product)
+      if (raw === undefined || raw === null) return ''
+      return String(raw)
+    },
+    getProductVariants(product) {
+      if (product && Array.isArray(product.product_variants)) return product.product_variants
+      return []
+    },
+    hasSelectableVariants(product) {
+      return this.getProductVariants(product).some(v => !!this.getVariantId(v))
+    },
+    getVariantId(variant) {
+      if (!variant) return ''
+      return String(variant.variant_id || variant.product_uuid || variant.id || '')
+    },
+    variantRowKey(variant, index) {
+      const id = this.getVariantId(variant)
+      if (id) return id
+      if (variant && variant.product_code_sku) return `sku-${variant.product_code_sku}`
+      return `idx-${index}`
+    },
+    getSelectedVariantIdsByKey(productKey) {
+      if (!productKey) return []
+      const map = this.selectedVariantsMap || {}
+      const list = map[productKey]
+      return Array.isArray(list) ? list : []
+    },
+    isVariantSelected(product, variant) {
+      const key = this.productKey(product)
+      const vid = this.getVariantId(variant)
+      if (!key || !vid) return false
+      return this.getSelectedVariantIdsByKey(key).includes(vid)
+    },
+    setSelectedVariants(productKey, variants) {
+      const ids = Array.isArray(variants) ? variants.filter(Boolean) : []
+      if (ids.length) this.$set(this.selectedVariantsMap, productKey, ids)
+      else this.$delete(this.selectedVariantsMap, productKey)
+    },
+    onToggleProduct(product, checked) {
+      const key = this.productKey(product)
+      if (!key) return
+      if (checked) {
+        const ids = this.getProductVariants(product).map(v => this.getVariantId(v)).filter(Boolean)
+        this.setSelectedVariants(key, ids)
+      } else {
+        this.setSelectedVariants(key, [])
+      }
+    },
+    onToggleVariant(product, variant, checked) {
+      const key = this.productKey(product)
+      const vid = this.getVariantId(variant)
+      if (!key || !vid) return
+      const current = new Set(this.getSelectedVariantIdsByKey(key))
+      if (checked) current.add(vid)
+      else current.delete(vid)
+      this.setSelectedVariants(key, Array.from(current))
+    },
+    isProductFullySelected(product) {
+      const key = this.productKey(product)
+      if (!key) return false
+      const all = this.getProductVariants(product).map(v => this.getVariantId(v)).filter(Boolean)
+      if (!all.length) return false
+      const selected = this.getSelectedVariantIdsByKey(key)
+      return all.every(id => selected.includes(id))
+    },
+    isProductIndeterminate(product) {
+      const key = this.productKey(product)
+      if (!key) return false
+      const all = this.getProductVariants(product).map(v => this.getVariantId(v)).filter(Boolean)
+      if (!all.length) return false
+      const selected = this.getSelectedVariantIdsByKey(key)
+      return selected.length > 0 && selected.length < all.length
+    },
+    handleProductExpand(expanded, record) {
+      const key = this.productKey(record)
+      const keys = new Set(this.productExpandedKeys || [])
+      if (expanded) keys.add(key)
+      else keys.delete(key)
+      this.productExpandedKeys = Array.from(keys)
+    },
+    historyRowKey(record) {
+      if (!record) return ''
+      return record.sourcing_id || record.id || record._id || ''
+    },
+    historyVariantKey(item) {
+      if (!item) return ''
+      if (item.item_id) return `item-${item.item_id}`
+      const pid = item.product_id || ''
+      const vid = item.variant_id || ''
+      if (!pid && !vid) return ''
+      return `pv-${pid}__${vid}`
+    },
+    getHistoryVariantMeta(item) {
+      const key = this.historyVariantKey(item)
+      if (!key) return null
+      return this.historyVariantInfo[key] || null
+    },
+    isHistoryVariantLoading(item) {
+      const key = this.historyVariantKey(item)
+      if (!key) return false
+      return !!this.historyVariantLoading[key]
+    },
+    isHistoryVariantError(item) {
+      const meta = this.getHistoryVariantMeta(item)
+      return !!(meta && meta.error)
+    },
+    getHistoryVariantImage(item) {
+      const meta = this.getHistoryVariantMeta(item)
+      if (!meta) return ''
+      return this.variantImage(meta.product, meta.variant)
+    },
+    getHistoryVariantTitle(item) {
+      const meta = this.getHistoryVariantMeta(item)
+      if (!meta) return ''
+      if (meta.error) return ''
+      if (meta.product && meta.variant) return this.formatVariantTitle(meta.product, meta.variant)
+      if (meta.product) return this.formatProductTitle(meta.product)
+      return ''
+    },
+    getHistoryVariantSku(item) {
+      const meta = this.getHistoryVariantMeta(item)
+      return meta && meta.variant ? (meta.variant.product_code_sku || '') : ''
+    },
+    getHistoryVariantPrice(item) {
+      const meta = this.getHistoryVariantMeta(item)
+      if (!meta || !meta.variant) return ''
+      return this.formatVariantPrice(meta.variant)
+    },
+    async ensureHistoryVariantInfo(item) {
+      const key = this.historyVariantKey(item)
+      if (!key || this.historyVariantInfo[key] || this.historyVariantLoading[key]) return
+      this.$set(this.historyVariantLoading, key, true)
+      try {
+        if (!item.product_id || !item.variant_id) {
+          this.$set(this.historyVariantInfo, key, { product: null, variant: null })
+          return
+        }
+        const params = { product_id: item.product_id, variant_id: item.variant_id }
+        const res = await this.$ajax({ url: '/api/product/product-variant-info', method: 'get', params, roleType: this.roleType })
+        if (this.$isRequestSuccessful(res.code)) {
+          const data = res.data || {}
+          const product = data.product || null
+          let variant = data.variant || null
+          if (!variant && product && Array.isArray(product.product_variants)) {
+            variant = product.product_variants[0] || null
+          }
+          if (product && variant) {
+            if (!Array.isArray(product.product_variants) || !product.product_variants.length) {
+              product.product_variants = [variant]
+            }
+          }
+          this.$set(this.historyVariantInfo, key, { product, variant })
+        } else {
+          this.$set(this.historyVariantInfo, key, { product: null, variant: null, error: true })
+        }
+      } catch (error) {
+        this.$set(this.historyVariantInfo, key, { product: null, variant: null, error: true })
+      } finally {
+        this.$delete(this.historyVariantLoading, key)
+      }
+    },
+    async preloadHistoryVariantInfo(record) {
+      const items = (record.items || []).filter(item => item.source_type === 'product')
+      if (!items.length) return
+      await Promise.all(items.map(item => this.ensureHistoryVariantInfo(item)))
+    },
+    handleHistoryExpand(expanded, record) {
+      const key = this.historyRowKey(record)
+      const next = new Set(this.historyExpandedKeys || [])
+      if (expanded && key) {
+        next.add(key)
+        this.preloadHistoryVariantInfo(record)
+      } else if (!expanded && key) {
+        next.delete(key)
+      }
+      this.historyExpandedKeys = Array.from(next)
+    },
+    formatVariantTitle(product, variant) {
+      const primaryName = this.langType === 'zh_cn'
+        ? (product.chinese_name || product.english_name || '')
+        : (product.english_name || product.chinese_name || '')
+      const subName = this.langType === 'zh_cn'
+        ? (variant.sub_chinese_name || variant.sub_english_name || '')
+        : (variant.sub_english_name || variant.sub_chinese_name || '')
+      return subName ? `${primaryName} - ${subName}` : primaryName
+    },
+    variantImage(product, variant) {
+      return variant?.sub_image_url || product?.main_image_url || ''
+    },
+    formatVariantPrice(variant) {
+      const unit = variant.unit || ''
+      const price = variant.price
+      if (price === undefined || price === null || price === '') return ''
+      const symbol = this.currencySymbolMap?.[unit] || this.currencySymbol
+      return `${symbol}${price}`
+    },
+    formatProductPrice(product) {
+      const price = this.extractProductQuote(product)
+      if (price === '') return ''
+      return `${this.currencySymbol}${price}`
+    },
     async searchProducts(query) {
       if (!query) { this.productOptions = []; return }
       this.productLoading = true
@@ -486,8 +781,35 @@ export default {
       return []
     },
     openMore() { this.moreVisible = true; this.moreStep = 'options' },
-    chooseMore(step) { this.moreStep = step; if (step === 'image') this.imageForm.purchase_reason = this.$t('sourcing.lowestPrice'); if (step === 'product') { this.selectedProductIds = []; this.loadProductList(1) } },
-    onProductSelectionChangeKeys(selectedRowKeys, selectedRows) { this.selectedProductIds = selectedRowKeys },
+    chooseMore(step) {
+      this.moreStep = step
+      if (step === 'image') {
+        this.imageForm.purchase_reason = this.$t('sourcing.lowestPrice')
+      }
+      if (step === 'product') {
+        this.selectedVariantsMap = {}
+        this.productExpandedKeys = []
+        this.loadProductList(1)
+      }
+    },
+    extractProductQuote(product) {
+      if (!product) return ''
+      const candidates = []
+      if (this.isValidPrice(product.price)) candidates.push(Number(product.price))
+      if (Array.isArray(product.product_variants)) {
+        product.product_variants.forEach(variant => {
+          if (variant && this.isValidPrice(variant.price)) candidates.push(Number(variant.price))
+        })
+      }
+      if (!candidates.length) return ''
+      return Math.min(...candidates)
+    },
+    isValidPrice(val) {
+      if (val === null || val === undefined) return false
+      if (typeof val === 'string' && val.trim() === '') return false
+      const num = Number(val)
+      return Number.isFinite(num)
+    },
     resetProductQuery() { this.productQuery = { name: '', sku: '' }; this.loadProductList(1) },
     async loadProductList(page) {
       this.productLoading = true
@@ -519,12 +841,34 @@ export default {
       })
     },
     async submitProduct() {
-      if (!this.selectedProductIds.length) { message.warning(this.$t('message.productManagement.productSelect')); return }
+      if (!this.totalSelectedVariants) {
+        message.warning(this.$t('message.productManagement.productSelect'))
+        return
+      }
+      const items = []
+      Object.entries(this.selectedVariantsMap || {}).forEach(([productId, variantIds]) => {
+        if (!Array.isArray(variantIds)) return
+        variantIds.forEach(variantId => {
+          const pid = String(productId || '').trim()
+          const vid = String(variantId || '').trim()
+          if (!pid || !vid) return
+          items.push({ source_type: 'product', product_id: pid, variant_id: vid })
+        })
+      })
+      if (!items.length) {
+        message.warning(this.$t('message.productManagement.productSelect'))
+        return
+      }
       this.submittingProduct = true
       try {
-        const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: (this.selectedProductIds || []).map(id => ({ source_type: 'product', product_id: id })) }
+        const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-        if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.selectedProductIds = [] }
+        if (this.$isRequestSuccessful(res.code)) {
+          message.success(this.$t('common.operationSuccessful'))
+          this.moreVisible = false
+          this.selectedVariantsMap = {}
+          this.productExpandedKeys = []
+        }
       } finally { this.submittingProduct = false }
     },
     openHistory(keyword) {
@@ -584,7 +928,13 @@ export default {
           params.keyword = this.escapeRegexLiteral(this.historyQuery.keyword)
         }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
-        if (this.$isRequestSuccessful(res.code)) { const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }; this.history = data }
+        if (this.$isRequestSuccessful(res.code)) {
+          const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }
+          this.history = data
+          this.historyExpandedKeys = []
+          this.historyVariantInfo = {}
+          this.historyVariantLoading = {}
+        }
       } finally { this.historyLoading = false }
     },
     onHistorySizeChange(current, size) {
@@ -678,8 +1028,8 @@ export default {
   /* stack card + banner vertically */
   align-items: center;
   justify-content: flex-start;
-  padding: 32px 0 24px;
-  min-height: 90vh;
+  padding: 28px 0 20px;
+  min-height: clamp(480px, calc(100vh - 120px), 980px);
   overflow: hidden;
   border-radius: 10px !important;
 }
@@ -874,6 +1224,65 @@ export default {
   word-break: break-word;
 }
 
+.product-step {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.product-search-form {
+  margin-bottom: 12px;
+}
+
+.product-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.product-footer {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.product-pagination {
+  flex: 1;
+  text-align: right;
+}
+
+.variant-table {
+  margin-left: 48px;
+}
+
+.variant-table ::v-deep .ant-table-thead>tr>th,
+.variant-table ::v-deep .ant-table-tbody>tr>td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.product-actions {
+  margin-top: 0;
+}
+
+.global-modal-class ::v-deep .ant-select-selection__clear,
+.global-modal-class ::v-deep .ant-select-clear {
+  background-color: var(--custom-background-color) !important;
+  color: var(--custom-font-color2) !important;
+  border-radius: 4px;
+  opacity: 1;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.global-modal-class ::v-deep .ant-select-selection__clear:hover,
+.global-modal-class ::v-deep .ant-select-clear:hover {
+  color: var(--custom-font-color) !important;
+  background-color: var(--custom-background-color) !important;
+}
+
 /* spacing for inline forms in modals */
 .modal-inline-form {
   margin-bottom: 12px;
@@ -944,6 +1353,12 @@ export default {
 .his-item__sub {
   color: var(--custom-font-color2);
   font-size: 12px;
+}
+
+.product-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .status-tips {

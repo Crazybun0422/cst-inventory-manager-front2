@@ -199,26 +199,22 @@
         </el-table-column>
         <el-table-column prop="create_time" sortable :label="$t('common.createTime')" width="160">
         </el-table-column>
-        <el-table-column :label="$t('message.productManagement.qualityInspectionWeight') + '[KG]'"
-          " width="210">
+        <el-table-column :label="$t('message.productManagement.qualityInspectionWeight') + '[KG]'" width="210">
           <template slot-scope="scope">
             <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_weight_kg') }}</p>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('message.productManagement.qualityInspectionLength') + '[CM]'"
-          " width="210">
+        <el-table-column :label="$t('message.productManagement.qualityInspectionLength') + '[CM]'" width="210">
           <template slot-scope="scope">
             <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_length_cm') }}</p>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('message.productManagement.qualityInspectionWidth') + '[CM]'"
-          " width="210">
+        <el-table-column :label="$t('message.productManagement.qualityInspectionWidth') + '[CM]'" width="210">
           <template slot-scope="scope">
             <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_width_cm') }}</p>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('message.productManagement.qualityInspectionHeight') + '[CM]'"
-          " width="210">
+        <el-table-column :label="$t('message.productManagement.qualityInspectionHeight') + '[CM]'" width="210">
           <template slot-scope="scope">
             <p>{{ getQualityInspectionField(scope.row, 'quality_inspection_height_cm') }}</p>
           </template>
@@ -687,6 +683,45 @@ export default {
     // 鼠标移出单元格时触发的方法
     cellMouseLeave(row, column, cell, event) {
       this.curRowArr = []
+    },
+    getQualityInspectionField(row, fieldKey) {
+      if (!row || !fieldKey) {
+        return ''
+      }
+      const directValue = row[fieldKey]
+      if (directValue !== undefined && directValue !== null && directValue !== '') {
+        return directValue
+      }
+      const qualityInfo = row.quality_inspection_info
+      if (
+        qualityInfo &&
+        qualityInfo[fieldKey] !== undefined &&
+        qualityInfo[fieldKey] !== null &&
+        qualityInfo[fieldKey] !== ''
+      ) {
+        return qualityInfo[fieldKey]
+      }
+      const variants = Array.isArray(row.product_variants)
+        ? row.product_variants.filter((variantItem) => variantItem)
+        : []
+      for (const variant of variants) {
+        if (
+          variant[fieldKey] !== undefined &&
+          variant[fieldKey] !== null &&
+          variant[fieldKey] !== ''
+        ) {
+          return variant[fieldKey]
+        }
+        if (
+          variant.quality_inspection_info &&
+          variant.quality_inspection_info[fieldKey] !== undefined &&
+          variant.quality_inspection_info[fieldKey] !== null &&
+          variant.quality_inspection_info[fieldKey] !== ''
+        ) {
+          return variant.quality_inspection_info[fieldKey]
+        }
+      }
+      return ''
     },
     fillQualityInspectionFields(target, source) {
       const fieldKeys = [

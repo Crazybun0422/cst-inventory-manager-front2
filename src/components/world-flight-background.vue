@@ -7,6 +7,9 @@
 </template>
 
 <script>
+const BOX_SIZE = 32;
+const BOX_MASK_PADDING = 6;
+
 export default {
   name: 'WorldFlightBackground',
   props: {
@@ -211,7 +214,6 @@ export default {
     },
     _initFlights() {
       const SPEED_MIN = 0.0016, SPEED_MAX = 0.0032;
-      const BOX_SIZE = 32;
       const density = Math.max(6, Math.min(36, Number(this.featherDensity) || 16));
       const featherScale = Math.max(0.5, Math.min(2.0, Number(this.featherScale) || 1.0));
 
@@ -257,12 +259,14 @@ export default {
         this.phaseOffset = Math.random() * Math.PI * 2;
         this.curviness = 0.35 + Math.random() * 0.35;
         this.route = null;
+         this.tail = [];
         this.pickRoute();
       }
       Flight.prototype.pickRoute = function () {
         this.ca = self.cities[(Math.random() * self.cities.length) | 0];
         do { this.cb = self.cities[(Math.random() * self.cities.length) | 0]; } while (this.cb === this.ca);
         this.route = null;
+        this.tail.length = 0;
         self.flightsNeedRouteRecalc = true;
         self.routesDirty = true;
         this.t = 0;
@@ -272,7 +276,10 @@ export default {
         const B = self._project(this.cb.lon, this.cb.lat);
         this.route = bezier(A, B, this.curviness);
       };
-      Flight.prototype.reproject = function () { this.route = null; };
+      Flight.prototype.reproject = function () {
+        this.route = null;
+        this.tail.length = 0;
+      };
       Flight.prototype.update = function () { this.t += this.speed; if (this.t >= 1) this.pickRoute(); };
       Flight.prototype.getPoint = function () {
         if (!this.route) this.ensureRoute();
@@ -302,11 +309,9 @@ export default {
           ctx.stroke();
         }
         // Erase trail inside the (possibly rotated) box area
-        // Use a square large enough to cover the rotated box (BOX_SIZE * sqrt(2))
         ctx.globalCompositeOperation = 'destination-out';
         ctx.fillStyle = '#000';
-        const MASK_SIZE = Math.ceil(BOX_SIZE * Math.SQRT2);
-        ctx.fillRect(p.x - MASK_SIZE / 2, p.y - MASK_SIZE / 2, MASK_SIZE, MASK_SIZE);
+        self._applyBoxMask(ctx, p, BOX_MASK_PADDING);
         ctx.restore();
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang);
         const phase = now * 0.010 + this.phaseOffset;
@@ -373,13 +378,12 @@ export default {
         this.rtCtx.setLineDash([6, 6]);
       }
       // cut holes under current box locations so dashed route doesn't show inside the box
-      const BOX_SIZE = 32;
-      const MASK_SIZE = Math.ceil(BOX_SIZE * Math.SQRT2);
       if (holes && holes.length) {
         this.rtCtx.save();
         this.rtCtx.globalCompositeOperation = 'destination-out';
+        this.rtCtx.fillStyle = '#000';
         for (const p of holes) {
-          this.rtCtx.fillRect(p.x - MASK_SIZE / 2, p.y - MASK_SIZE / 2, MASK_SIZE, MASK_SIZE);
+          this._applyBoxMask(this.rtCtx, p, BOX_MASK_PADDING);
         }
         this.rtCtx.restore();
       }
@@ -414,6 +418,17 @@ export default {
       ctx.arcTo(x, y + h, x, y, r);
       ctx.arcTo(x, y, x + w, y, r);
       ctx.closePath();
+    },
+    _applyBoxMask(ctx, point, padding = 0) {
+      if (!ctx || !point) return;
+      const { x, y, ang } = point;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      const half = BOX_SIZE / 2 + padding;
+      ctx.save();
+      ctx.translate(x, y);
+      if (typeof ang === 'number' && Number.isFinite(ang)) ctx.rotate(ang);
+      ctx.fillRect(-half, -half, half * 2, half * 2);
+      ctx.restore();
     },
   }
 }
