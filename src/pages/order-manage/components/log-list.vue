@@ -159,6 +159,14 @@ export default {
     title: {
       type: String,
       default: ''
+    },
+    relatedIdField: {
+      type: String,
+      default: 'order_id'
+    },
+    relatedId: {
+      type: [String, Number],
+      default: ''
     }
   },
   components: {},
@@ -175,12 +183,19 @@ export default {
       this.$emit('close')
     },
     getLogList () {
-      let queryParam = {
-        related_id: this.currentData.order_id
+      const fallback = this.relatedId !== '' && this.relatedId !== null && this.relatedId !== undefined
+        ? this.relatedId
+        : this.currentData?.[this.relatedIdField]
+      if (!fallback) {
+        this.logInfoList = []
+        return
+      }
+      const queryParam = {
+        related_id: fallback
       }
       this.getLog(queryParam).then((res) => {
         if (this.$isRequestSuccessful(res.code)) {
-          this.logInfoList = res.data
+          this.logInfoList = Array.isArray(res.data) ? res.data : []
         }
       })
     }
@@ -191,6 +206,19 @@ export default {
     visible (val) {
       this.dialogVisible = val
       if (val) {
+        this.getLogList()
+      }
+    },
+    currentData: {
+      deep: true,
+      handler () {
+        if (this.dialogVisible) {
+          this.getLogList()
+        }
+      }
+    },
+    relatedId () {
+      if (this.dialogVisible) {
         this.getLogList()
       }
     }

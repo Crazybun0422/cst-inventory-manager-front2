@@ -911,7 +911,17 @@ const zh_cn = {
       inboundTime: '入库时间',
       ownerCode: '客户代码',
       columnSettings: '列设置',
-      searchPlaceholder: '名称/产品条码/SKU'
+      searchPlaceholder: '名称/产品条码/SKU',
+      adjustStock: '修改库存',
+      adjustQuantity: '调整数量',
+      adjustOperation: '调整操作',
+      adjustQuantityRequired: '请输入大于 0 的调整数量',
+      adjustStorageRequired: '缺少仓库信息，无法调整库存，请先选择仓库。',
+      adjustTargetMissing: '未找到可调整的库存记录。',
+      adjustBarcodeRequired: '缺少条码信息，无法调整库存。',
+      warehouseName: '仓库',
+      stockLog: '库存日志',
+      stockLogBarcodeRequired: '缺少产品条码，无法查询库存日志。'
     }
   },
   navigate: {

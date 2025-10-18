@@ -39,7 +39,7 @@
               $t('sourcing.alibaba') }}</a>
             ,
             <a class="info-link" href="https://www.amazon.com/" target="_blank" rel="noopener">{{ $t('sourcing.amazon')
-              }}</a>
+            }}</a>
             <span> {{ $t('sourcing.etcSuffix') }} </span>
           </div>
         </div>
@@ -112,7 +112,7 @@
         <div class="dialog-actions">
           <a-button @click="backMore">{{ $t('common.back') }}</a-button>
           <a-button type="primary" :loading="submittingImage" @click="submitImage">{{ $t('common.submit')
-            }}</a-button>
+          }}</a-button>
         </div>
       </div>
       <div v-else-if="moreStep === 'product'" class="product-step">
@@ -134,84 +134,104 @@
         </a-form-model>
 
         <!-- product table (Ant Design Vue) -->
+        <!-- product table (Ant Design Vue) -->
         <div class="product-table-wrapper">
-          <a-table class="product-table" :data-source="productTable.items" :loading="productLoading"
-            :rowKey="formatProductValue" :pagination="false" size="small" :scroll="productTableScroll"
-            :expandedRowKeys="productExpandedKeys" @expand="handleProductExpand">
-            <a-table-column key="select" width="50" align="center">
-              <template slot-scope="text, record">
-                <a-checkbox :disabled="!hasSelectableVariants(record)" :indeterminate="isProductIndeterminate(record)"
-                  :checked="isProductFullySelected(record)"
-                  @change="onToggleProduct(record, $event.target.checked)" />
+          <!-- 内部滚动容器（滚动条只出现在表格区域内） -->
+          <div class="product-table-scroll" :style="productTableScrollStyle">
+            <a-table class="product-table" :data-source="productTable.items" :loading="productLoading"
+              :rowKey="formatProductValue" :pagination="false" size="small" :expandedRowKeys="productExpandedKeys"
+              @expand="handleProductExpand">
+              <a-table-column key="select" width="50" align="center">
+                <template slot-scope="text, record">
+                  <a-checkbox :disabled="!hasSelectableVariants(record)" :indeterminate="isProductIndeterminate(record)"
+                    :checked="isProductFullySelected(record)"
+                    @change="onToggleProduct(record, $event.target.checked)" />
+                </template>
+              </a-table-column>
+
+              <a-table-column :title="$t('dashboard.image')" key="image" width="72">
+                <template slot-scope="text, record">
+                  <AuthImg :src="record.sub_image_url ? record.sub_image_url : record.main_image_url"
+                    :styleInfo="'width:40px;height:40px;border-radius:6px;'" />
+                </template>
+              </a-table-column>
+
+              <a-table-column
+                :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+                key="name" :ellipsis="true" :width="260">
+                <template slot-scope="text, record">
+                  <span class="cell-text" :title="formatProductTitle(record)">{{ formatProductTitle(record) }}</span>
+                </template>
+              </a-table-column>
+
+              <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :width="220">
+                <template slot-scope="text, record">
+                  <span class="sku-cell" :title="(record.product_variants || []).map(v => v.product_code_sku).join(', ')">{{ (record.product_variants || []).map(v => v.product_code_sku).join(', ')
+                  }}</span>
+                </template>
+              </a-table-column>
+
+              <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
+                <template slot-scope="text, record">
+                  <span>{{ formatProductPrice(record) }}</span>
+                </template>
+              </a-table-column>
+
+              <template slot="expandedRowRender" slot-scope="record">
+                <div class="variant-inline-wrapper">
+                  <a-table class="variant-table" :data-source="getProductVariants(record)" :rowKey="variantRowKey"
+                    :pagination="false" size="small">
+                    <a-table-column key="select" width="50" align="center">
+                      <template slot-scope="text, variant">
+                        <a-checkbox :checked="isVariantSelected(record, variant)"
+                          @change="onToggleVariant(record, variant, $event.target.checked)" />
+                      </template>
+                    </a-table-column>
+
+                    <a-table-column :title="$t('dashboard.image')" key="image" width="72">
+                      <template slot-scope="text, variant">
+                        <AuthImg :src="variantImage(record, variant)" :styleInfo="'width:40px;height:40px;border-radius:6px;'" />
+                      </template>
+                    </a-table-column>
+
+                    <a-table-column
+                      :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
+                    key="name" :ellipsis="true" :width="240">
+                    <template slot-scope="text, variant">
+                      <span class="cell-text" :title="formatVariantTitle(record, variant)">{{ formatVariantTitle(record, variant) }}</span>
+                    </template>
+                  </a-table-column>
+
+                  <a-table-column :title="$t('message.productManagement.productSku')" key="sku" :width="200">
+                    <template slot-scope="text, variant">
+                      <span :title="variant.product_code_sku">{{ variant.product_code_sku }}</span>
+                    </template>
+                  </a-table-column>
+
+                    <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
+                      <template slot-scope="text, variant">
+                        <span>{{ formatVariantPrice(variant) }}</span>
+                      </template>
+                    </a-table-column>
+                  </a-table>
+                </div>
               </template>
-            </a-table-column>
-            <a-table-column :title="$t('dashboard.image')" key="image" width="90">
-              <template slot-scope="text, record">
-                <AuthImg :src="record.sub_image_url ? record.sub_image_url : record.main_image_url"
-                  :styleInfo="'width:48px;height:48px;'" />
-              </template>
-            </a-table-column>
-            <a-table-column
-              :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
-              key="name" :ellipsis="true">
-              <template slot-scope="text, record">
-                <span>{{ formatProductTitle(record) }}</span>
-              </template>
-            </a-table-column>
-            <a-table-column :title="$t('message.productManagement.productSku')" key="sku">
-              <template slot-scope="text, record">
-                <span class="sku-cell">{{ (record.product_variants || []).map(v => v.product_code_sku).join(', ') }}</span>
-              </template>
-            </a-table-column>
-            <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
-              <template slot-scope="text, record">
-                <span>{{ formatProductPrice(record) }}</span>
-              </template>
-            </a-table-column>
-            <template slot="expandedRowRender" slot-scope="record">
-              <a-table class="variant-table" :data-source="getProductVariants(record)" :rowKey="variantRowKey"
-                :pagination="false" size="small">
-                <a-table-column key="select" width="50" align="center">
-                  <template slot-scope="text, variant">
-                    <a-checkbox :checked="isVariantSelected(record, variant)"
-                      @change="onToggleVariant(record, variant, $event.target.checked)" />
-                  </template>
-                </a-table-column>
-                <a-table-column :title="$t('dashboard.image')" key="image" width="90">
-                  <template slot-scope="text, variant">
-                    <AuthImg :src="variantImage(record, variant)" :styleInfo="'width:48px;height:48px;'" />
-                  </template>
-                </a-table-column>
-                <a-table-column
-                  :title="langType === 'zh_cn' ? $t('message.productManagement.chineseName') : $t('message.productManagement.englishName')"
-                  key="name" :ellipsis="true">
-                  <template slot-scope="text, variant">
-                    <span>{{ formatVariantTitle(record, variant) }}</span>
-                  </template>
-                </a-table-column>
-                <a-table-column :title="$t('message.productManagement.productSku')" key="sku">
-                  <template slot-scope="text, variant">
-                    <span>{{ variant.product_code_sku }}</span>
-                  </template>
-                </a-table-column>
-                <a-table-column :title="$t('message.productManagement.price')" key="price" width="120">
-                  <template slot-scope="text, variant">
-                    <span>{{ formatVariantPrice(variant) }}</span>
-                  </template>
-                </a-table-column>
-              </a-table>
-            </template>
-          </a-table>
+            </a-table>
+          </div>
         </div>
+
         <div class="product-footer">
           <div class="product-pagination">
-            <a-pagination show-quick-jumper :pageSize="productTable.page_size" :current="productTable.page_number"
-              :total="productTable.total" @change="loadProductList" />
+            <a-pagination show-quick-jumper :showSizeChanger="true"
+              :pageSizeOptions="['10', '20', '50', '100']" :pageSize="productTable.page_size"
+              :current="productTable.page_number" :total="productTable.total"
+              @change="onProductPageChange" @showSizeChange="onProductPageSizeChange" />
           </div>
           <div class="dialog-actions product-actions">
             <a-button @click="backMore">{{ $t('common.back') }}</a-button>
             <a-button type="primary" :disabled="!totalSelectedVariants" :loading="submittingProduct"
-              @click="submitProduct">{{ $t('common.submit')
+              @click="submitProduct">{{
+                $t('common.submit')
               }}</a-button>
           </div>
         </div>
@@ -260,9 +280,14 @@
                   <a v-if="it.source_type === 'url'" class="his-item__link" :href="it.source_url" target="_blank"
                     rel="noopener">{{ it.source_url }}</a>
                   <template v-else-if="it.source_type === 'product'">
-                    <span v-if="getHistoryVariantTitle(it)" class="his-item__text">{{ getHistoryVariantTitle(it) }}</span>
-                    <span v-else-if="isHistoryVariantLoading(it)" class="his-item__text">{{ $t('common.loading') }}</span>
-                    <span v-else-if="isHistoryVariantError(it)" class="his-item__text">{{ $t('sourcing.variantInfoUnavailable') }}</span>
+                    <a v-if="getHistoryVariantMeta(it) && getHistoryVariantMeta(it).product" class="his-item__link"
+                      href="javascript:void(0)" @click="openProductDetail(getHistoryVariantMeta(it).product)">
+                      {{ getHistoryVariantTitle(it) || getHistoryVariantSku(it) || it.product_id }}
+                    </a>
+                    <span v-else-if="isHistoryVariantLoading(it)" class="his-item__text">{{ $t('common.loading')
+                    }}</span>
+                    <span v-else-if="isHistoryVariantError(it)" class="his-item__text">{{
+                      $t('sourcing.variantInfoUnavailable') }}</span>
                     <span v-else class="his-item__text">{{ it.product_id }}</span>
                   </template>
                   <span v-else-if="it.source_type === 'image'" class="his-item__text">{{ it.description }}</span>
@@ -322,10 +347,13 @@
       </a-table>
       <div class="mt-16" style="text-align:right">
         <a-pagination show-quick-jumper :showSizeChanger="true" :pageSizeOptions="['10', '20', '50', '100']"
-          :pageSize="history.page_size" :current="history.page_number" :total="history.total" @change="loadHistory"
-          @showSizeChange="onHistorySizeChange" />
+          :pageSize="history.page_size" :current="history.page_number" :total="history.total"
+          @change="loadHistory" @showSizeChange="onHistorySizeChange" />
       </div>
     </a-modal>
+
+    <ProductDetail :visible="productDetailVisible" :currentData="productDetailData || {}"
+      :originalDataArr="productDetailData ? [productDetailData] : []" @close="closeProductDetail" />
 
     <!-- Removed Support Items Modal; now inline above -->
   </div>
@@ -335,13 +363,14 @@
 import PageHead from '@/components/page-head.vue'
 import WorldMagnifierBackground from '@/components/world-magnifier-background.vue'
 import AuthImg from '@/components/auth-img.vue'
+import ProductDetail from '@/pages/product-manage/components/product-detail.vue'
 import { message, Modal } from 'ant-design-vue'
 import { getGlobalHeaders } from '@/common/common-func'
 import bus, { EVENTS } from '@/common/event-bus'
 import { currencySymbolMap } from '@/common/field-maping'
 export default {
   name: 'DsSourcing',
-  components: { PageHead, AuthImg, WorldMagnifierBackground },
+  components: { PageHead, AuthImg, WorldMagnifierBackground, ProductDetail },
   data() {
     return {
       submittingUrl: false,
@@ -382,6 +411,8 @@ export default {
       historyVariantInfo: {},
       historyVariantLoading: {},
       _historyDebounce: null,
+      productDetailVisible: false,
+      productDetailData: null,
       // inline support banner state
       pauseScroll: false,
       supportItems: [],
@@ -408,6 +439,14 @@ export default {
     currencySymbol() { return '$' },
     productTableScroll() {
       return { x: 'max-content', y: this.productTableScrollY }
+    },
+    // 新增：用于内部滚动容器样式
+    productTableScrollStyle() {
+      const y = (this.productTableScroll && this.productTableScroll.y) || this.productTableScrollY || 360
+      return {
+        maxHeight: typeof y === 'number' ? `${y}px` : String(y),
+        overflow: 'auto'
+      }
     },
     duplicatedSupportItems() {
       // two identical blocks to enable seamless looping at -50%
@@ -811,21 +850,37 @@ export default {
       return Number.isFinite(num)
     },
     resetProductQuery() { this.productQuery = { name: '', sku: '' }; this.loadProductList(1) },
-    async loadProductList(page) {
+    onProductPageChange(page, pageSize) {
+      this.loadProductList(page, pageSize)
+    },
+    onProductPageSizeChange(current, size) {
+      this.loadProductList(1, size)
+    },
+    async loadProductList(page, pageSize) {
+      if (typeof page === 'number') this.productTable.page_number = page
+      if (typeof pageSize === 'number') this.productTable.page_size = pageSize
       this.productLoading = true
       try {
         const key = this.langType === 'zh_cn' ? 'chinese_name_reg' : 'english_name_reg'
-        const params = { cur_page: page || this.productTable.page_number, page_size: this.productTable.page_size }
+        const params = {
+          cur_page: this.productTable.page_number,
+          page_size: this.productTable.page_size
+        }
         if (this.productQuery.name) params[key] = this.productQuery.name
         if (this.productQuery.sku) params['product_variants.product_code_sku_reg'] = this.productQuery.sku
         const res = await this.$ajax({ url: '/api-prefix/api/product/query-product', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) {
           const data = res.data || { result: [], total: 0, cur_page: 1, page_size: 10 }
           this.productTable.items = data.result || []
-          this.productTable.total = data.total || 0
-          this.productTable.page_number = data.cur_page || 1
-          this.productTable.page_size = data.page_size || params.page_size
-        } else { this.productTable.items = []; this.productTable.total = 0 }
+          const nextPage = data.cur_page || data.page_number || this.productTable.page_number || 1
+          const nextSize = data.page_size || params.page_size
+          this.productTable.total = Number(data.total || data.count || 0)
+          this.productTable.page_number = Number(nextPage) || 1
+          this.productTable.page_size = Number(nextSize) || this.productTable.page_size || 10
+        } else {
+          this.productTable.items = []
+          this.productTable.total = 0
+        }
       } finally { this.productLoading = false }
     },
     backMore() { this.moreStep = 'options' },
@@ -870,6 +925,15 @@ export default {
           this.productExpandedKeys = []
         }
       } finally { this.submittingProduct = false }
+    },
+    openProductDetail(product) {
+      if (!product) return
+      this.productDetailData = product
+      this.productDetailVisible = true
+    },
+    closeProductDetail() {
+      this.productDetailVisible = false
+      this.productDetailData = null
     },
     openHistory(keyword) {
       // Guard against Vue event object being passed implicitly
@@ -919,28 +983,46 @@ export default {
       clearTimeout(this._historyDebounce)
       this._historyDebounce = setTimeout(() => this.loadHistory(1), 400)
     },
-    async loadHistory(page) {
+    async loadHistory(page, pageSize) {
+      if (typeof page === 'number') this.history.page_number = page
+      if (typeof pageSize === 'number') this.history.page_size = pageSize
       this.historyLoading = true
       try {
-        const params = { page_number: page || this.history.page_number, page_size: this.history.page_size }
+        const params = {
+          page_number: this.history.page_number,
+          page_size: this.history.page_size
+        }
         if (this.historyQuery.status) params.status = this.historyQuery.status
         if (this.historyQuery.keyword) {
           params.keyword = this.escapeRegexLiteral(this.historyQuery.keyword)
         }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'get', params, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) {
-          const data = res.data || { items: [], total: 0, page_number: 1, page_size: 10 }
-          this.history = data
+          const data = res.data || {}
+          const nextPage = data.page_number || data.cur_page || this.history.page_number || 1
+          const nextSize = data.page_size || this.history.page_size || params.page_size
+          const items = data.items || data.result || []
+          const total = Number(data.total || data.count || items.length || 0)
+          this.history = {
+            items,
+            total,
+            page_number: Number(nextPage) || 1,
+            page_size: Number(nextSize) || this.history.page_size || 10
+          }
           this.historyExpandedKeys = []
           this.historyVariantInfo = {}
           this.historyVariantLoading = {}
+        } else {
+          this.history = {
+            items: [],
+            total: 0,
+            page_number: this.history.page_number || 1,
+            page_size: this.history.page_size || 10
+          }
         }
       } finally { this.historyLoading = false }
     },
-    onHistorySizeChange(current, size) {
-      this.history.page_size = size
-      this.loadHistory(1)
-    },
+    onHistorySizeChange(current, size) { this.loadHistory(1, size) },
     async confirmHistory(row) {
       try {
         const res = await this.$ajax({ url: `/api/sourcing/${row.sourcing_id}`, method: 'put', data: { status: 'completed' }, roleType: this.roleType })
@@ -1169,6 +1251,7 @@ export default {
 ::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary) {
   border-color: var(--custom-border-color2) !important;
 }
+
 ::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):hover,
 ::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):focus {
   border-color: var(--outer-background-color, #c6c7f8) !important;
@@ -1176,6 +1259,7 @@ export default {
   color: var(--outer-background-color, #c6c7f8) !important;
   text-decoration: none !important;
 }
+
 ::v-deep .more-action-btn.ant-btn:not(.ant-btn-primary):active {
   color: var(--outer-background-color, #c6c7f8) !important;
   border-color: var(--outer-background-color, #c6c7f8) !important;
@@ -1219,7 +1303,11 @@ export default {
   gap: 8px;
 }
 
+.cell-text { max-width: 100%; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default; }
+
 .sku-cell {
+  display: inline-block;
+  max-width: 220px;
   white-space: normal;
   word-break: break-word;
 }
@@ -1234,11 +1322,64 @@ export default {
   margin-bottom: 12px;
 }
 
+/* 外层不滚动，仅作为布局容器 */
 .product-table-wrapper {
   flex: 1 1 auto;
   min-height: 360px;
-  overflow: hidden;
+  overflow: visible;
 }
+
+/* 内部滚动容器（滚动条只出现在这里，看起来像“表格内部滚动”） */
+.product-table-scroll {
+  width: 100%;
+  overflow: auto;
+  /* 同时支持横向/纵向 */
+  scrollbar-width: auto;
+  scrollbar-color: rgba(137, 137, 155, 0.65) transparent;
+}
+
+.product-table-scroll::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.product-table-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(137, 137, 155, 0.7);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.product-table-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 107, 138, 0.85);
+}
+
+.product-table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 表头置顶，滚动时保持可见（配合内部滚动容器） */
+.product-table-scroll ::v-deep .ant-table-thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--custom-background-color);
+}
+
+/* 宽表格时支持横向滚动 */
+.product-table ::v-deep table {
+  width: 100%;
+  min-width: 720px;
+  table-layout: fixed;
+}
+
+/* 提升可读性：避免过度换行（按需保留） */
+.product-table ::v-deep .ant-table-thead>tr>th,
+.product-table ::v-deep .ant-table-tbody>tr>td {
+  white-space: nowrap;
+}
+
+.product-table ::v-deep .ant-table-expanded-row>td { padding: 0; background: transparent; }
 
 .product-footer {
   margin-top: 16px;
@@ -1254,14 +1395,27 @@ export default {
   text-align: right;
 }
 
-.variant-table {
-  margin-left: 48px;
-}
-
 .variant-table ::v-deep .ant-table-thead>tr>th,
 .variant-table ::v-deep .ant-table-tbody>tr>td {
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+.variant-table ::v-deep .ant-table-tbody>tr>td:nth-child(3) span {
+  display: inline-block;
+  max-width: 220px;
+}
+
+.variant-table ::v-deep .ant-table-tbody>tr>td:nth-child(4) span {
+  display: inline-block;
+  max-width: 180px;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.variant-table ::v-deep table {
+  width: 100%;
+  table-layout: fixed;
 }
 
 .product-actions {
@@ -1439,3 +1593,6 @@ export default {
 
 /* (Modal version removed) */
 </style>
+.variant-inline-wrapper {
+  margin-left: 16px;
+}

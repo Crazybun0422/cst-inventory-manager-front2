@@ -92,6 +92,40 @@
           :empty-text="$t('common.noDataAvailable')"
         >
           <el-table-column
+            :label="$t('common.operation')"
+            width="180"
+            align="center"
+          >
+            <template slot-scope="scope">
+              <div class="operation-links">
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openAdjustDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.adjustStock') }}
+                </el-link>
+                <span class="operation-separator">|</span>
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openLogDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.stockLog') }}
+                </el-link>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="isColumnVisible('barcode')"
+            prop="barcode"
+            :label="$t('message.productManagement.productBarcode')"
+            min-width="160"
+            show-overflow-tooltip
+          />
+          <el-table-column
             v-if="isColumnVisible('image')"
             key="total-image"
             :label="$t('message.productManagement.productImage')"
@@ -107,13 +141,6 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column
-            v-if="isColumnVisible('barcode')"
-            prop="barcode"
-            :label="$t('message.productManagement.productBarcode')"
-            min-width="160"
-            show-overflow-tooltip
-          />
           <el-table-column
             v-if="isColumnVisible('sku')"
             prop="sku"
@@ -239,6 +266,40 @@
           :span-method="locationSpanMethod"
         >
           <el-table-column
+            v-if="isColumnVisible('location')"
+            prop="location"
+            :label="$t('message.storage.location')"
+            min-width="120"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            :label="$t('common.operation')"
+            width="180"
+            align="center"
+          >
+            <template slot-scope="scope">
+              <div class="operation-links">
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openAdjustDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.adjustStock') }}
+                </el-link>
+                <span class="operation-separator">|</span>
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openLogDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.stockLog') }}
+                </el-link>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
             v-if="isColumnVisible('image')"
             key="location-image"
             :label="$t('message.productManagement.productImage')"
@@ -254,13 +315,6 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column
-            v-if="isColumnVisible('location')"
-            prop="location"
-            :label="$t('message.storage.location')"
-            min-width="120"
-            show-overflow-tooltip
-          />
           <el-table-column
             v-if="isColumnVisible('barcode')"
             prop="barcode"
@@ -386,6 +440,40 @@
           :span-method="customerSpanMethod"
         >
           <el-table-column
+            v-if="isColumnVisible('owner_code')"
+            prop="user_code"
+            :label="$t('message.inventory.ownerCode')"
+            min-width="120"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            :label="$t('common.operation')"
+            width="180"
+            align="center"
+          >
+            <template slot-scope="scope">
+              <div class="operation-links">
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openAdjustDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.adjustStock') }}
+                </el-link>
+                <span class="operation-separator">|</span>
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="operation-link"
+                  @click="openLogDialog(scope.row)"
+                >
+                  {{ $t('message.inventory.stockLog') }}
+                </el-link>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
             v-if="isColumnVisible('image')"
             key="customer-image"
             :label="$t('message.productManagement.productImage')"
@@ -401,13 +489,6 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column
-            v-if="isColumnVisible('owner_code')"
-            prop="user_code"
-            :label="$t('message.inventory.ownerCode')"
-            min-width="120"
-            show-overflow-tooltip
-          />
           <el-table-column
             v-if="isColumnVisible('barcode')"
             prop="barcode"
@@ -529,6 +610,82 @@
         </el-table>
       </el-tab-pane>
     </el-tabs>
+    <el-dialog
+      :visible.sync="adjustDialogVisible"
+      :title="$t('message.inventory.adjustStock')"
+      width="480px"
+      :close-on-click-modal="false"
+      custom-class="adjust-stock-dialog"
+      @close="onAdjustDialogClosed"
+    >
+      <div v-if="adjustTarget" class="adjust-stock-summary">
+        <div v-if="adjustTarget.image_url" class="adjust-stock-summary__image">
+          <AuthImg
+            :src="adjustTarget.image_url"
+            :styleInfo="'width:72px;height:72px;border-radius:6px;object-fit:cover;'"
+          />
+        </div>
+        <div class="adjust-stock-summary__info">
+          <div class="adjust-stock-summary__title">
+            {{ adjustTarget.displayName }}
+          </div>
+          <div class="adjust-stock-summary__meta">
+            <span v-if="adjustTarget.sku">
+              {{ $t('message.productManagement.productSku') }}：{{ adjustTarget.sku }}
+            </span>
+            <span v-if="adjustTarget.barcode">
+              {{ $t('message.productManagement.productBarcode') }}：{{ adjustTarget.barcode }}
+            </span>
+            <span v-if="adjustTarget.location">
+              {{ $t('message.storage.location') }}：{{ adjustTarget.location }}
+            </span>
+            <span v-if="adjustTarget.user_code">
+              {{ $t('message.inventory.ownerCode') }}：{{ adjustTarget.user_code }}
+            </span>
+            <span v-if="adjustTarget.storage_name">
+              {{ $t('message.inventory.warehouseName') }}：{{ adjustTarget.storage_name }}
+            </span>
+            <span v-if="adjustTarget.available_stock !== null && adjustTarget.available_stock !== undefined">
+              {{ $t('message.inventory.availableStock') }}：{{ adjustTarget.available_stock }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <el-form :model="adjustForm" label-width="120px" class="adjust-stock-form">
+        <el-form-item :label="$t('message.inventory.adjustQuantity')">
+          <el-input-number
+            v-model="adjustForm.number"
+            :min="0"
+            :step="1"
+            :precision="0"
+            controls-position="right"
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item :label="$t('message.inventory.adjustOperation')">
+          <el-radio-group v-model="adjustForm.operation" size="small">
+            <el-radio-button label="increase">{{ $t('common.increase') }}</el-radio-button>
+            <el-radio-button label="decrease">{{ $t('common.decrease') }}</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeAdjustDialog" :disabled="adjustSubmitting">
+          {{ $t('common.cancel') }}
+        </el-button>
+        <el-button type="primary" :loading="adjustSubmitting" @click="submitAdjustStock">
+          {{ $t('common.confirm') }}
+        </el-button>
+      </span>
+    </el-dialog>
+    <LogList
+      :visible="logDialogVisible"
+      :currentData="logTarget || {}"
+      related-id-field="barcode"
+      :related-id="logTarget ? logTarget.barcode : ''"
+      :title="$t('message.inventory.stockLog')"
+      @close="handleLogDialogClose"
+    />
     <div class="pagination-wrapper">
       <el-pagination
         background
@@ -548,18 +705,19 @@
 import PageHead from '@/components/page-head.vue'
 import SearchCard from '@/components/search-card.vue'
 import AuthImg from '@/components/auth-img.vue'
+import LogList from '@/pages/order-manage/components/log-list.vue'
 import { getStorageDefinition, formatTimestamp } from '@/common/common-func'
 
 const COLUMN_SETTINGS_VERSION = 1
 
 export default {
   name: 'p-stock-statistics',
-  components: { PageHead, SearchCard, AuthImg },
+  components: { PageHead, SearchCard, AuthImg, LogList },
   data() {
     const columnOptions = {
       total: [
-        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'barcode', labelKey: 'message.productManagement.productBarcode', default: true },
+        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'sku', labelKey: 'message.productManagement.productSku', default: true },
         { id: 'chinese_name', labelKey: 'message.productManagement.chineseName', default: true },
         { id: 'english_name', labelKey: 'message.productManagement.englishName', default: true },
@@ -576,8 +734,8 @@ export default {
         { id: 'inbound_time', labelKey: 'message.inventory.inboundTime', default: true }
       ],
       location: [
-        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'location', labelKey: 'message.storage.location', default: true },
+        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'barcode', labelKey: 'message.productManagement.productBarcode', default: true },
         { id: 'sku', labelKey: 'message.productManagement.productSku', default: true },
         { id: 'chinese_name', labelKey: 'message.productManagement.chineseName', default: true },
@@ -594,8 +752,8 @@ export default {
         { id: 'inbound_time', labelKey: 'message.inventory.inboundTime', default: true }
       ],
       customer: [
-        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'owner_code', labelKey: 'message.inventory.ownerCode', default: true },
+        { id: 'image', labelKey: 'message.productManagement.productImage', default: true },
         { id: 'barcode', labelKey: 'message.productManagement.productBarcode', default: true },
         { id: 'sku', labelKey: 'message.productManagement.productSku', default: true },
         { id: 'chinese_name', labelKey: 'message.productManagement.chineseName', default: true },
@@ -643,7 +801,16 @@ export default {
       pageSizeOptions: [10, 20, 50, 100],
       loading: false,
       filterTimer: null,
-      saveColumnTimer: null
+      saveColumnTimer: null,
+      adjustDialogVisible: false,
+      adjustTarget: null,
+      adjustForm: {
+        number: 0,
+        operation: 'increase'
+      },
+      adjustSubmitting: false,
+      logDialogVisible: false,
+      logTarget: null
     }
   },
   computed: {
@@ -681,6 +848,133 @@ export default {
           value: item.storage_define_uuid
         }))
       }
+    },
+    resolveStorageName(uuid) {
+      if (!uuid) return ''
+      const match = this.storageOptions.find(item => item.value === uuid)
+      return match ? match.label : ''
+    },
+    openAdjustDialog(row) {
+      const target = this.buildAdjustTarget(row)
+      if (!target) {
+        this.$message.warning(this.$t('message.inventory.adjustTargetMissing'))
+        return
+      }
+      this.adjustTarget = target
+      this.resetAdjustForm()
+      this.adjustDialogVisible = true
+    },
+    resetAdjustForm() {
+      this.adjustForm.number = 0
+      this.adjustForm.operation = 'increase'
+    },
+    closeAdjustDialog() {
+      this.adjustDialogVisible = false
+    },
+    onAdjustDialogClosed() {
+      this.adjustTarget = null
+      this.resetAdjustForm()
+      this.adjustSubmitting = false
+    },
+    buildAdjustTarget(row) {
+      if (!row) return null
+      const storageUuid =
+        row.storage_uuid ||
+        row.storageUuid ||
+        row.storage_define_uuid ||
+        row.storageDefineUuid ||
+        this.queryForm.storage_uuid ||
+        ''
+      let availableStock = null
+      if (Object.prototype.hasOwnProperty.call(row, 'available_location_stock')) {
+        availableStock = row.available_location_stock
+      } else if (Object.prototype.hasOwnProperty.call(row, 'available_stock')) {
+        availableStock = row.available_stock
+      }
+      const displayName =
+        row.chinese_name ||
+        row.english_name ||
+        row.title ||
+        row.product_name ||
+        row.productName ||
+        row.sku ||
+        row.barcode ||
+        '-'
+      return {
+        raw: row,
+        tab: this.activeTab,
+        barcode: row.barcode || '',
+        sku: row.sku || '',
+        displayName,
+        location: row.location || '',
+        user_code: row.user_code || '',
+        storage_uuid: storageUuid,
+        storage_name: row.storage_name || this.resolveStorageName(storageUuid),
+        available_stock: availableStock,
+        image_url: row.image_url || row.main_image_url || ''
+      }
+    },
+    buildAdjustPayload() {
+      if (!this.adjustTarget) return null
+      const number = Number(this.adjustForm.number)
+      return {
+        barcode: this.adjustTarget.barcode,
+        location: this.adjustTarget.location || '',
+        storage_uuid: this.adjustTarget.storage_uuid || '',
+        number: Number.isNaN(number) ? 0 : number,
+        operation: this.adjustForm.operation,
+        reference_number: ''
+      }
+    },
+    async submitAdjustStock() {
+      if (this.adjustSubmitting) return
+      const payload = this.buildAdjustPayload()
+      if (!payload) {
+        this.$message.error(this.$t('message.inventory.adjustTargetMissing'))
+        return
+      }
+      if (!payload.barcode) {
+        this.$message.error(this.$t('message.inventory.adjustBarcodeRequired'))
+        return
+      }
+      if (!payload.storage_uuid) {
+        this.$message.error(this.$t('message.inventory.adjustStorageRequired'))
+        return
+      }
+      if (!payload.number || payload.number <= 0) {
+        this.$message.warning(this.$t('message.inventory.adjustQuantityRequired'))
+        return
+      }
+      this.adjustSubmitting = true
+      try {
+        const res = await this.$ajax({
+          url: '/api/product-stock/adjust-stock',
+          method: 'put',
+          data: payload,
+          roleType: this.roleType
+        })
+        if (this.$isRequestSuccessful(res?.code)) {
+          this.$message.success(this.$t('common.operationSuccessful'))
+          this.closeAdjustDialog()
+          this.fetchData()
+        }
+      } catch (error) {
+        console.error('adjust stock failed', error)
+      } finally {
+        this.adjustSubmitting = false
+      }
+    },
+    openLogDialog(row) {
+      if (!row || !row.barcode) {
+        this.$message.warning(this.$t('message.inventory.stockLogBarcodeRequired'))
+        return
+      }
+      this.logTarget = { ...row, barcode: row.barcode }
+      this.logDialogVisible = true
+    },
+    handleLogDialogClose() {
+      this.logDialogVisible = false
+      this.logTarget = null
     },
     getDefaultVisibleColumns(tab) {
       return this.columnOptions[tab]
@@ -1113,6 +1407,76 @@ export default {
 
 .stock-level-default {
   color: #303133;
+}
+
+.operation-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.operation-link {
+  font-size: 12px;
+}
+
+.operation-separator {
+  color: #dcdfe6;
+}
+
+.adjust-stock-summary {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--custom-border-color, #ebeef5);
+}
+
+.adjust-stock-summary__image {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.adjust-stock-summary__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.adjust-stock-summary__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--custom-font-color, #303133);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.adjust-stock-summary__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--custom-font-color2, #909399);
+}
+
+.adjust-stock-form {
+  margin-top: 8px;
+}
+
+.adjust-stock-dialog ::v-deep .el-dialog__header {
+  background: var(--custom-color-primary);
+  color: #fff;
+}
+
+.adjust-stock-dialog ::v-deep .el-dialog__title {
+  color: #fff;
+}
+
+.adjust-stock-dialog ::v-deep .el-dialog__headerbtn .el-dialog__close {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.adjust-stock-dialog ::v-deep .el-dialog__body {
+  padding-top: 16px;
 }
 </style>
 

@@ -907,7 +907,17 @@
       inboundTime: 'Inbound time',
       ownerCode: 'Owner code',
       columnSettings: 'Column settings',
-      searchPlaceholder: 'Name/Product barcode/SKU'
+      searchPlaceholder: 'Name/Product barcode/SKU',
+      adjustStock: 'Adjust stock',
+      adjustQuantity: 'Adjustment quantity',
+      adjustOperation: 'Operation type',
+      adjustQuantityRequired: 'Please enter an adjustment quantity greater than 0',
+      adjustStorageRequired: 'Warehouse information is missing. Please select a warehouse before adjusting the stock.',
+      adjustTargetMissing: 'Unable to locate the stock record to adjust.',
+      adjustBarcodeRequired: 'Barcode is required to adjust the stock.',
+      warehouseName: 'Warehouse',
+      stockLog: 'Stock log',
+      stockLogBarcodeRequired: 'Product barcode is required to view stock logs.'
     }
   },
   navigate: {
