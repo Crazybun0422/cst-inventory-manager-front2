@@ -991,7 +991,7 @@
     addShop: 'Add Shop',
     theme: 'Theme',
     pleaseDefaultTheme: 'Please select the default theme',
-    messageList: 'Message list',
+    messageList: 'Alarm list',
     isItDefault: "Is it default",
     pleaseSelectTheDataToBeSubmitted: 'Please select the data to be submitted',
     basicInformation: 'Basic information',

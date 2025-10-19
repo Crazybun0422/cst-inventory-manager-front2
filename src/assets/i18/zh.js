@@ -997,7 +997,7 @@ const zh_cn = {
     addShop: '添加店铺',
     theme: '主题',
     pleaseDefaultTheme: '请选择默认主题',
-    messageList: '消息列表',
+    messageList: '告警列表',
     isItDefault: "是否默认",
     pleaseSelectTheDataToBeSubmitted: '请选择要提交的数据',
     basicInformation: '基本信息',

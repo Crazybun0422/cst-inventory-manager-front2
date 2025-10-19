@@ -25,7 +25,11 @@
       </div>
       <span style="font-size: 24px; margin: 0px 10px"></span>
       <div>
-        <el-badge class="item bell-style badge-style" :hidden="notice === 0" :is-dot="Boolean(notice)">
+        <el-badge
+          class="item bell-style badge-style"
+          :hidden="!hasUnreadAlarms"
+          :is-dot="hasUnreadAlarms"
+        >
           <el-button plain class="icon-color el-icon-message-solid common-setting"
             style="font-size: 24px; padding: 0 0px; width: 30px; height: 30px" @click="showNoticeDrawer"></el-button>
         </el-badge>
@@ -262,6 +266,7 @@ export default {
       current_provider_uuid: '',
       isClicked: false,
       notice: 0, // 预留用来记录未读信个数
+      alarmUnreadCount: 0,
       showNotice: false,
       passwordStrength: 0, // 用于保存密码强度
       changePasswordForm: {
@@ -481,8 +486,22 @@ export default {
       this.getAlarmList(this.alarmQueryParams)
         .then((res) => {
           if (this.$isRequestSuccessful(res.code)) {
-            this.noticeList = res.data?.result
-            this.total = res.data?.total
+            const result = Array.isArray(res.data?.result) ? res.data.result : []
+            const unreadCandidates = [
+              res?.data?.unread_count,
+              res?.data?.unread,
+              res?.data?.unreadTotal,
+              res?.data?.unread_total
+            ].map((val) => (val === undefined || val === null ? null : Number(val)))
+            const unreadFromResponse = unreadCandidates.find(
+              (val) => typeof val === 'number' && !Number.isNaN(val)
+            )
+            const fallbackUnread = result.reduce((count, item) => {
+              return count + (!item?.alarm_read ? 1 : 0)
+            }, 0)
+            this.noticeList = result
+            this.total = res.data?.total || 0
+            this.alarmUnreadCount = unreadFromResponse != null ? unreadFromResponse : fallbackUnread
           }
         })
         .catch((err) => {
@@ -819,7 +838,7 @@ export default {
         // 2) 邮件
       } else if (msgData.message) {
         title = this.$t('message.myAccount.emailNotification')
-        msgContent = msgData.message
+        msgContent = this.resolveLocalizedText(msgData.message)
         pathType = 'mail'
         //  收到信息 更新刷新邮箱状态
         this.$store.dispatch('user/triggerEmailRefresh')
@@ -827,15 +846,23 @@ export default {
         // 3) 文件导出
       } else if (msgData.filename) {
         title = this.$t('message.myAccount.fileExportNotification')
-        msgContent = msgData.filename
+        msgContent = this.resolveLocalizedText(msgData.filename)
         pathType = 'download'
         this.$store.dispatch('user/triggerDownloadRefresh')
 
         // 4) 告警/系统通知
       } else if (msgData.event_name || msgData.title || msgData.content) {
         title = this.$t('message.myAccount.alarmNotification')
-        msgContent = msgData.content || msgData.event_name || msgData.title || ''
+        msgContent =
+          this.resolveLocalizedText(msgData.content) ||
+          this.resolveLocalizedText(msgData.event_name) ||
+          this.resolveLocalizedText(msgData.title) ||
+          ''
         pathType = 'alarm'
+      }
+
+      if (pathType === 'alarm') {
+        this.getAlarm()
       }
 
       setTimeout(
@@ -908,6 +935,52 @@ export default {
         }.bind(this),
         1000
       )
+    },
+    resolveLocalizedText(source) {
+      if (source === undefined || source === null) return ''
+      if (typeof source === 'string') return source
+      if (typeof source === 'number' || typeof source === 'boolean') return String(source)
+      if (Array.isArray(source)) {
+        return source
+          .map((item) => this.resolveLocalizedText(item))
+          .filter(Boolean)
+          .join(' ')
+      }
+      if (typeof source === 'object') {
+        const rawLang = (this.$languageType || (this.$i18n && this.$i18n.locale) || '').toLowerCase()
+        const langCandidates = []
+        const pushCandidate = (lang) => {
+          if (lang && !langCandidates.includes(lang)) langCandidates.push(lang)
+        }
+        pushCandidate(rawLang)
+        if (rawLang.includes('-')) pushCandidate(rawLang.replace('-', '_'))
+        if (rawLang.includes('_')) pushCandidate(rawLang.split('_')[0])
+        const locale = (this.$i18n && this.$i18n.locale && this.$i18n.locale.toLowerCase()) || ''
+        if (locale && locale !== rawLang) {
+          pushCandidate(locale)
+          if (locale.includes('-')) pushCandidate(locale.replace('-', '_'))
+          if (locale.includes('_')) pushCandidate(locale.split('_')[0])
+        }
+        pushCandidate('en_us')
+        pushCandidate('en')
+        pushCandidate('zh_cn')
+        pushCandidate('zh')
+        for (const key of langCandidates) {
+          if (!key) continue
+          if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const resolved = this.resolveLocalizedText(source[key])
+            if (resolved) return resolved
+          }
+        }
+        const firstKey = Object.keys(source).find((key) => source[key] !== undefined && source[key] !== null)
+        if (firstKey) return this.resolveLocalizedText(source[firstKey])
+        try {
+          return JSON.stringify(source)
+        } catch (_) {
+          return ''
+        }
+      }
+      return ''
     }
   },
   mounted() {
@@ -927,7 +1000,14 @@ export default {
     document.addEventListener('click', this.handleOutsideClick)
   },
   computed: {
-    ...mapGetters(['shouldRefreshEmails'])
+    ...mapGetters(['shouldRefreshEmails']),
+    hasUnreadAlarms() {
+      const count = Number(this.alarmUnreadCount)
+      if (!Number.isNaN(count)) {
+        return count > 0
+      }
+      return (this.noticeList || []).some((item) => !item.alarm_read)
+    }
   },
   watch: {
     shouldRefreshEmails(newValue) {
@@ -1027,9 +1107,18 @@ export default {
   position: absolute;
   right: 0;
   top: 60px;
-  width: 500px;
+  width: 420px;
+  max-width: 90vw;
   height: calc(100vh - 64px);
   z-index: 9999;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.08),
+    0 9px 28px rgba(0, 0, 0, 0.05),
+    0 12px 48px rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  border: none;
+  background-color: var(--custom-background-color, #fff);
+  overflow: hidden;
 }
 
 .notice-list-style .alarm-info-container {
@@ -1058,7 +1147,7 @@ export default {
 
 .transition-box {
   transition: all 0.5s;
-  overflow: scroll;
+  overflow: hidden;
   // ::v-deep .el-card__body {
   //   overflow: scroll;
   //   height: 100%;

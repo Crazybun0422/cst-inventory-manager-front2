@@ -225,20 +225,21 @@ export default {
       const completedKeys = { end: 1, success: 1, completed: 1, finish: 1, finished: 1 }
       const failedKeys = { failed: 1, fail: 1, error: 1, stopped: 1 }
       const pendingKeys = { pending: 1, wait: 1, waiting: 1, queued: 1, queue: 1 }
+      const textColor = this.isDarkTheme ? '#ffffff' : '#000000'
       if (percent >= 100 || completedKeys[statusKey]) {
         const color = palette.success || '#52c41a'
-        return { bar: color, text: color }
+        return { bar: color, text: textColor }
       }
       if (failedKeys[statusKey]) {
         const color = palette.danger || '#ff4d4f'
-        return { bar: color, text: color }
+        return { bar: color, text: textColor }
       }
       if (pendingKeys[statusKey]) {
         const color = palette.warning || '#faad14'
-        return { bar: color, text: color }
+        return { bar: color, text: textColor }
       }
       const primary = this.themePrimaryColor || palette.primary || '#1890ff'
-      return { bar: primary, text: primary }
+      return { bar: primary, text: textColor }
     },
     resolveProgressStatus (statusKey, percent) {
       const completedKeys = { end: 1, success: 1, completed: 1, finish: 1, finished: 1 }
@@ -587,11 +588,6 @@ export default {
 ::v-deep td.tc-nowrap { white-space: nowrap; word-break: keep-all; }
 /* fixed layout to avoid overflow */
 ::v-deep .ant-table { table-layout: fixed; }
-/* progress text color follows dynamic highlight */
-.task-dropdown .progress-cell .ant-progress-text {
-  color: var(--progress-text-color, var(--custom-font-color)) !important;
-  font-weight: 600;
-}
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -613,5 +609,9 @@ export default {
 .task-center-popover {
   .ant-popover-inner { padding: 0; border-radius: 8px; overflow: hidden; }
   .ant-popover-inner-content { padding: 8px 12px; }
+}
+.task-dropdown .progress-cell .ant-progress-text {
+  color: var(--progress-text-color, var(--custom-font-color, #333)) !important;
+  font-weight: 600;
 }
 </style>
