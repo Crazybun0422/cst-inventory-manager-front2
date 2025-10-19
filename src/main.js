@@ -34,6 +34,8 @@ import sourcingWS from '@/common/ws-notify'
 import { getRoleTypeForP } from '@/common/common-func'
 import { config, dropShipper } from '@/common/commonconfig'
 import bus, { EVENTS } from '@/common/event-bus'
+import { applyDocumentTheme, THEME_DEFAULT } from '@/common/theme'
+import { resolvePreferenceProviderUuid } from '@/common/global-user-settings'
 
 function changeFavicon(newIconURL) {
   let link = document.querySelector('link[rel="icon"]');
@@ -87,12 +89,19 @@ async function init() {
     }
 
   }
+  let role = getRoleType(window.location.pathname) || dropShipper
+  if (role === config.provider.role) role = getRoleTypeForP()
+  const providerUuid = resolvePreferenceProviderUuid(store, role)
+  const preferenceResult = await store.dispatch('user/fetchPreferences', { roleType: role, provider_uuid: providerUuid }) || {}
+  const prefTheme = preferenceResult.theme || THEME_DEFAULT
+  const prefLanguage = preferenceResult.language || store.state.user.defaultLanguage || getLanguage()
+  applyDocumentTheme(prefTheme)
+  if (prefLanguage) {
+    i18n.locale = prefLanguage
+  }
   initPermission()
   // Init WS notifications after permissions are set
   try {
-    let role = getRoleType(window.location.pathname) || dropShipper
-    if (role === config.provider.role) role = getRoleTypeForP()
-    // DS 端已有头部的 WebSocket，实现统一的 bus 转发；此处仅在 P 端启动全局 WS
     if (role !== dropShipper) sourcingWS.start()
   } catch (e) { /* ignore */ }
 
@@ -142,14 +151,11 @@ async function init() {
     beforeDestroy() { if (this._pBusNotify) bus.$off(EVENTS.SOURCING_NOTIFICATION, this._pBusNotify) },
     methods: {
       setTheme() {
-        const currentTheme = localStorage.getItem('theme') || 'defaultTheme';
-        document.documentElement.classList.remove(
-          currentTheme === 'defaultTheme' ? 'darkTheme' : 'defaultTheme'
-        );
-        document.documentElement.classList.add(currentTheme);
+        applyDocumentTheme(this.$store.state?.user?.theme || THEME_DEFAULT);
       }
     }
   }).$mount('#app');
+
 }
 
 Vue.use(Antd);

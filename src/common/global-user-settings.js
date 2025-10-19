@@ -1,4 +1,5 @@
 import ajax from '@/api/ajax'
+import { config } from '@/common/commonconfig'
 
 // Simple in-memory cache for global user settings (keyed by role/provider)
 const memoryCache = {}
@@ -44,4 +45,25 @@ export async function updateGlobalSettings ({ updates = {}, roleType, provider_u
     })
   } catch (e) {}
   return memoryCache[key]
+}
+
+export function resolvePreferenceProviderUuid (store, roleType) {
+  if (!roleType || typeof roleType !== 'string') return ''
+  try {
+    const state = store && store.state
+    if (roleType === config.provider.role || roleType === config.operator.role) {
+      const shopInfo = state && state.shopProviderUuid && state.shopProviderUuid.shopInfo
+      if (shopInfo && shopInfo.provider_uuid) return shopInfo.provider_uuid
+      const key = (config[roleType] && config[roleType].userRelatedId) || config.provider.userRelatedId
+      if (key) {
+        const stored = localStorage.getItem(key)
+        if (stored) return stored
+      }
+    }
+    if (roleType === config.dropShipper.role) {
+      const dsUuid = state && state.user && state.user.dsCurrentProviderUuid
+      if (dsUuid) return dsUuid
+    }
+  } catch (e) { /* ignore */ }
+  return ''
 }

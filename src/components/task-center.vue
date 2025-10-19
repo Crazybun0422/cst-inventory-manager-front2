@@ -59,12 +59,36 @@ export default {
     }
   },
   computed: {
+    themeColors () {
+      const theme =
+        (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.theme) ||
+        ''
+      /* eslint-disable no-unused-expressions */ theme
+      const style = getComputedStyle(document.documentElement)
+      const readVar = (name, fallback) => {
+        const value = style.getPropertyValue(name)
+        return (value && value.trim()) || fallback
+      }
+      return {
+        primary: readVar('--custom-color-primary', '#1890ff'),
+        success: readVar('--custom-color-success', '#52c41a'),
+        warning: readVar('--custom-color-warning', '#faad14'),
+        danger: readVar('--custom-color-danger', '#ff4d4f'),
+        info: readVar('--custom-color-info', '#d9d9d9')
+      }
+    },
     themePrimaryColor () {
       // react to theme toggles via vuex
       const _theme = (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.theme) || ''
       /* eslint-disable no-unused-expressions */ _theme
-      const v = getComputedStyle(document.documentElement).getPropertyValue('--custom-color-primary')
-      return (v && v.trim()) || '#1890ff'
+      return this.themeColors.primary || '#1890ff'
+    },
+    isDarkTheme () {
+      const theme =
+        (this.$store && this.$store.state && this.$store.state.user && this.$store.state.user.theme) ||
+        ''
+      /* eslint-disable no-unused-expressions */ theme
+      return theme === 'darkTheme'
     },
     columns () {
       return [
@@ -77,12 +101,12 @@ export default {
         {
           title: this.$t('common.status'),
           key: 'status',
-          width: 90,
+          width: 110,
           customRender: (text, row) => {
-            const statusKey = (row.status || '').toLowerCase()
-            const primary = this.themePrimaryColor
-            const color = statusKey === 'running' ? primary : (statusKey === 'end' ? '#52c41a' : '#d9d9d9')
-            return this.$createElement('a-tag', { props: { color } }, statusKey)
+            const statusKey = this.normalizeStatusKey(row.status)
+            const style = this.buildStatusStyle(statusKey)
+            const label = this.formatStatusLabel(statusKey, row.status)
+            return this.$createElement('span', { class: 'status-pill', style }, label)
           }
         },
         {
@@ -91,16 +115,25 @@ export default {
           width: 200,
           align: 'center',
           customRender: (text, row) => {
-            const p = this.getProgress(row)
-            const strokeColor = this.themePrimaryColor
-            return this.$createElement('a-progress', {
-              props: {
-                percent: p,
-                size: 'small',
-                status: p === 100 ? 'success' : 'active',
-                strokeColor
-              }
-            })
+            const rawPercent = this.getProgress(row)
+            const percent = this.normalizeProgressValue(rawPercent) ?? 0
+            const statusKey = this.normalizeStatusKey(row.status)
+            const colors = this.resolveProgressColors(statusKey, percent)
+            const progressStatus = this.resolveProgressStatus(statusKey, percent)
+            return this.$createElement(
+              'div',
+              { class: 'progress-cell', style: { '--progress-text-color': colors.text } },
+              [
+                this.$createElement('a-progress', {
+                  props: {
+                    percent,
+                    size: 'small',
+                    status: progressStatus,
+                    strokeColor: colors.bar
+                  }
+                })
+              ]
+            )
           }
         },
         {
@@ -126,7 +159,7 @@ export default {
       ]
     },
     runningCount () {
-      return this.tasks.filter(t => (t.status || '').toLowerCase() === 'running').length
+      return (this.tasks || []).filter(t => this.normalizeStatusKey(t.status) === 'running').length
     },
     isSpinning () {
       // Spin when running tasks exist or any ws progress in last 6s
@@ -163,6 +196,149 @@ export default {
     }
   },
   methods: {
+    normalizeStatusKey (status) {
+      if (status == null) return 'unknown'
+      return String(status).trim().toLowerCase() || 'unknown'
+    },
+    hasRunningTasks (list = this.tasks) {
+      return (list || []).some(item => this.normalizeStatusKey(item.status) === 'running')
+    },
+    clearProgressState () {
+      this.lastAnyProgressAt = 0
+      this.progressByMission = {}
+      this.progressByFilename = {}
+    },
+    normalizeProgressValue (value) {
+      if (value == null || value === '') return null
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        return Math.max(0, Math.min(100, value))
+      }
+      const str = String(value).trim()
+      if (!str) return null
+      const cleaned = str.endsWith('%') ? str.slice(0, -1) : str
+      const parsed = parseFloat(cleaned)
+      if (Number.isNaN(parsed)) return null
+      return Math.max(0, Math.min(100, parsed))
+    },
+    resolveProgressColors (statusKey, percent) {
+      const palette = this.themeColors || {}
+      const completedKeys = { end: 1, success: 1, completed: 1, finish: 1, finished: 1 }
+      const failedKeys = { failed: 1, fail: 1, error: 1, stopped: 1 }
+      const pendingKeys = { pending: 1, wait: 1, waiting: 1, queued: 1, queue: 1 }
+      if (percent >= 100 || completedKeys[statusKey]) {
+        const color = palette.success || '#52c41a'
+        return { bar: color, text: color }
+      }
+      if (failedKeys[statusKey]) {
+        const color = palette.danger || '#ff4d4f'
+        return { bar: color, text: color }
+      }
+      if (pendingKeys[statusKey]) {
+        const color = palette.warning || '#faad14'
+        return { bar: color, text: color }
+      }
+      const primary = this.themePrimaryColor || palette.primary || '#1890ff'
+      return { bar: primary, text: primary }
+    },
+    resolveProgressStatus (statusKey, percent) {
+      const completedKeys = { end: 1, success: 1, completed: 1, finish: 1, finished: 1 }
+      const failedKeys = { failed: 1, fail: 1, error: 1, stopped: 1 }
+      const pendingKeys = { pending: 1, wait: 1, waiting: 1, queued: 1, queue: 1 }
+      if (percent >= 100 || completedKeys[statusKey]) return 'success'
+      if (failedKeys[statusKey]) return 'exception'
+      if (pendingKeys[statusKey]) return 'normal'
+      return 'active'
+    },
+    formatStatusLabel (statusKey, rawStatus) {
+      const dict = {
+        running: this.$t('tasks.statuses.running'),
+        processing: this.$t('tasks.statuses.running'),
+        pending: this.$t('tasks.statuses.pending'),
+        wait: this.$t('tasks.statuses.pending'),
+        waiting: this.$t('tasks.statuses.pending'),
+        queued: this.$t('tasks.statuses.pending'),
+        queue: this.$t('tasks.statuses.pending'),
+        end: this.$t('tasks.statuses.completed'),
+        success: this.$t('tasks.statuses.completed'),
+        completed: this.$t('tasks.statuses.completed'),
+        finish: this.$t('tasks.statuses.completed'),
+        finished: this.$t('tasks.statuses.completed'),
+        failed: this.$t('tasks.statuses.failed'),
+        fail: this.$t('tasks.statuses.failed'),
+        error: this.$t('tasks.statuses.failed'),
+        stopped: this.$t('tasks.statuses.failed'),
+        unknown: this.$t('tasks.statuses.unknown')
+      }
+      if (dict[statusKey]) return dict[statusKey]
+      if (rawStatus != null && rawStatus !== '') return String(rawStatus)
+      return this.$t('tasks.statuses.unknown')
+    },
+    resolveStatusColor (statusKey) {
+      const palette = this.themeColors
+      const map = {
+        running: palette.primary,
+        processing: palette.primary,
+        pending: palette.warning,
+        wait: palette.warning,
+        waiting: palette.warning,
+        queued: palette.info,
+        queue: palette.info,
+        end: palette.success,
+        success: palette.success,
+        completed: palette.success,
+        finish: palette.success,
+        finished: palette.success,
+        failed: palette.danger,
+        fail: palette.danger,
+        error: palette.danger,
+        stopped: palette.danger
+      }
+      return map[statusKey] || palette.info
+    },
+    buildStatusStyle (statusKey) {
+      const baseColor = this.resolveStatusColor(statusKey)
+      const bgAlpha = this.isDarkTheme ? 0.32 : 0.14
+      const borderAlpha = this.isDarkTheme ? 0.5 : 0.22
+      return {
+        backgroundColor: this.applyAlpha(baseColor, bgAlpha),
+        borderColor: this.applyAlpha(baseColor, borderAlpha),
+        color: baseColor
+      }
+    },
+    applyAlpha (color, alpha) {
+      const parsed = this.parseColor(color)
+      if (!parsed) return color
+      const clamped = Math.min(1, Math.max(0, alpha))
+      const { r, g, b } = parsed
+      return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${clamped})`
+    },
+    parseColor (color) {
+      if (!color) return null
+      const value = color.trim()
+      if (value.startsWith('#')) {
+        let hex = value.slice(1)
+        if (hex.length === 3) {
+          hex = hex.split('').map(ch => ch + ch).join('')
+        }
+        if (hex.length === 6 || hex.length === 8) {
+          const num = parseInt(hex.slice(0, 6), 16)
+          return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+          }
+        }
+      }
+      const rgbMatch = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/i)
+      if (rgbMatch) {
+        return {
+          r: parseFloat(rgbMatch[1]),
+          g: parseFloat(rgbMatch[2]),
+          b: parseFloat(rgbMatch[3])
+        }
+      }
+      return null
+    },
     toggle () { this.visible = !this.visible; if (this.visible) this.refresh() },
     translateTaskName (name) {
       const map = {
@@ -175,24 +351,30 @@ export default {
     },
     getProgress (row) {
       const mid = row.mission_id
-      if (mid && this.progressByMission[mid] != null) return this.progressByMission[mid]
+      if (mid && this.progressByMission[mid] != null) {
+        const stored = this.normalizeProgressValue(this.progressByMission[mid])
+        if (stored != null) return stored
+      }
 
       // Fallback: try filename-based mapping for product sync
       if (row.task_name === 'shop_manager.task.sync_products_task' && row.shop_url) {
         const key = `sync_product_${row.shop_url}`
-        const v = this.progressByFilename[key]
+        const v = this.normalizeProgressValue(this.progressByFilename[key])
         if (v != null) return v
       }
 
       // As a safe default, if running, show latest known progress; else 100/0 by status
-      if ((row.status || '').toLowerCase() === 'running') {
+      if (this.normalizeStatusKey(row.status) === 'running') {
         const latest = this.latestProgressValue()
         return latest == null ? 0 : latest
       }
-      return  (row.status || '').toLowerCase() === 'end' ? 100 : 0
+      return this.normalizeStatusKey(row.status) === 'end' ? 100 : 0
     },
     latestProgressValue () {
-      const arr = Object.values(this.progressByMission).concat(Object.values(this.progressByFilename))
+      const arr = Object.values(this.progressByMission)
+        .concat(Object.values(this.progressByFilename))
+        .map(v => this.normalizeProgressValue(v))
+        .filter(v => v != null)
       if (!arr.length) return null
       return arr[arr.length - 1]
     },
@@ -208,6 +390,7 @@ export default {
             try { localStorage.setItem('taskRecordsCache', JSON.stringify(list)) } catch (_) {}
             // After tasks synced, ensure mission websockets are bound
             this.ensureMissionSockets()
+            if (!this.hasRunningTasks(list)) this.clearProgressState()
           }
         })
         .finally(() => { this.isLoading = false })
@@ -225,17 +408,21 @@ export default {
             try {
               const ws = new WebSocket(`${base}/ws/common_progress/${encodeURIComponent(mid)}`)
               ws.onmessage = (evt) => {
-                this.lastAnyProgressAt = Date.now()
                 let msg = {}
                 try { msg = JSON.parse(evt.data || '{}') } catch (_) { msg = {} }
-                if (msg.progress != null) {
-                  this.$set(this.progressByMission, mid, msg.progress)
-                  if (Number(msg.progress) >= 100) {
+                const progress = this.normalizeProgressValue(msg.progress)
+                if (progress != null) {
+                  if (progress < 100) {
+                    this.lastAnyProgressAt = Date.now()
+                  }
+                  this.$set(this.progressByMission, mid, progress)
+                  if (progress >= 100) {
                     try { ws.close() } catch (_) {}
                     delete this.missionSockets[mid]
                     // Mark end locally; then refresh once to sync status
                     const idx = (this.tasks || []).findIndex(x => x.mission_id === mid)
                     if (idx > -1) this.$set(this.tasks[idx], 'status', 'end')
+                    if (!this.hasRunningTasks()) this.clearProgressState()
                     this.refresh()
                   }
                 }
@@ -254,6 +441,7 @@ export default {
           this.$delete(this.missionSockets, mid)
         }
       })
+      if (!this.hasRunningTasks()) this.clearProgressState()
     },
     deleteTask (row) {
       const taskId = row.entity_id || row.mission_id || row.related_id
@@ -271,6 +459,7 @@ export default {
               if (self.$isRequestSuccessful(res.code)) {
                 self.tasks = (self.tasks || []).filter(t => (t.entity_id || t.mission_id || t.related_id) !== taskId)
                 try { localStorage.setItem('taskRecordsCache', JSON.stringify(self.tasks)) } catch (_) {}
+                if (!self.hasRunningTasks()) self.clearProgressState()
                 // close mission socket if exists
                 const ws = self.missionSockets[taskId]
                 if (ws) { try { ws.close() } catch (_) {} delete self.missionSockets[taskId] }
@@ -398,8 +587,25 @@ export default {
 ::v-deep td.tc-nowrap { white-space: nowrap; word-break: keep-all; }
 /* fixed layout to avoid overflow */
 ::v-deep .ant-table { table-layout: fixed; }
-/* progress text color by theme */
-.task-dropdown .ant-progress-text { color: var(--custom-font-color) !important; }
+/* progress text color follows dynamic highlight */
+.task-dropdown .progress-cell .ant-progress-text {
+  color: var(--progress-text-color, var(--custom-font-color)) !important;
+  font-weight: 600;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: capitalize;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
 </style>
 
 <!-- global (non-scoped) overlay tuning for proper stacking/containment -->

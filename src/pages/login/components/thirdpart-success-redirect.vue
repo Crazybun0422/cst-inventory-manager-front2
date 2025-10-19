@@ -70,10 +70,10 @@ export default {
 
                     // 设置主题
                     const defaultTheme = default_settings?.defaultTheme || 'defaultTheme';
-                    localStorage.setItem('theme', defaultTheme);
                     this.$store.dispatch('user/changeSetting', {
                         key: 'theme',
-                        value: defaultTheme
+                        value: defaultTheme,
+                        persist: false
                     });
                     if (this.config.roleNames.includes(user.user_role)) {
                         return this.getRelatedInfo()

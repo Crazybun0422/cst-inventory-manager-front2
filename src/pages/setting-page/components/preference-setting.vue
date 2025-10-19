@@ -57,7 +57,10 @@
 <script>
 import PageHead from '@/components/page-head.vue'
 import { languageOptions, defaultThemeOptions } from '@/common/field-maping'
-import { setDefaultParams, loadHomeData } from '@/common/common-func'
+import { loadGlobalSettings, updateGlobalSettings, resolvePreferenceProviderUuid } from '@/common/global-user-settings'
+import { getRoleType, getRoleTypeForP } from '@/common/common-func'
+import { config, dropShipper } from '@/common/commonconfig'
+import { normalizeTheme, THEME_DEFAULT } from '@/common/theme'
 export default {
   name: 'preference-setting',
   components: {
@@ -74,35 +77,71 @@ export default {
     }
   },
   methods: {
-    setDefaultParams,
-    loadHomeData,
-    sePersonalPreferences () {
+    async sePersonalPreferences () {
       this.loading = true
-      this.setDefaultParams(this.preferenceSettingForm).then((res) => {
-        if (this.$isRequestSuccessful(res.code)) {
-          this.$message.success(res.msg[this.preferenceSettingForm.defaultLanguage])
-          this.$store.dispatch('user/getDefaultLanguage', this.preferenceSettingForm.defaultLanguage)
-          this.$store.dispatch('user/changeSetting', {
-            key: 'theme',
-            value: this.preferenceSettingForm.defaultTheme
-          })
-          localStorage.setItem('theme', this.preferenceSettingForm.defaultTheme)
-          this.$i18n.locale = this.preferenceSettingForm.defaultLanguage;
-          this.$forceUpdate()
+      try {
+        const role = this.resolveRoleType()
+        const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
+        const updates = {
+          default_language: this.preferenceSettingForm.defaultLanguage,
+          defaultLanguage: this.preferenceSettingForm.defaultLanguage,
+          language: this.preferenceSettingForm.defaultLanguage,
+          ui_language: this.preferenceSettingForm.defaultLanguage,
+          default_theme: this.preferenceSettingForm.defaultTheme,
+          defaultTheme: this.preferenceSettingForm.defaultTheme,
+          theme: this.preferenceSettingForm.defaultTheme,
+          ui_theme: this.preferenceSettingForm.defaultTheme,
+          theme_preference: this.preferenceSettingForm.defaultTheme
         }
-      }).catch((error) => {
-        this.$message.error(error)
-      }).finally(() => {
+        await updateGlobalSettings({ updates, roleType: role, provider_uuid })
+        this.$store.dispatch('user/getDefaultLanguage', this.preferenceSettingForm.defaultLanguage)
+        this.$store.dispatch('user/changeSetting', {
+          key: 'theme',
+          value: this.preferenceSettingForm.defaultTheme,
+          persist: false
+        })
+        this.$i18n.locale = this.preferenceSettingForm.defaultLanguage
+        this.$forceUpdate()
+        this.$message.success(this.$t('common.operationSuccessful'))
+      } catch (error) {
+        this.$message.error(error && error.message ? error.message : this.$t('common.operationFailed'))
+      } finally {
         this.loading = false
-      })
+      }
     },
-    getDefaultSetting () {
-      this.loadHomeData().then((resData) => {
-        this.preferenceSettingForm.defaultLanguage = resData?.default_settings?.defaultLanguage
-        this.preferenceSettingForm.defaultTheme = resData?.default_settings?.defaultTheme
-      }).catch((error) => {
-        this.$message.error(error)
-      })
+    async getDefaultSetting () {
+      this.loading = true
+      try {
+        const role = this.resolveRoleType()
+        const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
+        const settings = await loadGlobalSettings({ roleType: role, provider_uuid }) || {}
+        const defaultLanguage = settings.default_language ||
+          settings.defaultLanguage ||
+          settings.language ||
+          settings.ui_language ||
+          this.$store.state.user.defaultLanguage ||
+          'en_us'
+        const defaultThemeRaw = settings.default_theme ||
+          settings.defaultTheme ||
+          settings.theme ||
+          settings.ui_theme ||
+          settings.theme_preference ||
+          this.$store.state.user.theme ||
+          THEME_DEFAULT
+        this.preferenceSettingForm.defaultLanguage = defaultLanguage
+        this.preferenceSettingForm.defaultTheme = normalizeTheme(defaultThemeRaw)
+      } catch (error) {
+        this.$message.error(error && error.message ? error.message : this.$t('common.operationFailed'))
+      } finally {
+        this.loading = false
+      }
+    },
+    resolveRoleType () {
+      let role = getRoleType(window.location.pathname) || this.$store.state.user.roles || dropShipper
+      if (role === config.provider.role) {
+        role = getRoleTypeForP() || role
+      }
+      return role || dropShipper
     }
   },
   mounted () {

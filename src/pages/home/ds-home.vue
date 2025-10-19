@@ -419,8 +419,7 @@ export default {
           this.$store.dispatch('user/getDefaultLanguage', defaultLanguage)
           this.$i18n.locale = defaultLanguage
           const defaultTheme = default_settings?.defaultTheme || 'defaultTheme'
-          localStorage.setItem('theme', defaultTheme)
-          this.$store.dispatch('user/changeSetting', { key: 'theme', value: defaultTheme })
+          this.$store.dispatch('user/changeSetting', { key: 'theme', value: defaultTheme, persist: false })
         })
         .catch(() => { })
     }

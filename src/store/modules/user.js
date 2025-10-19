@@ -1,8 +1,14 @@
-// import { login, logout, getInfo } from '@/api/user'
-// import { getToken, setToken, removeToken } from '@/utils/auth'
-// import router, { resetRouter } from '@/router'
-// import variables from '@/styles/element-variables.scss'
 import { setLanguge, getLanguage } from '@/common/language'
+import { loadGlobalSettings } from '@/common/global-user-settings'
+import { normalizeTheme, THEME_DEFAULT, applyDocumentTheme } from '@/common/theme'
+
+function pickFirstString (...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 const state = {
   roles: null,
   shouldRefreshEmails: false,
@@ -10,19 +16,27 @@ const state = {
   isLoginExpiredNotified: false,
   dsCurrentProviderUuid: null,
   providerIdMap: {},  // id和名称的映射
-  shops: [],  // 当前账号的店铺列表
+  shops: [],  // 当前账号的店铺列�?
   defaultLanguage: getLanguage(),
-  // theme: variables.theme
-  theme: localStorage.getItem('theme') || ''
+  theme: THEME_DEFAULT
 }
 
 const mutations = {
-  CHANGE_SETTING: (state, { key, value }) => {
-    localStorage.setItem(key, value) // 缓存起来，刷新的时候重新取用
-    // eslint-disable-next-line no-prototype-builtins
-    if (state.hasOwnProperty(key)) {
+  CHANGE_SETTING: (state, { key, value, persist = true }) => {
+    const shouldPersist = persist && key !== 'theme' && key !== 'defaultLanguage'
+    if (shouldPersist) {
+      try {
+        localStorage.setItem(key, value)
+      } catch (e) { }
+    }
+    if (Object.prototype.hasOwnProperty.call(state, key)) {
       state[key] = value
     }
+  },
+  SET_THEME (state, theme) {
+    const normalized = normalizeTheme(theme)
+    state.theme = normalized
+    applyDocumentTheme(normalized)
   },
   SET_DEFAULT_LANGUAGE (state, language) {
     state.defaultLanguage = language
@@ -59,16 +73,47 @@ const mutations = {
 
 const actions = {
   changeSetting ({ commit }, data) {
+    if (data && data.key === 'theme') {
+      commit('SET_THEME', data.value)
+      return
+    }
     commit('CHANGE_SETTING', data)
   },
   getDefaultLanguage ({ commit }, language) {
-    // const language = getLanguage()
     commit('SET_DEFAULT_LANGUAGE', language)
+  },
+  async fetchPreferences ({ commit }, { roleType, provider_uuid } = {}) {
+    let language = getLanguage()
+    let theme = THEME_DEFAULT
+    try {
+      const data = await loadGlobalSettings({ roleType, provider_uuid }) || {}
+      language = pickFirstString(
+        data.default_language,
+        data.defaultLanguage,
+        data.language,
+        data.ui_language,
+        language
+      ) || language
+      theme = normalizeTheme(
+        pickFirstString(
+          data.default_theme,
+          data.defaultTheme,
+          data.theme,
+          data.ui_theme,
+          data.theme_preference,
+          theme
+        ) || theme
+      )
+    } catch (e) {
+      // ignore errors, fall back to defaults
+    }
+    commit('SET_THEME', theme)
+    commit('SET_DEFAULT_LANGUAGE', language)
+    return { theme, language }
   },
   getShops ({ state, dispatch }, { }) {
     // TODO: 缓存home中的shops数据
   },
-  // get user info
   getInfo ({ commit, state }) {
     const userRole = localStorage.getItem('userRole')
     commit('SET_ROLES', userRole)

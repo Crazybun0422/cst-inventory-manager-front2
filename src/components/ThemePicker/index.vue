@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-switch
     class="tableScopeSwitch"
     v-model="currentTheme"
@@ -11,69 +11,87 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { getRoleType, getRoleTypeForP } from '@/common/common-func'
+import { config, dropShipper } from '@/common/commonconfig'
+import { updateGlobalSettings, resolvePreferenceProviderUuid } from '@/common/global-user-settings'
+import { applyDocumentTheme, normalizeTheme, THEME_DEFAULT } from '@/common/theme'
+
 export default {
   data () {
     return {
-      currentTheme: true, // true for white, false for black
-      themesName: 'defaultTheme'
+      currentTheme: true, // true -> defaultTheme, false -> darkTheme
+      themesName: THEME_DEFAULT
     }
   },
   computed: {
     ...mapGetters(['theme'])
   },
   watch: {
-    theme (val) {
-      const theme = val == 'defaultTheme' ? true : false
-      this.currentTheme = theme
-      this.themeChange(theme)
+    theme: {
+      immediate: true,
+      handler (val) {
+        const normalized = normalizeTheme(val || THEME_DEFAULT)
+        this.themesName = normalized
+        const boolValue = normalized === 'defaultTheme'
+        if (this.currentTheme !== boolValue) {
+          this.currentTheme = boolValue
+        }
+        this.applyTheme(normalized, false)
+      }
     }
   },
   methods: {
-    themeChange (val) {
-      this.themesName = val ? 'defaultTheme' : 'darkTheme';
+    async themeChange (val) {
+      const nextTheme = val ? 'defaultTheme' : 'darkTheme'
+      this.themesName = nextTheme
+      this.applyTheme(nextTheme, true)
+      this.$emit('change', nextTheme)
+      this.$store.dispatch('user/changeSetting', { key: 'theme', value: nextTheme, persist: false })
 
-      // window.document.documentElement.setAttribute(
-      //   'data-theme',
-      //   this.themesName
-      // );
-      document.documentElement.classList.remove(
-        this.themesName === 'defaultTheme' ? 'darkTheme' : 'defaultTheme'
-      );
-      document.documentElement.classList.add(this.themesName);
-      // 获取按钮的坐标
-      const switchButton = this.$refs.switchButton.$el; // 确保正确访问 Element UI 组件内的根 DOM 元素
-      const rect = switchButton.getBoundingClientRect();
-      const clientX = rect.left + rect.width / 2; // 按钮中心点 X 坐标
-      const clientY = rect.top + rect.height / 2; // 按钮中心点 Y 坐标
-
+      const role = this.resolveRoleType()
+      const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
+      const updates = {
+        default_theme: nextTheme,
+        defaultTheme: nextTheme,
+        theme: nextTheme,
+        ui_theme: nextTheme,
+        theme_preference: nextTheme
+      }
+      try {
+        await updateGlobalSettings({ updates, roleType: role, provider_uuid })
+      } catch (e) {
+        // ignore persistence errors, UI state already updated
+      }
+    },
+    applyTheme (themeName, animate) {
+      applyDocumentTheme(themeName || THEME_DEFAULT)
+      if (!animate) return
+      const refEl = this.$refs.switchButton && this.$refs.switchButton.$el
+      if (!refEl) return
+      const rect = refEl.getBoundingClientRect()
+      const clientX = rect.left + rect.width / 2
+      const clientY = rect.top + rect.height / 2
       const radius = Math.hypot(
-        Math.max(clientX, innerWidth - clientX),
-        Math.max(clientY, innerHeight - clientY)
-      );
-      const clipPath = [
-        `circle(0% at ${clientX}px ${clientY}px)`,
-        `circle(${radius}px at ${clientX}px ${clientY}px)`
-      ]
-      const isDark = this.themesName === 'darkTheme'
-      // 圆形动画扩散开始
+        Math.max(clientX, window.innerWidth - clientX),
+        Math.max(clientY, window.innerHeight - clientY)
+      )
       document.documentElement.animate(
         {
-          // clipPath: isDark ? clipPath.reverse() : clipPath,
-          clipPath: clipPath,
+          clipPath: [
+            `circle(0% at ${clientX}px ${clientY}px)`,
+            `circle(${radius}px at ${clientX}px ${clientY}px)`
+          ]
         },
-        {
-          duration: 500,
-          // pseudoElement: isDark ? "::view-transition-old(root)" : "::view-transition-new(root)",
-        }
+        { duration: 500 }
       )
-      this.$emit('change', this.themesName);
+    },
+    resolveRoleType () {
+      let role = getRoleType(window.location.pathname) || this.$store.state.user.roles || dropShipper
+      if (role === config.provider.role) {
+        role = getRoleTypeForP() || role
+      }
+      return role || dropShipper
     }
-
-  },
-  mounted () {
-    const storedTheme = localStorage.getItem('theme') == 'defaultTheme' ? true : false
-    this.currentTheme = storedTheme
-    this.themeChange(storedTheme)
   }
 }
 </script>
@@ -90,3 +108,4 @@ export default {
   height: 16px;
 }
 </style>
+

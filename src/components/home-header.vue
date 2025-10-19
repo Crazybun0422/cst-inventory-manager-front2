@@ -406,10 +406,10 @@ export default {
       this.fetchAvatarFromProfile()
     },
     themeChange(val) {
-      localStorage.setItem('theme', val)
       this.$store.dispatch('user/changeSetting', {
         key: 'theme',
-        value: val
+        value: val,
+        persist: false
       })
     },
     handleOutsideClick(event) {

@@ -94,7 +94,14 @@
     exportToXls: 'Export Orders to XLSX',
     fulfillOrders: 'Fulfill Orders',
     exportShopifyOrders: 'Export Shopify Orders',
-    syncProducts: 'Sync Products'
+    syncProducts: 'Sync Products',
+    statuses: {
+      running: 'In Progress',
+      pending: 'Pending',
+      completed: 'Completed',
+      failed: 'Failed',
+      unknown: 'Unknown'
+    }
   },
   message: {
 

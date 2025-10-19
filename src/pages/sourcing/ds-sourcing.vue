@@ -243,7 +243,7 @@
       class="global-modal-class global-modal-center" @cancel="historyVisible = false">
       <a-form-model layout="inline" :model="historyQuery" class="mb-24 modal-inline-form">
         <a-form-model-item>
-          <a-input v-model="historyQuery.keyword" :allowClear="true" :placeholder="$t('sourcing.partUrlPlaceholder')"
+          <a-input v-model="historyQuery.keyword" :allowClear="true" :placeholder="$t('sourcing.adminSearchPlaceholder')"
             style="width:260px" />
         </a-form-model-item>
         <a-form-model-item :label="$t('common.status')">
@@ -334,6 +334,7 @@
             <a-tag :color="statusColor(record.status)">{{ statusLabel(record.status) }}</a-tag>
           </template>
         </a-table-column>
+        <a-table-column :title="$t('sourcing.sourcingId')" dataIndex="sourcing_id" key="sourcing_id" />
         <a-table-column :title="$t('common.createTime')" dataIndex="created_at" key="created_at" />
         <a-table-column :title="$t('sourcing.itemsCount')" key="items">
           <template slot-scope="text, record">{{ (record.items || []).length }}</template>
@@ -766,8 +767,9 @@ export default {
             const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items: [{ source_type: 'url', source_url: url }] }
             const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
             if (this.$isRequestSuccessful(res.code)) {
+              const sourcingId = (res && res.data && res.data.sourcing_id) || ''
               this.urlForm.source_url = ''
-              this.showSubmitSuccess(url)
+              this.showSubmitSuccess({ sourcingId, keyword: url })
             }
           }
           if (existed && existed.length) {
@@ -794,17 +796,25 @@ export default {
         } finally { this.submittingUrl = false }
       })
     },
-    showSubmitSuccess(keyword) {
+    showSubmitSuccess(payload) {
+      const { sourcingId, keyword } = payload || {}
+      const searchKeyword = typeof sourcingId === 'string' && sourcingId
+        ? sourcingId
+        : (typeof keyword === 'string' ? keyword : '')
       const h = this.$createElement
+      const children = [h('div', this.$t('sourcing.submitSuccessMsg'))]
+      if (sourcingId) {
+        children.push(h('div', {
+          style: { marginTop: '6px', color: 'var(--custom-font-color2)' }
+        }, `${this.$t('sourcing.sourcingId')}: ${sourcingId}`))
+      }
       const link = h('a', {
         attrs: { href: 'javascript:void(0)' },
         style: { color: 'var(--custom-color-primary)', cursor: 'pointer', textDecoration: 'underline' },
-        on: { click: () => { this.openHistory(typeof keyword === 'string' ? keyword : ''); Modal.destroyAll() } }
+        on: { click: () => { this.openHistory(searchKeyword); Modal.destroyAll() } }
       }, this.$t('sourcing.openHistory'))
-      const content = h('div', [
-        h('div', this.$t('sourcing.submitSuccessMsg')),
-        h('div', { style: { marginTop: '6px' } }, [link])
-      ])
+      children.push(h('div', { style: { marginTop: sourcingId ? '8px' : '6px' } }, [link]))
+      const content = h('div', children)
       Modal.success({ title: this.$t('sourcing.submitSuccessTitle'), content })
     },
     async checkExistingUrl(url) {
@@ -891,7 +901,12 @@ export default {
         try {
           const payload = { status: 'submitted', purchase_reason: this.imageForm.purchase_reason, items: [{ source_type: 'image', image: this.imageForm.image, description: this.imageForm.description, quote: this.imageForm.quote }] }
           const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
-          if (this.$isRequestSuccessful(res.code)) { message.success(this.$t('common.operationSuccessful')); this.moreVisible = false; this.imageForm = { image: '', description: '', quote: '', purchase_reason: '' } }
+          if (this.$isRequestSuccessful(res.code)) {
+            const sourcingId = (res && res.data && res.data.sourcing_id) || ''
+            this.moreVisible = false
+            this.imageForm = { image: '', description: '', quote: '', purchase_reason: '' }
+            this.showSubmitSuccess({ sourcingId })
+          }
         } finally { this.submittingImage = false }
       })
     },
@@ -919,10 +934,11 @@ export default {
         const payload = { status: 'submitted', purchase_reason: this.$t('sourcing.lowestPrice'), items }
         const res = await this.$ajax({ url: '/api/sourcing', method: 'post', data: payload, roleType: this.roleType })
         if (this.$isRequestSuccessful(res.code)) {
-          message.success(this.$t('common.operationSuccessful'))
+          const sourcingId = (res && res.data && res.data.sourcing_id) || ''
           this.moreVisible = false
           this.selectedVariantsMap = {}
           this.productExpandedKeys = []
+          this.showSubmitSuccess({ sourcingId })
         }
       } finally { this.submittingProduct = false }
     },

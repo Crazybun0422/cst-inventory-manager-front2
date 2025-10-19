@@ -94,7 +94,14 @@ const zh_cn = {
     exportToXls: '导出订单（XLSX）',
     fulfillOrders: '订单履约',
     exportShopifyOrders: '导出 Shopify 订单',
-    syncProducts: '同步产品'
+    syncProducts: '同步产品',
+    statuses: {
+      running: '进行中',
+      pending: '等待中',
+      completed: '已完成',
+      failed: '失败',
+      unknown: '未知状态'
+    }
   },
   message: {
     login: {
@@ -1258,4 +1265,3 @@ const zh_cn = {
 }
 
 export default zh_cn
-
