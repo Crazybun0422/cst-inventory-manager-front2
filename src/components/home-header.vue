@@ -88,65 +88,14 @@
         }}</el-button>
       </div>
     </el-dialog>
-    <!-- 通知列表 -->
-    <el-collapse-transition>
-      <el-card v-show="showNotice" class="transition-box notice-list-style" v-loading="alarmLoading">
-        <div slot="header" class="clearfix" style="line-height: 15px">
-          <span style="color: var(--custom-font-color)">{{
-            $t('common.messageList')
-          }}</span>
-          <el-button style="float: right; padding: 3px 0" type="text" icon="el-icon-close" size="medium"
-            @click="closeNotice"></el-button>
-        </div>
-        <div v-if="noticeList.length > 0">
-          <div class="alarm-info-container">
-            <el-row v-for="(item, index) in noticeList" :key="index" class="notice-item">
-              <el-col :span="24">
-                <div class="alarm-info">
-                  <div class="alarm-header">
-                    <div class="alarm-title">
-                      <el-badge is-dot class="alarm-title alarm-badge" :hidden="item.alarm_read"><span
-                          class="el-icon-warning-outline">{{
-                            item.alarm_name[$languageType]
-                          }}</span></el-badge>
-                    </div>
-                    <div class="button-group">
-                      <el-tooltip :content="$t('message.myAccount.markRead')" placement="top">
-                        <el-button style="
-                            padding: 0px 0px;
-                            font-size: 20px;
-                            margin-right: 10px;
-                          " icon="el-icon-finished" v-if="!item.alarm_read" @click="markRead(item.entity_id)"
-                          class="mark-read-button"></el-button></el-tooltip>
-                      <el-tooltip :content="$t('common.delete')" placement="top">
-                        <el-button style="padding: 0px 0px; color: red; font-size: 20px" icon="el-icon-delete"
-                          @click="deleteAlarm(item.entity_id)" class="delete-button"></el-button></el-tooltip>
-                    </div>
-                  </div>
-                  <el-tooltip :content="item.alarm_content[$languageType]" placement="left-end">
-                    <div class="alarm-content text-ellipsis">
-                      {{ item.alarm_content[$languageType] }}
-                    </div>
-                  </el-tooltip>
-                  <div class="alarm-content alarm-time">
-                    {{ item.alarm_time }}
-                  </div>
-                </div>
-              </el-col>
-            </el-row>
-          </div>
-          <el-row type="flex" justify="end" style="margin-top: 10px">
-            <el-pagination small @size-change="handleSizeChange" @current-change="handleCurrentChange"
-              :current-page.sync="alarmQueryParams.page_number" :page-sizes="[10, 50, 100]"
-              :page-size="alarmQueryParams.page_size" layout="total,sizes, prev, pager, next" :total="total">
-            </el-pagination>
-          </el-row>
-        </div>
-        <div v-else>
-          <el-empty :description="$t('common.noDataAvailable')"></el-empty>
-        </div>
-      </el-card>
-    </el-collapse-transition>
+    <alarm-list
+      ref="alarmList"
+      :visible="showNotice"
+      :role-type="roleType"
+      :provider-uuid="providerUuidBySelectStore"
+      @close="closeNotice"
+      @unread-change="handleAlarmUnreadChange"
+    />
     <OperatorSignup :visible.sync="addOperatorFormVisible" @close="handleCloseOperatorSignup" />
   </div>
 </template>
@@ -154,6 +103,7 @@
 <script>
 import LanguageSelect from '@/components/language-select.vue'
 import ThemePicker from '@/components/ThemePicker/index.vue'
+import AlarmList from '@/components/alarm-list.vue'
 import { resetRouter } from '@/router/index'
 import { mapGetters } from 'vuex'
 import { provider, dropShipper } from '@/common/commonconfig'
@@ -162,7 +112,6 @@ import {
   toLoginPage,
   encryptPassword,
   getWarehouseRelatedInfo,
-  getAlarmList,
   getWebSocketUrl,
 } from '@/common/common-func'
 import OperatorSignup from '@/pages/login/operator-signup.vue'
@@ -258,10 +207,8 @@ export default {
     }
     return {
       loading: false, // 新增loading
-      noticeList: [],
       dropShipper,
       provider,
-      alarmLoading: false,
       remoteQueryOptions: [],
       current_provider_uuid: '',
       isClicked: false,
@@ -323,21 +270,16 @@ export default {
       serverTimeoutObj: null,
       shouldReconnect: true, // 添加一个标志变量控制是否重连
       nameIdMap: {},
-      alarmQueryParams: {
-        page_size: 10,
-        page_number: 1
-      },
-      total: 0
     }
   },
   components: {
     LanguageSelect,
     OperatorSignup,
     ThemePicker,
+    AlarmList,
     TaskCenter: () => import('@/components/task-center.vue')
   },
   methods: {
-    getAlarmList,
     getWarehouseRelatedInfo,
     get_unread_message_count,
     normalizeAvatarSrc(rawValue) {
@@ -422,94 +364,15 @@ export default {
         this.closeNotice() // 调用关闭面板的方法
       }
     },
-    closeNotice() {
-      this.showNotice = false // 控制折叠面板的显示属性
+    handleAlarmUnreadChange(count) {
+      const numeric = Number(count)
+      this.alarmUnreadCount = Number.isNaN(numeric) ? 0 : numeric
     },
-    handleSizeChange(val) {
-      this.alarmQueryParams.page_size = val
-      this.getAlarm()
-    },
-    handleCurrentChange(val) {
-      this.alarmQueryParams.page_number = val
-      this.getAlarm()
-    },
-    markRead(alarm_id) {
-      this.alarmLoading = true
-      this.$ajax({
-        url: '/api/alarms/mark_read/',
-        method: 'put',
-        data: {
-          alarm_id: alarm_id
-        }
-      })
-        .then((res) => {
-          if (this.$isRequestSuccessful(res.code)) {
-            return this.getAlarm()
-          }
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-        .finally(() => {
-          this.alarmLoading = false
-        })
-    },
-    deleteAlarm(alarm_id) {
-      this.alarmLoading = true
-      this.$ajax({
-        url: '/api/alarms/delete/',
-        method: 'delete',
-        data: {
-          alarm_ids: [alarm_id]
-        }
-      })
-        .then((res) => {
-          if (this.$isRequestSuccessful(res.code)) {
-            this.alarmQueryParams['page_number'] = 1
-            return this.getAlarm()
-          }
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-        .finally(() => {
-          this.alarmLoading = false
-        })
-    },
-    getAlarm() {
-      if (this.config.pRoleList.includes(this.roleType)) {
-        // 如果是p或者操作员 传递 provider_uuid
-
-        this.alarmQueryParams['provider_uuid'] = this.providerUuidBySelectStore
+    refreshAlarmList() {
+      const component = this.$refs.alarmList
+      if (component && typeof component.refresh === 'function') {
+        component.refresh()
       }
-      this.alarmLoading = true
-      this.getAlarmList(this.alarmQueryParams)
-        .then((res) => {
-          if (this.$isRequestSuccessful(res.code)) {
-            const result = Array.isArray(res.data?.result) ? res.data.result : []
-            const unreadCandidates = [
-              res?.data?.unread_count,
-              res?.data?.unread,
-              res?.data?.unreadTotal,
-              res?.data?.unread_total
-            ].map((val) => (val === undefined || val === null ? null : Number(val)))
-            const unreadFromResponse = unreadCandidates.find(
-              (val) => typeof val === 'number' && !Number.isNaN(val)
-            )
-            const fallbackUnread = result.reduce((count, item) => {
-              return count + (!item?.alarm_read ? 1 : 0)
-            }, 0)
-            this.noticeList = result
-            this.total = res.data?.total || 0
-            this.alarmUnreadCount = unreadFromResponse != null ? unreadFromResponse : fallbackUnread
-          }
-        })
-        .catch((err) => {
-          console.error(err)
-        })
-        .finally(() => {
-          this.alarmLoading = false
-        })
     },
     handleCloseOperatorSignup() {
       this.addOperatorFormVisible = false
@@ -862,7 +725,7 @@ export default {
       }
 
       if (pathType === 'alarm') {
-        this.getAlarm()
+        this.refreshAlarmList()
       }
 
       setTimeout(
@@ -992,7 +855,7 @@ export default {
         this.config[this.roleType].userRelatedId
       )
       this.initWebSocket()
-      this.getAlarm()
+      this.refreshAlarmList()
     }
     this.userName = localStorage.getItem(this.config[this.roleType].userName)
     this.fetchAvatarFromProfile()
@@ -1003,10 +866,7 @@ export default {
     ...mapGetters(['shouldRefreshEmails']),
     hasUnreadAlarms() {
       const count = Number(this.alarmUnreadCount)
-      if (!Number.isNaN(count)) {
-        return count > 0
-      }
-      return (this.noticeList || []).some((item) => !item.alarm_read)
+      return !Number.isNaN(count) && count > 0
     }
   },
   watch: {
@@ -1023,7 +883,7 @@ export default {
       // P 端不再干预全局通知 WS，避免触发二次连接；仅更新计数/告警
       if (this.config.pRoleList.includes(this.roleType)) {
         this.fetchUnreadMessageCount()
-        this.getAlarm()
+        this.refreshAlarmList()
         try {
           const mod = require('@/common/ws-notify').default
           // if (mod && mod.ws && mod.ws.close) { mod.ws.close() }
@@ -1102,135 +962,8 @@ export default {
   cursor: pointer;
 }
 
-.notice-list-style {
-  /* 显示于页面靠右 */
-  position: absolute;
-  right: 0;
-  top: 60px;
-  width: 420px;
-  max-width: 90vw;
-  height: calc(100vh - 64px);
-  z-index: 9999;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.08),
-    0 9px 28px rgba(0, 0, 0, 0.05),
-    0 12px 48px rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-  border: none;
-  background-color: var(--custom-background-color, #fff);
-  overflow: hidden;
-}
-
-.notice-list-style .alarm-info-container {
-  height: calc(100vh - 230px);
-  overflow-y: auto;
-  /* 添加滚动条 */
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.notice-card {
-  margin-top: 10px;
-}
-
 .language-select {
   margin-left: 16px;
-}
-
-.transition-box {
-  transition: all 0.5s;
-  overflow: hidden;
-  // ::v-deep .el-card__body {
-  //   overflow: scroll;
-  //   height: 100%;
-  // }
-}
-
-.alarm-info {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  border-bottom: 1px solid var(--custom-border-color);
-}
-
-.alarm-title {
-  span {
-    // 字体加粗
-    font-weight: bold;
-  }
-
-  .el-icon-warning-outline:before {
-    color: var(--custom-color-danger);
-    margin-right: 5px;
-  }
-}
-
-.alarm-title,
-.button-group {
-  display: flex;
-  justify-content: space-between;
-}
-
-.alarm-time {
-  color: var(--custom-font-color2);
-  font-size: 14px;
-}
-
-.button-group {
-  visibility: hidden;
-  /* 默认隐藏 */
-  float: right;
-
-  ::v-deep .el-button {
-    border-width: 0px;
-  }
-}
-
-.alarm-info:hover .button-group {
-  visibility: visible;
-  /* 鼠标移入时显示 */
-}
-
-.alarm-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* 确保内容垂直居中 */
-  width: 100%;
-  line-height: 40px;
-}
-
-.alarm-content {
-  margin-top: 10px;
-  white-space: pre-line;
-  // white-space: nowrap;
-  // overflow: hidden; /* 隐藏溢出的内容 */
-  // text-overflow: ellipsis; /* 使用省略号表示文本溢出 */
-  width: 100%;
-  /* 或者根据需要设置固定宽度 */
-  margin-left: 10px;
-  line-height: 40px;
-}
-
-.alarm-badge {
-  ::v-deep .el-badge__content {
-    top: 4px;
-    right: -4px;
-    height: 10px;
-    width: 10px;
-  }
-}
-
-::v-deep .el-card__body {
-  padding-bottom: 0px;
 }
 
 .change-password-form {
