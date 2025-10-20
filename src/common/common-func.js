@@ -654,6 +654,74 @@ export function queryLogisticsChannels(queryParams) {
   })
 }
 
+export function fetchLogisticsQueryUrlList(queryParams) {
+  return new Promise((resolve, reject) => {
+    this.$ajax({
+      method: 'get',
+      url: '/api-prefix/api/logistics/query-url/list',
+      params: queryParams,
+      roleType: this.roleType
+    }).then(res => {
+      if (this.$isRequestSuccessful(res.code)) {
+        resolve(res)
+      } else {
+        reject(res)
+      }
+    }).catch(reject)
+  })
+}
+
+export function createLogisticsQueryUrl(data) {
+  return new Promise((resolve, reject) => {
+    this.$ajax({
+      method: 'post',
+      url: '/api-prefix/api/logistics/query-url/create',
+      data,
+      roleType: this.roleType
+    }).then(res => {
+      if (this.$isRequestSuccessful(res.code)) {
+        resolve(res)
+      } else {
+        reject(res)
+      }
+    }).catch(reject)
+  })
+}
+
+export function updateLogisticsQueryUrl(data) {
+  return new Promise((resolve, reject) => {
+    this.$ajax({
+      method: 'put',
+      url: '/api-prefix/api/logistics/query-url/update',
+      data,
+      roleType: this.roleType
+    }).then(res => {
+      if (this.$isRequestSuccessful(res.code)) {
+        resolve(res)
+      } else {
+        reject(res)
+      }
+    }).catch(reject)
+  })
+}
+
+export function deleteLogisticsQueryUrls(data) {
+  return new Promise((resolve, reject) => {
+    this.$ajax({
+      method: 'delete',
+      url: '/api-prefix/api/logistics/query-url/delete',
+      data,
+      roleType: this.roleType
+    }).then(res => {
+      if (this.$isRequestSuccessful(res.code)) {
+        resolve(res)
+      } else {
+        reject(res)
+      }
+    }).catch(reject)
+  })
+}
+
 export function toShippingDetail(row) {
   //TODO: 跳转到物流详情页 需要从row中获取 url
   let url = 'http://www.baidu.com'

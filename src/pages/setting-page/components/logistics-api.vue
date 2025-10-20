@@ -159,6 +159,7 @@ import LogisticsApiDialog from '@/pages/setting-page/components/logistics-api-di
 import LogisticsApiDetail from '@/pages/setting-page/components/logistics-api-detail.vue'
 import { logisticsApiFieldSelectMap } from '@/common/field-maping'
 import { queryLogisticsApi } from '@/common/common-func'
+import { resolvePreferenceProviderUuid } from '@/common/global-user-settings'
 export default {
   name: 'logistics-api',
   props: {
@@ -201,9 +202,15 @@ export default {
     remoteQueryLogisticsApiMethod (query) {
       this.remoteLoading = true;
 
+      const provider_uuid = this.provider_uuid
+      if (!provider_uuid) {
+        this.options = []
+        this.remoteLoading = false
+        return
+      }
       let queryParams = {
         // provider的userRelatedId就是provider_uuid
-        provider_uuid: this.provider_uuid,
+        provider_uuid,
       }
       queryParams[this.searchForm.queryKey] = query
       try {
@@ -246,10 +253,11 @@ export default {
         page_number: this.curPage,
         page_size: this.pageSize,
       }
-      let provider_uuid = localStorage.getItem('shop_provider_uuid');
+      const provider_uuid = this.provider_uuid
       if (!provider_uuid) {
+        this.loading = false
         this.$message.error(this.$t('message.myAccount.noShop'));
-        this.$router.push({ name: 'p-login' })
+        return
       }
       queryParams['provider_uuid'] = provider_uuid;
       if (this.searchForm.queryValue) {
@@ -343,15 +351,25 @@ export default {
       return this.multipleSelection.length > 0
     },
     provider_uuid () {
-      return this.$store.state.shopProviderUuid.shopInfo.provider_uuid
+      const uuid = resolvePreferenceProviderUuid(this.$store, this.roleType)
+      if (uuid) return uuid
+      const fallback = localStorage.getItem('shop_provider_uuid')
+      return fallback || ''
     },
   },
   mounted () {
-    this.searchLogisticsApi()
-    this.remoteQueryLogisticsApiMethod('')
+    if (this.provider_uuid) {
+      this.searchLogisticsApi()
+      this.remoteQueryLogisticsApiMethod('')
+    }
   },
   watch: {
-
+    provider_uuid (newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        this.searchLogisticsApi()
+        this.remoteQueryLogisticsApiMethod('')
+      }
+    }
   }
 }
 </script>

@@ -129,6 +129,7 @@
 <script>
 import { getApiNameListInfo } from '@/common/common-func'
 import { provide } from 'vue';
+import { resolvePreferenceProviderUuid } from '@/common/global-user-settings'
 export default {
   name: 'logistics-api-dialog',
   props: {
@@ -196,7 +197,13 @@ export default {
           this.loading = true;
           let methodType = 'post';
           let reqUrl = '/api-prefix/api/logistics/define-api-params';
-          this.addLogisticsApiForm['provider_uuid'] = this.provider_uuid;
+          const provider_uuid = this.provider_uuid;
+          if (!provider_uuid) {
+            this.$message.error(this.$t('message.myAccount.noShop'));
+            this.loading = false;
+            return;
+          }
+          this.addLogisticsApiForm['provider_uuid'] = provider_uuid;
 
           if (type === 'edit') {
             // delete this.addLogisticsApiForm.customer_id
@@ -249,7 +256,10 @@ export default {
   },
   computed: {
     provider_uuid () {
-      return this.$store.state.shopProviderUuid.shopInfo.provider_uuid
+      const uuid = resolvePreferenceProviderUuid(this.$store, this.roleType)
+      if (uuid) return uuid
+      const fallback = localStorage.getItem('shop_provider_uuid')
+      return fallback || ''
     },
   },
   mounted () {

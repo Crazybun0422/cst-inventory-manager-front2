@@ -330,7 +330,7 @@
         :label="$t('message.orderManagement.logisticsInformation')" show-overflow-tooltip width="175">
         <template slot-scope="scope">
           <el-link type="primary" v-for="shipping_statu in scope.row.shipping_statuses"
-            :key="shipping_statu.shipping_id" style="display: block" @click="toShippingDetail(scope.row)">
+            :key="shipping_statu.shipping_id" style="display: block" @click="toShippingDetail(scope.row, shipping_statu)">
             {{ shipping_statu.tracking_number }}
           </el-link>
         </template>
@@ -412,7 +412,8 @@ import {
   showErrorAlert,
   query_all_logistics_channels,
   getTagStyle,
-  deleteLogistics
+  deleteLogistics,
+  fetchLogisticsQueryUrlList
 } from '@/common/common-func'
 import {
   StockEntryStatusEnum,
@@ -517,7 +518,8 @@ export default {
       showAllColumns: true,
       toolbarCollapsed: false,
       expandedRowKeys: [],
-      objectSpanFlag: false
+      objectSpanFlag: false,
+      defaultTrackUrlMap: {}
     }
   },
   computed: {
@@ -546,6 +548,7 @@ export default {
     showErrorAlert,
     copyData,
     queryDsRelateStorage,
+    fetchLogisticsQueryUrlList,
 
     toggleToolbar() {
       this.toolbarCollapsed = !this.toolbarCollapsed
@@ -865,11 +868,91 @@ export default {
       return this.expandedRowKeys.includes(row.order_id)
     },
 
-    toShippingDetail(row) {
-      const url = 'http://www.baidu.com'
-      window.open(url)
+    async toShippingDetail(row, shippingStatus) {
+      const trackingNumber = shippingStatus && shippingStatus.tracking_number
+      if (!trackingNumber) {
+        return
+      }
+      try {
+        const baseUrl = await this.ensureDefaultTrackUrl(row && row.provider_uuid)
+        if (!baseUrl) {
+          this.$message.warning(this.$t('message.orderManagement.noDefaultTrackUrl'))
+          return
+        }
+        const finalUrl = this.composeTrackingUrl(baseUrl, trackingNumber)
+        if (finalUrl) {
+          window.open(finalUrl, '_blank')
+        } else {
+          this.$message.warning(this.$t('message.orderManagement.noDefaultTrackUrl'))
+        }
+      } catch (error) {
+        console.error('Failed to open logistics tracking URL:', error)
+        this.$message.error(this.$t('common.operationFailed'))
+      }
     },
 
+    async ensureDefaultTrackUrl(providerUuid) {
+      const resolvedProviderUuid = providerUuid || this.dsCurrentProviderUuid
+      const cacheKey = resolvedProviderUuid || 'NA'
+      if (!resolvedProviderUuid) {
+        return ''
+      }
+      if (this.defaultTrackUrlMap[cacheKey]) {
+        return this.defaultTrackUrlMap[cacheKey]
+      }
+      try {
+        const res = await this.fetchLogisticsQueryUrlList({
+          page_number: 1,
+          page_size: 50,
+          provider_uuid: resolvedProviderUuid,
+          scope: 'all'
+        })
+        if (res && this.$isRequestSuccessful(res.code)) {
+          const results = (res.data && res.data.results) || []
+          const defaultItem = results.find((item) => item && item.is_default && item.query_url)
+          const url = defaultItem ? defaultItem.query_url : ''
+          this.$set(this.defaultTrackUrlMap, cacheKey, url)
+          return url
+        }
+      } catch (error) {
+        console.error('Failed to fetch logistics track URL list:', error)
+      }
+      this.$set(this.defaultTrackUrlMap, cacheKey, '')
+      return ''
+    },
+
+    composeTrackingUrl(baseUrl, trackingNumber) {
+      if (!baseUrl) return ''
+      const encodedNumber = encodeURIComponent(trackingNumber)
+      const placeholders = [
+        '{tracking_number}',
+        '{TRACKING_NUMBER}',
+        '{trackingNumber}',
+        '{{tracking_number}}',
+        '{{trackingNumber}}',
+        '%s'
+      ]
+      let composed = baseUrl
+      const replaced = placeholders.some((pattern) => {
+        if (composed.includes(pattern)) {
+          composed = composed.split(pattern).join(encodedNumber)
+          return true
+        }
+        return false
+      })
+      if (replaced) {
+        return composed
+      }
+      const trimmed = baseUrl.trim()
+      const lastChar = trimmed.charAt(trimmed.length - 1)
+      if (lastChar === '?' || lastChar === '&' || lastChar === '=' || lastChar === '/' || trimmed.includes('#')) {
+        return `${trimmed}${encodedNumber}`
+      }
+      if (trimmed.includes('?')) {
+        return `${trimmed}&tracking_number=${encodedNumber}`
+      }
+      return `${trimmed}/${encodedNumber}`
+    },
     submitShipment(value) {
       if (this.multipleSelection.length === 0) {
         this.$message.warning(this.$t('common.selectSubmitData'))

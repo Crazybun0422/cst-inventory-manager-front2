@@ -17,6 +17,12 @@
         >
           <LogisticsChannel></LogisticsChannel>
         </el-tab-pane>
+        <el-tab-pane
+          :label="$t('message.myAccount.logisticsTrackUrl')"
+          :lazy="true"
+        >
+          <LogisticsTrackUrl></LogisticsTrackUrl>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
   </div>
@@ -25,13 +31,15 @@
 <script>
 import LogisticsApi from './components/logistics-api.vue'
 import LogisticsChannel from './components/logistics-channel.vue'
+import LogisticsTrackUrl from './components/logistics-track-url.vue'
 export default {
   name: 'logistics-providers',
   props: {
   },
   components: {
     LogisticsApi,
-    LogisticsChannel
+    LogisticsChannel,
+    LogisticsTrackUrl
 
   },
   data () {
