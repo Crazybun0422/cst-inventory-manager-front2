@@ -13,7 +13,7 @@
 import { mapGetters } from 'vuex'
 import { getRoleType, getRoleTypeForP } from '@/common/common-func'
 import { config, dropShipper } from '@/common/commonconfig'
-import { updateGlobalSettings, resolvePreferenceProviderUuid } from '@/common/global-user-settings'
+import { updateGlobalSettings, resolvePreferenceProviderUuid, hasGlobalSettingsToken } from '@/common/global-user-settings'
 import { applyDocumentTheme, normalizeTheme, THEME_DEFAULT } from '@/common/theme'
 
 export default {
@@ -49,18 +49,20 @@ export default {
       this.$store.dispatch('user/changeSetting', { key: 'theme', value: nextTheme, persist: false })
 
       const role = this.resolveRoleType()
-      const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
-      const updates = {
-        default_theme: nextTheme,
-        defaultTheme: nextTheme,
-        theme: nextTheme,
-        ui_theme: nextTheme,
-        theme_preference: nextTheme
-      }
-      try {
-        await updateGlobalSettings({ updates, roleType: role, provider_uuid })
-      } catch (e) {
-        // ignore persistence errors, UI state already updated
+      if (hasGlobalSettingsToken(role)) {
+        const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
+        const updates = {
+          default_theme: nextTheme,
+          defaultTheme: nextTheme,
+          theme: nextTheme,
+          ui_theme: nextTheme,
+          theme_preference: nextTheme
+        }
+        try {
+          await updateGlobalSettings({ updates, roleType: role, provider_uuid })
+        } catch (e) {
+          // ignore persistence errors, UI state already updated
+        }
       }
     },
     applyTheme (themeName, animate) {

@@ -8,9 +8,49 @@ function cacheKey ({ provider_uuid = '', roleType = '' } = {}) {
   return provider_uuid ? `p:${provider_uuid}` : `ds:${roleType || 'default'}`
 }
 
+function resolveAccessTokenKey (roleType) {
+  if (!roleType) return ''
+  if (roleType === config.operator.role) {
+    return config.provider.accessToken
+  }
+  const configEntry = config[roleType]
+  return configEntry && configEntry.accessToken ? configEntry.accessToken : ''
+}
+
+function hasStoredToken (key) {
+  if (!key) return false
+  try {
+    return !!localStorage.getItem(key)
+  } catch (e) {
+    return false
+  }
+}
+
+function hasAuthTokenForRole (roleType) {
+  const key = resolveAccessTokenKey(roleType)
+  return hasStoredToken(key)
+}
+
+function hasAnyAuthToken () {
+  return Array.isArray(config.roles) && config.roles.some((role) => hasAuthTokenForRole(role))
+}
+
+function hasAuthToken (roleType) {
+  if (roleType) return hasAuthTokenForRole(roleType)
+  return hasAnyAuthToken()
+}
+
+export function hasGlobalSettingsToken (roleType) {
+  return hasAuthToken(roleType)
+}
+
 export async function loadGlobalSettings ({ roleType, provider_uuid } = {}) {
   const key = cacheKey({ provider_uuid, roleType })
   if (memoryCache[key]) return memoryCache[key]
+  if (!hasAuthToken(roleType)) {
+    memoryCache[key] = {}
+    return memoryCache[key]
+  }
   try {
     const params = {}
     if (provider_uuid) params.provider_uuid = provider_uuid
@@ -18,7 +58,8 @@ export async function loadGlobalSettings ({ roleType, provider_uuid } = {}) {
       url: '/api-prefix/api/customer-settings/global-user-settings',
       method: 'get',
       params,
-      roleType
+      roleType,
+      skipErrorMessage: true
     })
     if (res && (res.code === 200 || res.code === 0 || res.code === undefined) && res.data) {
       memoryCache[key] = res.data || {}
@@ -33,6 +74,9 @@ export async function updateGlobalSettings ({ updates = {}, roleType, provider_u
   const key = cacheKey({ provider_uuid, roleType })
   // merge into cache first
   memoryCache[key] = { ...(memoryCache[key] || {}), ...updates }
+  if (!hasAuthToken(roleType)) {
+    return memoryCache[key]
+  }
   const data = { ...updates }
   if (provider_uuid) data.provider_uuid = provider_uuid
   try {
@@ -41,7 +85,8 @@ export async function updateGlobalSettings ({ updates = {}, roleType, provider_u
       method: 'post',
       data,
       headers: { 'Content-Type': 'application/json' },
-      roleType
+      roleType,
+      skipErrorMessage: true
     })
   } catch (e) {}
   return memoryCache[key]

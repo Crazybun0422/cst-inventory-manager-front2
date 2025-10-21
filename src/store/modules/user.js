@@ -1,5 +1,5 @@
 import { setLanguge, getLanguage } from '@/common/language'
-import { loadGlobalSettings } from '@/common/global-user-settings'
+import { loadGlobalSettings, hasGlobalSettingsToken } from '@/common/global-user-settings'
 import { normalizeTheme, THEME_DEFAULT, applyDocumentTheme } from '@/common/theme'
 
 function pickFirstString (...values) {
@@ -85,6 +85,11 @@ const actions = {
   async fetchPreferences ({ commit }, { roleType, provider_uuid } = {}) {
     let language = getLanguage()
     let theme = THEME_DEFAULT
+    if (!hasGlobalSettingsToken(roleType)) {
+      commit('SET_THEME', normalizeTheme(theme))
+      commit('SET_DEFAULT_LANGUAGE', language)
+      return { theme: normalizeTheme(theme), language }
+    }
     try {
       const data = await loadGlobalSettings({ roleType, provider_uuid }) || {}
       language = pickFirstString(

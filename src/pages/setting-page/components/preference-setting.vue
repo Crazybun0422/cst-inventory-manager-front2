@@ -57,7 +57,7 @@
 <script>
 import PageHead from '@/components/page-head.vue'
 import { languageOptions, defaultThemeOptions } from '@/common/field-maping'
-import { loadGlobalSettings, updateGlobalSettings, resolvePreferenceProviderUuid } from '@/common/global-user-settings'
+import { loadGlobalSettings, updateGlobalSettings, resolvePreferenceProviderUuid, hasGlobalSettingsToken } from '@/common/global-user-settings'
 import { getRoleType, getRoleTypeForP } from '@/common/common-func'
 import { config, dropShipper } from '@/common/commonconfig'
 import { normalizeTheme, THEME_DEFAULT } from '@/common/theme'
@@ -81,6 +81,10 @@ export default {
       this.loading = true
       try {
         const role = this.resolveRoleType()
+        if (!hasGlobalSettingsToken(role)) {
+          this.$message.warning(this.$t('common.noPermission') || 'Unauthorized')
+          return
+        }
         const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
         const updates = {
           default_language: this.preferenceSettingForm.defaultLanguage,
@@ -113,6 +117,10 @@ export default {
       this.loading = true
       try {
         const role = this.resolveRoleType()
+        if (!hasGlobalSettingsToken(role)) {
+          this.loading = false
+          return
+        }
         const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
         const settings = await loadGlobalSettings({ roleType: role, provider_uuid }) || {}
         const defaultLanguage = settings.default_language ||

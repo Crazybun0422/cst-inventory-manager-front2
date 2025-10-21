@@ -16,48 +16,22 @@
     <SearchCard>
       <el-form :inline="true" :model="queryMailForm" class="demo-form-inline">
         <el-form-item>
-          <el-select
-            v-model="queryType"
-            :placeholder="$t('common.pleaseSelect')"
-          >
-            <el-option
-              v-for="item in queryTypeOptions"
-              :key="item.value"
-              :label="item.label[$languageType]"
-              :value="item.value"
-            >
+          <el-select v-model="queryType" :placeholder="$t('common.pleaseSelect')">
+            <el-option v-for="item in queryTypeOptions" :key="item.value" :label="item.label[$languageType]"
+              :value="item.value">
             </el-option>
           </el-select>
-          <el-select
-            v-model="queryMailForm.user_code"
-            filterable
-            reserve-keyword
-            remote
-            :loading="remoteLoading"
-            :remote-method="remoteQueryMethod"
-            :placeholder="$t('common.pleaseInput')"
-            :loading-text="$t('common.loading')"
-            clearable
-          >
-            <el-option
-              v-for="item in remoteQueryOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            >
+          <el-select v-model="queryMailForm.user_code" filterable reserve-keyword remote :loading="remoteLoading"
+            :remote-method="remoteQueryMethod" :placeholder="$t('common.pleaseInput')"
+            :loading-text="$t('common.loading')" clearable>
+            <el-option v-for="item in remoteQueryOptions" :key="item.value" :label="item.label" :value="item.value">
             </el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-date-picker
-            v-model="queryMailForm.date"
-            type="daterange"
-            :range-separator="$t('common.to')"
-            :start-placeholder="$t('common.startTime')"
-            :end-placeholder="$t('common.endTime')"
-            format="yyyy-MM-dd"
-            value-format="yyyy-MM-dd"
-          >
+          <el-date-picker v-model="queryMailForm.date" type="daterange" :range-separator="$t('common.to')"
+            :start-placeholder="$t('common.startTime')" :end-placeholder="$t('common.endTime')" format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd">
           </el-date-picker>
         </el-form-item>
         <el-form-item>
@@ -86,12 +60,8 @@
           </el-radio-group>
         </el-form-item> -->
         <el-form-item>
-          <el-checkbox
-            v-model="onlyUnread"
-            v-if="queryMailForm.type === 'recipient'"
-            @change="changeRead"
-            >{{ $t('message.myAccount.viewOnlyUnread') }}</el-checkbox
-          >
+          <el-checkbox v-model="onlyUnread" v-if="queryMailForm.type === 'recipient'" @change="changeRead">{{
+            $t('message.myAccount.viewOnlyUnread') }}</el-checkbox>
         </el-form-item>
       </el-form>
     </SearchCard>
@@ -100,57 +70,29 @@
         <!-- 一键已读 -->
       </template>
       <template slot="top-right">
-        <el-button
-          type="primary"
-          @click="markMail([])"
-          :disabled="!hasSelection"
-          v-if="queryMailForm.type === 'recipient'"
-          >{{ $t('message.myAccount.markRead') }}</el-button
-        >
-        <el-button
-          type="danger"
-          @click="deleteMail"
-          :disabled="!hasSelection"
-          >{{ $t('common.deleteInBulk') }}</el-button
-        >
+        <el-button type="primary" @click="markMail([])" :disabled="!hasSelection"
+          v-if="queryMailForm.type === 'recipient'">{{ $t('message.myAccount.markRead') }}</el-button>
+        <el-button type="danger" @click="deleteMail" :disabled="!hasSelection">{{ $t('common.deleteInBulk')
+          }}</el-button>
       </template>
     </CstTableHead>
-    <el-table
-      :data="messageTableData"
-      style="width: 100%"
-      height="530px"
-      size="small"
-      @selection-change="handleSelectionChange"
-      @row-click="handleRowClick"
-    >
+    <el-table :data="messageTableData" style="width: 100%" height="530px" size="small"
+      @selection-change="handleSelectionChange" @row-click="handleRowClick">
       <el-table-column type="selection" width="55"> </el-table-column>
-      <el-table-column
-        prop="title"
-        :label="$t('message.myAccount.topic')"
-      ></el-table-column>
-      <el-table-column
-        prop="recipient"
-        :label="$t('message.myAccount.recipient')"
-      >
+      <el-table-column prop="title" :label="$t('message.myAccount.topic')"></el-table-column>
+      <el-table-column prop="recipient" :label="$t('message.myAccount.recipient')">
       </el-table-column>
       <el-table-column prop="sender" :label="$t('message.myAccount.sender')">
       </el-table-column>
       <el-table-column prop="time" :label="$t('common.date')"></el-table-column>
-      <el-table-column
-        prop="is_read"
-        :label="$t('common.status')"
-        v-if="queryMailForm.type === 'recipient' && dataLoadingStatus"
-      >
+      <el-table-column prop="is_read" :label="$t('common.status')"
+        v-if="queryMailForm.type === 'recipient' && dataLoadingStatus">
         <template slot-scope="scope">
-          <el-tag
-            :type="scope.row.is_read ? 'success' : 'danger'"
-            class="status-tag"
-            >{{
-              scope.row.is_read
-                ? $t('message.myAccount.Read')
-                : $t('message.myAccount.Unread')
-            }}</el-tag
-          >
+          <el-tag :type="scope.row.is_read ? 'success' : 'danger'" class="status-tag">{{
+            scope.row.is_read
+              ? $t('message.myAccount.Read')
+              : $t('message.myAccount.Unread')
+          }}</el-tag>
         </template>
       </el-table-column>
       <!-- <el-table-column label="operate" width="200" prop="operate">
@@ -176,28 +118,14 @@
         </template>
       </el-table-column> -->
     </el-table>
-    <SendMail
-      :sendMailDialogVisible="sendMailDialogVisible"
-      :recipient="remoteQueryOptions"
-      @markMailRead="markMail"
-      @close="closeSendMailDialog"
-      :messagaeSession="messagaeSession"
-      :nameIdMap="nameIdMap"
-    >
+    <SendMail :sendMailDialogVisible="sendMailDialogVisible" :recipient="remoteQueryOptions" @markMailRead="markMail"
+      @close="closeSendMailDialog" :messagaeSession="messagaeSession" :nameIdMap="nameIdMap">
     </SendMail>
     <el-row type="flex" justify="end" style="margin-top: 10px">
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page.sync="queryMailForm.page_number"
-        :page-sizes="[10, 50, 100]"
-        :page-size="queryMailForm.page_size"
-        layout="total,sizes, prev, pager, next"
-        :total="total"
-        background
-      >
-      </el-pagination
-    ></el-row>
+      <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+        :current-page.sync="queryMailForm.page_number" :page-sizes="[10, 50, 100]" :page-size="queryMailForm.page_size"
+        layout="total,sizes, prev, pager, next" :total="total" background>
+      </el-pagination></el-row>
   </div>
 </template>
 
@@ -217,7 +145,7 @@ export default {
   components: {
     PageHead, SearchCard, CstTableHead, SendMail
   },
-  data () {
+  data() {
 
     return {
       total: 0,
@@ -250,7 +178,7 @@ export default {
   },
 
   methods: {
-    handleRowClick (row, column, event) {
+    handleRowClick(row, column, event) {
       // reply 后面的布尔值参数 主要用于给发送邮件组件确定收件人的
       // 如果是true 代表是再次回复 会把当前的收件人作为发件人
       // 如果是false 代表是回复 会把当前的发件人作为收件人
@@ -261,26 +189,26 @@ export default {
       }
 
     },
-    handleSizeChange (val) {
+    handleSizeChange(val) {
       this.queryMailForm.page_size = val
       this.getMail()
     },
-    handleCurrentChange (val) {
+    handleCurrentChange(val) {
       this.queryMailForm.page_number = val
       this.getMail()
     },
-    changeRead (val) {
+    changeRead(val) {
       this.getMail()
     },
-    changeDeleted (val) {
+    changeDeleted(val) {
       this.queryMailForm.is_deleted = val
       this.getMail()
     },
-    changeType (val) {
+    changeType(val) {
       this.queryMailForm.type = val
       this.getMail()
     },
-    async markMail (message_ids = []) {
+    async markMail(message_ids = []) {
       this.loading = true
       if (message_ids.length === 0) {
         message_ids = this.multipleSelection.map(obj => obj.message_id);
@@ -314,13 +242,13 @@ export default {
         this.loading = false
       }
     },
-    reply (row, isAgainSend) {
+    reply(row, isAgainSend) {
       //TODO: 回复 自动填写这个邮件的发件人 并且不可修改
       this.messagaeSession = row
       this.messagaeSession['isAgainSend'] = isAgainSend
       this.sendMailDialogVisible = true;
     },
-    deleteMail () {
+    deleteMail() {
       this.$ajax({
         method: 'put',
         url: '/api-prefix/api/customer/mark-deleted',
@@ -343,21 +271,21 @@ export default {
         this.loading = false
       });
     },
-    handleSelectionChange (val) {
+    handleSelectionChange(val) {
       this.multipleSelection = val
     },
-    sendMailDialog () {
+    sendMailDialog() {
       this.sendMailDialogVisible = true;
       this.messagaeSession = {}
     },
-    closeSendMailDialog (isSubmit) {
+    closeSendMailDialog(isSubmit) {
       this.sendMailDialogVisible = false;
       if (isSubmit) {
         this.getMail()
       }
     },
 
-    async remoteQueryMethod (query) {
+    async remoteQueryMethod(query) {
       this.remoteLoading = true;
       try {
         const res = await getCustomerList(this.queryType, query, this.roleType)
@@ -379,11 +307,11 @@ export default {
       }
 
     },
-    async getMail () {
+    async getMail() {
       this.loading = true
       this.dataLoadingStatus = false
       let curUserRelatedId = localStorage.getItem('shop_provider_uuid')
-      let curUserName = localStorage.getItem('userName')
+      let curUserName = localStorage.getItem('pUserName')
       // 如果 curUserRelatedId 或者curUserName 不存在 或者为空 返回登录
       if (!curUserRelatedId || !curUserName) {
         this.$message({
@@ -457,18 +385,18 @@ export default {
   },
   computed: {
     // 是否有勾选
-    hasSelection () {
+    hasSelection() {
       return this.multipleSelection.length > 0
     },
     ...mapGetters(["shouldRefreshEmails"]),
 
   },
-  async mounted () {
+  async mounted() {
     // await this.remoteQueryMethod();
     this.getMail()
   },
   watch: {
-    shouldRefreshEmails (newValue) {
+    shouldRefreshEmails(newValue) {
       if (newValue) {
         // 重新获取邮件
         this.getMail();

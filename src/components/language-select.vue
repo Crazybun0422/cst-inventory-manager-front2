@@ -17,7 +17,7 @@
 
 <script>
 import { languageOptions } from '@/common/field-maping'
-import { updateGlobalSettings, resolvePreferenceProviderUuid } from '@/common/global-user-settings'
+import { updateGlobalSettings, resolvePreferenceProviderUuid, hasGlobalSettingsToken } from '@/common/global-user-settings'
 import { getRoleType, getRoleTypeForP } from '@/common/common-func'
 import { config, dropShipper } from '@/common/commonconfig'
 
@@ -48,17 +48,19 @@ export default {
       this.$forceUpdate()
 
       const role = this.resolveRoleType()
-      const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
-      const updates = {
-        default_language: newValue,
-        defaultLanguage: newValue,
-        language: newValue,
-        ui_language: newValue
-      }
-      try {
-        await updateGlobalSettings({ updates, roleType: role, provider_uuid })
-      } catch (e) {
-        // persistence errors are non-blocking for UI
+      if (hasGlobalSettingsToken(role)) {
+        const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
+        const updates = {
+          default_language: newValue,
+          defaultLanguage: newValue,
+          language: newValue,
+          ui_language: newValue
+        }
+        try {
+          await updateGlobalSettings({ updates, roleType: role, provider_uuid })
+        } catch (e) {
+          // persistence errors are non-blocking for UI
+        }
       }
     },
     resolveRoleType () {

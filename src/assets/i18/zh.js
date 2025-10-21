@@ -1070,6 +1070,7 @@ const zh_cn = {
     operationSuccessful: '操作成功',
     editSuccessful: '编辑成功',
     operationFailed: '操作失败',
+    noPermission: '暂无权限执行该操作',
     copy: '复制',
     edit: '编辑',
     delete: '删除',

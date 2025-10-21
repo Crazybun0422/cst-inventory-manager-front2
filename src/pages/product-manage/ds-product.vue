@@ -301,7 +301,7 @@ import EditProduct from '@/pages/product-manage/components/edit-product.vue'
 import ProductDetail from '@/pages/product-manage/components/product-detail.vue'
 import PrintProductTagDialog from '@/pages/product-manage/components/print-product-tag-dialog.vue'
 import ProductStandardCards from '@/pages/product-manage/components/product-standard-cards.vue'
-import { loadGlobalSettings, updateGlobalSettings } from '@/common/global-user-settings.js'
+import { loadGlobalSettings, updateGlobalSettings, hasGlobalSettingsToken } from '@/common/global-user-settings.js'
 import {
   productCategoryMap,
   productUnitMap,
@@ -399,9 +399,16 @@ export default {
     async ensureLoadCardsSettings() {
       if (this.settingsLoaded) return
       try {
+        if (!hasGlobalSettingsToken(this.roleType)) {
+          this.settingsLoaded = true
+          return
+        }
         const data = await loadGlobalSettings({ roleType: this.roleType })
         const v = Number((data && (data.product_standard_cards_per_row || data['product_standard_cards_per_row'])) || 0)
-        if (v && v > 0) this.cardsPerRow = Math.max(1, Math.min(10, v)); this.setCardsPerRowLocal(this.cardsPerRow)
+        if (v && v > 0) {
+          this.cardsPerRow = Math.max(1, Math.min(10, v))
+          this.setCardsPerRowLocal(this.cardsPerRow)
+        }
       } catch { }
       this.settingsLoaded = true
     },
@@ -409,7 +416,9 @@ export default {
       const n = Math.max(1, Math.min(10, Number(this.cardsPerRow) || 1))
       this.cardsPerRow = n
       try {
-        await updateGlobalSettings({ updates: { product_standard_cards_per_row: n }, roleType: this.roleType })
+        if (hasGlobalSettingsToken(this.roleType)) {
+          await updateGlobalSettings({ updates: { product_standard_cards_per_row: n }, roleType: this.roleType })
+        }
       } catch { }
       this.setCardsPerRowLocal(n)
       this.cardsSettingVisible = false

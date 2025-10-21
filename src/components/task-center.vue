@@ -55,7 +55,9 @@ export default {
       progressByFilename: {},
       lastAnyProgressAt: 0,
       tasks: [],
-      isLoading: false
+      isLoading: false,
+      pollTimer: null,
+      pollIntervalMs: 5000
     }
   },
   computed: {
@@ -193,6 +195,16 @@ export default {
   watch: {
     relatedId () {
       this.reconnect()
+    },
+    runningCount: {
+      immediate: true,
+      handler (count) {
+        if (count > 0) {
+          this.startPolling()
+        } else {
+          this.stopPolling()
+        }
+      }
     }
   },
   methods: {
@@ -207,6 +219,22 @@ export default {
       this.lastAnyProgressAt = 0
       this.progressByMission = {}
       this.progressByFilename = {}
+    },
+    startPolling () {
+      if (this.pollTimer) return
+      this.pollTimer = setInterval(() => {
+        if (!this.runningCount) {
+          this.stopPolling()
+          return
+        }
+        // Poll backend while tasks running to sync status without user interaction
+        if (!this.isLoading) this.refresh()
+      }, this.pollIntervalMs)
+    },
+    stopPolling () {
+      if (!this.pollTimer) return
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
     },
     normalizeProgressValue (value) {
       if (value == null || value === '') return null
@@ -391,7 +419,10 @@ export default {
             try { localStorage.setItem('taskRecordsCache', JSON.stringify(list)) } catch (_) {}
             // After tasks synced, ensure mission websockets are bound
             this.ensureMissionSockets()
-            if (!this.hasRunningTasks(list)) this.clearProgressState()
+            if (!this.hasRunningTasks(list)) {
+              this.clearProgressState()
+              this.stopPolling()
+            }
           }
         })
         .finally(() => { this.isLoading = false })
@@ -400,14 +431,16 @@ export default {
       const base = getWebSocketUrl().replace(/\/$/, '')
       const runningIds = {}
       ;(this.tasks || []).forEach(t => {
-        const mid = t.mission_id
-        if (!mid) return
+        const rawMid = t.mission_id
+        if (rawMid == null || rawMid === '') return
+        const midKey = String(rawMid)
         const isRunning = (t.status || '').toLowerCase() === 'running'
         if (isRunning) {
-          runningIds[mid] = 1
-          if (!this.missionSockets[mid] || this.missionSockets[mid].readyState === WebSocket.CLOSED) {
+          runningIds[midKey] = 1
+          const socket = this.missionSockets[midKey]
+          if (!socket || socket.readyState === WebSocket.CLOSED) {
             try {
-              const ws = new WebSocket(`${base}/ws/common_progress/${encodeURIComponent(mid)}`)
+              const ws = new WebSocket(`${base}/ws/common_progress/${encodeURIComponent(rawMid)}`)
               ws.onmessage = (evt) => {
                 let msg = {}
                 try { msg = JSON.parse(evt.data || '{}') } catch (_) { msg = {} }
@@ -416,12 +449,12 @@ export default {
                   if (progress < 100) {
                     this.lastAnyProgressAt = Date.now()
                   }
-                  this.$set(this.progressByMission, mid, progress)
+                  this.$set(this.progressByMission, midKey, progress)
                   if (progress >= 100) {
                     try { ws.close() } catch (_) {}
-                    delete this.missionSockets[mid]
+                    delete this.missionSockets[midKey]
                     // Mark end locally; then refresh once to sync status
-                    const idx = (this.tasks || []).findIndex(x => x.mission_id === mid)
+                    const idx = (this.tasks || []).findIndex(x => String(x.mission_id) === midKey)
                     if (idx > -1) this.$set(this.tasks[idx], 'status', 'end')
                     if (!this.hasRunningTasks()) this.clearProgressState()
                     this.refresh()
@@ -430,7 +463,7 @@ export default {
               }
               ws.onerror = () => { try { ws.close() } catch (_) {} }
               ws.onclose = () => { /* noop */ }
-              this.$set(this.missionSockets, mid, ws)
+              this.$set(this.missionSockets, midKey, ws)
             } catch (_) {}
           }
         }
@@ -505,6 +538,7 @@ export default {
     } catch (_) {}
   },
   beforeDestroy () {
+    this.stopPolling()
     this.closeWS()
     try {
       const bus = require('@/common/event-bus').default

@@ -1066,6 +1066,7 @@
     operationSuccessful: 'Operation successful',
     editSuccessful: 'Edit successful',
     operationFailed: 'Operation failed',
+    noPermission: 'You do not have permission to perform this action.',
     copy: 'Copy',
     edit: 'Edit',
     delete: 'Delete',

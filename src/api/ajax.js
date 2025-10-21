@@ -67,8 +67,9 @@ instance.interceptors.response.use(
     let langType = getLanguage()
     // 不需要展示错误的 code集合
     const notShowCode = [12004, 11006, 4004] // [6005, 7005]
+    const skipErrorMessage = response.config && response.config.skipErrorMessage
     if (response.data.code && response.data.code != 200 && response.data.code % 1000) {
-      if (isNonEmptyObject(response.data.msg) && !notShowCode.includes(response.data.code)) {
+      if (!skipErrorMessage && isNonEmptyObject(response.data.msg) && !notShowCode.includes(response.data.code)) {
         showMessage(response.data.msg[langType])
       }
       // 如果没登录 返回登录页面 
@@ -79,7 +80,9 @@ instance.interceptors.response.use(
           return;
         }
         const currentRoute = getRouter().currentRoute;
-        showMessage(i18n.t("common.loginExpired"))
+        if (!skipErrorMessage) {
+          showMessage(i18n.t("common.loginExpired"))
+        }
         if (currentRoute.path !== dropShipperConfig.loginPath || currentRoute.path !== providerConfig.loginPath) {
           // 当前不是登录页面，执行跳转操作
 
@@ -92,6 +95,7 @@ instance.interceptors.response.use(
     return Promise.resolve(response.data)
   },
   (error) => {
+    const skipErrorMessage = error.config && error.config.skipErrorMessage
     const code = error.response
       ? error.response.status
       : error.code || error.message
@@ -126,7 +130,9 @@ instance.interceptors.response.use(
     // })
 
 
-    showMessage(message)
+    if (!skipErrorMessage) {
+      showMessage(message)
+    }
     return Promise.reject(error)
   }
 )

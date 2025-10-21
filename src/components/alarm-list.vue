@@ -156,7 +156,8 @@ export default {
         const res = await this.$ajax({
           url: '/api/alarms/mark_read/',
           method: 'put',
-          data: { alarm_id: alarmId }
+          data: { alarm_id: alarmId },
+          roleType: this.resolveRoleType()
         })
         if (this.$isRequestSuccessful(res.code)) {
           await this.refresh()
@@ -174,7 +175,8 @@ export default {
         const res = await this.$ajax({
           url: '/api/alarms/delete/',
           method: 'delete',
-          data: { alarm_ids: [alarmId] }
+          data: { alarm_ids: [alarmId] },
+          roleType: this.resolveRoleType()
         })
         if (this.$isRequestSuccessful(res.code)) {
           this.alarmQueryParams.page_number = 1
@@ -202,7 +204,7 @@ export default {
       }
       this.alarmLoading = true
       try {
-        const res = await this.getAlarmList(params)
+        const res = await this.getAlarmList(params, { roleType: role })
         if (this.$isRequestSuccessful(res.code)) {
           const result = Array.isArray(res.data?.result) ? res.data.result : []
           const unreadCandidates = [

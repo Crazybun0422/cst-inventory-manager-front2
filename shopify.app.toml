@@ -1,8 +1,8 @@
-# Learn more about configuring your app at https://continuserv.ngrok.app/docs/apps/tools/cli/configuration
+# Learn more about configuring your app at https://wingdropship.app/docs/apps/tools/cli/configuration
 
 client_id = "7d96e9bbcd216107c25fbd2f45d01864"
 name = "Wing Dropship"
-application_url = "https://continuserv.ngrok.app/"
+application_url = "https://wingdropship.app/"
 embedded = false
 handle = "wing-dropship"
 
@@ -11,20 +11,20 @@ api_version = "2025-07"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-uri = "https://continuserv.ngrok.app/api/webhooks"
+uri = "https://wingdropship.app/api/webhooks"
 
 [access_scopes]
-# Learn more at https://continuserv.ngrok.app/docs/apps/tools/cli/configuration#access_scopes
+# Learn more at https://wingdropship.app/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products,read_discounts,read_orders,read_customers,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_merchant_managed_fulfillment_orders,write_inventory,read_inventory,read_locations,read_fulfillments,write_fulfillments"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://continuserv.ngrok.app/api/shopify/auth/callback/",
-  "https://continuserv.ngrok.app/api/shopify/auth/callback/?direct=true",
-  "https://continuserv.ngrok.app/api/webhooks",
-  "https://continuserv.ngrok.app/api/webhooks/"
+  "https://wingdropship.app/api/shopify/auth/callback/",
+  "https://wingdropship.app/api/shopify/auth/callback/?direct=true",
+  "https://wingdropship.app/api/webhooks",
+  "https://wingdropship.app/api/webhooks/"
 ]
 
 [pos]

@@ -799,12 +799,12 @@ export function getTagStyle(status, colorMap) {
 }
 
 // 获取告警
-export function getAlarmList(params) {
+export function getAlarmList(params, { roleType } = {}) {
   return new Promise((resolve, reject) => {
     this.$ajax({
       url: "/api-prefix/api/alarms/current/",
       method: "get",
-      roleType: this.roleType,
+      roleType: roleType || this.roleType,
       params: params,
     }).then((res) => {
       resolve(res)
