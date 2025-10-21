@@ -18,7 +18,7 @@
 
     <!-- Initial password modal for first-time accounts -->
     <el-dialog :visible.sync="passwordModalVisible" :append-to-body="true" :z-index="4000" :modal="true"
-      modal-class="light-modal" width="520px" top="18vh" :close-on-click-modal="false"
+      modal-class="light-modal" width="560px" top="18vh" :close-on-click-modal="false"
       :before-close="onPasswordBeforeClose">
       <div class="pwd-title">{{ $t('message.signUp.initialPassword') }}</div>
       <div class="pwd-desc">{{ $t('message.signUp.keepPasswordSafe') }}</div>
@@ -33,8 +33,18 @@
         <el-button class="copy-btn" type="primary" icon="el-icon-document-copy" @click="copyPassword"
           :disabled="!generatedPassword"></el-button>
       </div>
+      <div class="email-opt">
+        <el-checkbox v-model="sendEmailChecked">{{ $t('message.signUp.sendCredentialsCheckbox') }}</el-checkbox>
+        <el-input
+          class="email-input"
+          v-model="sendEmailAddress"
+          :disabled="!sendEmailChecked"
+          :placeholder="$t('message.signUp.sendCredentialsEmailPlaceholder')">
+          <template slot="prepend">{{ $t('message.signUp.sendCredentialsEmailLabel') }}</template>
+        </el-input>
+      </div>
       <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="onPasswordConfirm">{{ $t('common.confirm') }}</el-button>
+        <el-button type="primary" @click="onPasswordConfirm" :loading="emailSending">{{ $t('common.confirm') }}</el-button>
       </span>
     </el-dialog>
   </div>
@@ -63,7 +73,10 @@ export default {
       showPassword: false,
       copied: false,
       errorMsg: '',
-      shopUrl: ''
+      shopUrl: '',
+      sendEmailChecked: false,
+      sendEmailAddress: '',
+      emailSending: false
     }
   },
   computed: {
@@ -147,6 +160,8 @@ export default {
         this.isNewAccount = true
         this.generatedUsername = username || ''
         this.generatedPassword = password
+        this.sendEmailChecked = false
+        this.sendEmailAddress = username || ''
         this.passwordModalVisible = true
       } else {
         this.isNewAccount = false
@@ -243,11 +258,74 @@ export default {
         this.$message.warning(this.$t('common.copyFailed') || 'Copy failed')
       }
     },
-    onPasswordConfirm() {
+    resolveEmailLanguage() {
+      const raw = (this.$i18n && this.$i18n.locale) || ''
+      const lower = String(raw).toLowerCase()
+      if (lower.includes('zh')) return 'zh-CN'
+      if (lower.includes('en')) return 'en-US'
+      return 'en-US'
+    },
+    validateEmail(email) {
+      if (!email) return false
+      const pattern = /^[\w.%+-]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+      return pattern.test(email)
+    },
+    resetPasswordModalState() {
+      this.showPassword = false
+      this.sendEmailChecked = false
+      this.emailSending = false
+      this.sendEmailAddress = this.generatedUsername || this.sendEmailAddress || ''
+    },
+    async onPasswordConfirm() {
+      if (this.emailSending) return
+      if (this.sendEmailChecked) {
+        const email = (this.sendEmailAddress || '').trim()
+        if (!email) {
+          this.$message.error(this.$t('message.signUp.sendCredentialsEmailRequired'))
+          return
+        }
+        if (!this.validateEmail(email)) {
+          this.$message.error(this.$t('message.signUp.sendCredentialsEmailInvalid'))
+          return
+        }
+        if (!this.generatedUsername || !this.generatedPassword) {
+          this.$message.error(this.$t('message.signUp.sendCredentialsMissingData'))
+          return
+        }
+        this.emailSending = true
+        try {
+          const res = await this.$ajax({
+            url: '/api-prefix/api/send-account-credentials/',
+            method: 'post',
+            data: {
+              username: this.generatedUsername,
+              password: this.generatedPassword,
+              email,
+              language: this.resolveEmailLanguage()
+            },
+            roleType: this.config.dropShipper.role,
+            skipErrorMessage: true
+          })
+          if (!this.$isRequestSuccessful(res.code)) {
+            const errMsg = this.pickEnglishMsg(res) || (res.message || '')
+            throw new Error(errMsg || 'Send failed')
+          }
+          this.$message.success(this.$t('message.signUp.sendCredentialsSuccess'))
+        } catch (e) {
+          const msg = this.pickEnglishMsg(e) || e.message || ''
+          this.$message.error(msg || (this.$t('message.signUp.sendCredentialsFailed') || 'Send failed'))
+          this.emailSending = false
+          return
+        }
+        this.emailSending = false
+      }
+      this.resetPasswordModalState()
       this.passwordModalVisible = false
       this.$emit('password-confirmed')
     },
     onPasswordBeforeClose(done) {
+      if (this.emailSending) return
+      this.resetPasswordModalState()
       this.passwordModalVisible = false
       this.$emit('password-confirmed')
       if (typeof done === 'function') done()
@@ -397,6 +475,7 @@ export default {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 /* Center the eye icon vertically while keeping x unchanged */
@@ -409,6 +488,24 @@ export default {
   padding: 0 16px;
   height: 40px;
   font-size: 16px;
+}
+
+.email-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.email-opt .email-input :deep(.el-input-group__prepend) {
+  min-width: 82px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-opt .email-input :deep(.el-input__inner) {
+  border-radius: 8px;
 }
 
 ::v-deep .action-icon {
