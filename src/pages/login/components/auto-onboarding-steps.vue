@@ -35,13 +35,12 @@
       </div>
       <div class="email-opt">
         <el-checkbox v-model="sendEmailChecked">{{ $t('message.signUp.sendCredentialsCheckbox') }}</el-checkbox>
-        <el-input
-          class="email-input"
-          v-model="sendEmailAddress"
-          :disabled="!sendEmailChecked"
-          :placeholder="$t('message.signUp.sendCredentialsEmailPlaceholder')">
-          <template slot="prepend">{{ $t('message.signUp.sendCredentialsEmailLabel') }}</template>
-        </el-input>
+        <div class="email-row" :class="{ 'is-disabled': !sendEmailChecked }">
+          <span class="email-label">{{ $t('message.signUp.sendCredentialsEmailLabel') }}</span>
+          <el-input class="email-input" v-model="sendEmailAddress" :disabled="!sendEmailChecked"
+            :placeholder="$t('message.signUp.sendCredentialsEmailPlaceholder')">
+          </el-input>
+        </div>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="onPasswordConfirm" :loading="emailSending">{{ $t('common.confirm') }}</el-button>
@@ -74,7 +73,7 @@ export default {
       copied: false,
       errorMsg: '',
       shopUrl: '',
-      sendEmailChecked: false,
+      sendEmailChecked: true,
       sendEmailAddress: '',
       emailSending: false
     }
@@ -160,7 +159,7 @@ export default {
         this.isNewAccount = true
         this.generatedUsername = username || ''
         this.generatedPassword = password
-        this.sendEmailChecked = false
+        this.sendEmailChecked = true
         this.sendEmailAddress = username || ''
         this.passwordModalVisible = true
       } else {
@@ -272,7 +271,7 @@ export default {
     },
     resetPasswordModalState() {
       this.showPassword = false
-      this.sendEmailChecked = false
+      this.sendEmailChecked = true
       this.emailSending = false
       this.sendEmailAddress = this.generatedUsername || this.sendEmailAddress || ''
     },
@@ -347,7 +346,7 @@ export default {
   z-index: 3500;
   font-size: 16px;
 }
- 
+
 .top-hint .flicker {
   animation: blinkGlow 1.6s ease-in-out infinite;
 }
@@ -467,6 +466,7 @@ export default {
   margin-bottom: 10px;
   color: #ddd;
 }
+
 .creds-lines .line { line-height: 1.6; }
 .creds-lines .k { color: #bfbfbf; margin-right: 6px; }
 .creds-lines .v { color: #f0f0f0; }
@@ -497,15 +497,42 @@ export default {
   margin-bottom: 12px;
 }
 
-.email-opt .email-input :deep(.el-input-group__prepend) {
-  min-width: 82px;
-  display: inline-flex;
+.email-row {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
+  gap: 0;
 }
 
-.email-opt .email-input :deep(.el-input__inner) {
-  border-radius: 8px;
+.email-row .email-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  height: 40px;
+  box-sizing: border-box;
+  border: 1px solid var(--custom-border-color, #dcdfe6);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  background: var(--custom-background-color, #fff);
+  color: var(--custom-font-color, #333);
+  font-weight: 500;
+}
+
+.email-row .email-input {
+  flex: 1;
+}
+
+.email-row .email-input :deep(.el-input__inner) {
+  height: 40px;
+  line-height: 40px;
+  border: 1px solid var(--custom-border-color, #dcdfe6);
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
+
+.email-row.is-disabled .email-label {
+  opacity: 0.5;
 }
 
 ::v-deep .action-icon {
