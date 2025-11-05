@@ -443,6 +443,21 @@ export default {
     MarkOrder
   },
   data() {
+    const allSelectableColumns = [
+      { id: 'operate' },
+      { id: 'order_id' },
+      { id: 'cs_reference' },
+      { id: 'order_type' },
+      { id: 'order_status' },
+      { id: 'source' },
+      { id: 'storage_uuid' },
+      { id: 'create_time' },
+      { id: 'recipient_name' },
+      { id: 'recipient_phone' },
+      { id: 'country' },
+      { id: 'address_1' },
+      { id: 'logistics_information' }
+    ]
     return {
       logistics_channels: [],
       logisticsCompanyMap: {},
@@ -498,22 +513,8 @@ export default {
       showDownloadListVisible: false,
       tableRenderKey: 0,
       columnSelectorVisible: false,
-      allSelectableColumns: [
-        { id: 'operate' },
-        { id: 'order_id' },
-        { id: 'cs_reference' },
-        { id: 'order_type' },
-        { id: 'order_status' },
-        { id: 'source' },
-        { id: 'storage_uuid' },
-        { id: 'create_time' },
-        { id: 'recipient_name' },
-        { id: 'recipient_phone' },
-        { id: 'country' },
-        { id: 'address_1' },
-        { id: 'logistics_information' }
-      ],
-      visibleColumnIds: [],
+      allSelectableColumns,
+      visibleColumnIds: allSelectableColumns.map((col) => col.id),
       settingsLoaded: false,
       showAllColumns: true,
       toolbarCollapsed: false,

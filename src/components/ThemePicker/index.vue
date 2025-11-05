@@ -52,11 +52,7 @@ export default {
       if (hasGlobalSettingsToken(role)) {
         const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
         const updates = {
-          default_theme: nextTheme,
-          defaultTheme: nextTheme,
-          theme: nextTheme,
-          ui_theme: nextTheme,
-          theme_preference: nextTheme
+          theme: nextTheme
         }
         try {
           await updateGlobalSettings({ updates, roleType: role, provider_uuid })

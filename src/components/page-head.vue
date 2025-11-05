@@ -33,10 +33,10 @@
             </el-option>
           </el-select>
           <!-- 添加店铺按钮 -->
-          <el-button v-if="isShowShopSelect && isDropShipper" @click="openAddShopModal" type="primary"
+          <!-- <el-button v-if="isShowShopSelect && isDropShipper" @click="openAddShopModal" type="primary"
             style="margin-left: 10px">
             {{ $t('common.addShop') }}
-          </el-button>
+          </el-button> -->
         </div>
         <slot name="head-right"></slot>
       </el-col>

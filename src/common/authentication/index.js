@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js'
+import { syncPreferencesAfterLogin } from '@/common/preference-sync'
 
 export function encryptPassword(aesKey, password) {
   const key = CryptoJS.enc.Base64.parse(aesKey)
@@ -46,42 +47,33 @@ export function loadHomeData(roleType = null) {
 }
 
 // home信息存储和相关操作
-export function storeHomeData(resData, roleType = null) {
-  return (() => {
-    const { user, user_avatar_url, shops, default_settings } = resData
-    // 可能需要将 角色信息存到cookie 或者localstorage
-    localStorage.setItem(
-      this.config[this.roleType].userName,
-      user.username
-    )
-    localStorage.setItem(
-      this.config[this.roleType].userRole,
-      user.user_role
-    )
-    localStorage.setItem(
-      this.config[this.roleType].userRelatedId,
-      user.user_related_id
-    )
-    // 保存店铺信息
-    localStorage.setItem(
-      this.config[this.roleType].shopList,
-      JSON.stringify(shops)
-    )
-    this.$store.dispatch('tagsView/delAllPDSViews')
-
-    // 设置个人偏好的语言种类
-    const defaultLanguage =
-      default_settings?.defaultLanguage || 'en_us'
-    this.$store.dispatch('user/getDefaultLanguage', defaultLanguage)
-    this.$i18n.locale = defaultLanguage
-    // 设置主题
-    const defaultTheme = default_settings?.defaultTheme || 'defaultTheme'
-    this.$store.dispatch('user/changeSetting', {
-      key: 'theme',
-      value: defaultTheme,
-      persist: false
-    })
-
+export async function storeHomeData(resData, roleType = null) {
+  const { user, user_avatar_url, shops, default_settings } = resData
+  // 可能需要将 角色信息存到cookie 或者localstorage
+  localStorage.setItem(
+    this.config[this.roleType].userName,
+    user.username
+  )
+  localStorage.setItem(
+    this.config[this.roleType].userRole,
+    user.user_role
+  )
+  localStorage.setItem(
+    this.config[this.roleType].userRelatedId,
+    user.user_related_id
+  )
+  // 保存店铺信息
+  localStorage.setItem(
+    this.config[this.roleType].shopList,
+    JSON.stringify(shops)
+  )
+  this.$store.dispatch('tagsView/delAllPDSViews')
+  await syncPreferencesAfterLogin({
+    store: this.$store,
+    i18n: this.$i18n,
+    currentRoleType: this.roleType,
+    userRoleName: user.user_role,
+    defaultSettings: default_settings
   })
 }
 

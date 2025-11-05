@@ -11,6 +11,7 @@
 
 <script>
 import { loadHomeData, getWarehouseRelatedInfo } from '@/common/common-func'
+import { syncPreferencesAfterLogin } from '@/common/preference-sync'
 export default {
     name: 'thirdpart-success-redirect',
     computed: {
@@ -48,8 +49,8 @@ export default {
 
             // 加载首页数据
             this.loadHomeData()
-                .then((resData) => {
-                    const { user, user_avatar_url, shops, default_settings } = resData;
+                .then(async (resData) => {
+                    const { user, user_avatar_url, shops, default_settings: defaultSettings } = resData;
                     this.roleType = user.user_role
                     console.log(this.config[this.roleType].homePath)
                     // 将用户信息存储到localStorage
@@ -62,18 +63,12 @@ export default {
 
                     // 清空标签视图
                     this.$store.dispatch('tagsView/delAllPDSViews');
-
-                    // 设置用户偏好的语言
-                    const defaultLanguage = default_settings?.defaultLanguage || 'en_us';
-                    this.$store.dispatch('user/getDefaultLanguage', defaultLanguage);
-                    this.$i18n.locale = defaultLanguage;
-
-                    // 设置主题
-                    const defaultTheme = default_settings?.defaultTheme || 'defaultTheme';
-                    this.$store.dispatch('user/changeSetting', {
-                        key: 'theme',
-                        value: defaultTheme,
-                        persist: false
+                    await syncPreferencesAfterLogin({
+                        store: this.$store,
+                        i18n: this.$i18n,
+                        currentRoleType: this.roleType,
+                        userRoleName: user.user_role,
+                        defaultSettings
                     });
                     if (this.config.roleNames.includes(user.user_role)) {
                         return this.getRelatedInfo()

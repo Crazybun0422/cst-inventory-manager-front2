@@ -87,15 +87,8 @@ export default {
         }
         const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
         const updates = {
-          default_language: this.preferenceSettingForm.defaultLanguage,
-          defaultLanguage: this.preferenceSettingForm.defaultLanguage,
           language: this.preferenceSettingForm.defaultLanguage,
-          ui_language: this.preferenceSettingForm.defaultLanguage,
-          default_theme: this.preferenceSettingForm.defaultTheme,
-          defaultTheme: this.preferenceSettingForm.defaultTheme,
-          theme: this.preferenceSettingForm.defaultTheme,
-          ui_theme: this.preferenceSettingForm.defaultTheme,
-          theme_preference: this.preferenceSettingForm.defaultTheme
+          theme: this.preferenceSettingForm.defaultTheme
         }
         await updateGlobalSettings({ updates, roleType: role, provider_uuid })
         this.$store.dispatch('user/getDefaultLanguage', this.preferenceSettingForm.defaultLanguage)

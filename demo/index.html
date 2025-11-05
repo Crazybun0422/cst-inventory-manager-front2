@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World Flight Background Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #030303;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .demo-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .wf-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .wf-bg.fixed {
+      position: fixed;
+    }
+
+    .canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+    }
+
+    #bg {
+      z-index: 1;
+    }
+
+    #rt {
+      z-index: 2;
+    }
+
+    #fx {
+      z-index: 3;
+    }
+
+    .title-banner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .title-text {
+      font-size: 140px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #A67C52, #FFD700, #FF4500);
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: slide-in 2.5s ease-out forwards;
+      transform: translateX(60vw);
+      box-shadow: #030303 0 0 32px;
+      opacity: 0;
+      white-space: nowrap;
+    }
+
+    @keyframes slide-in {
+      from {
+        transform: translateX(60vw);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="demo-wrapper">
+    <div id="world-flight" class="wf-bg fixed">
+      <canvas id="bg" class="canvas"></canvas>
+      <canvas id="rt" class="canvas"></canvas>
+      <canvas id="fx" class="canvas"></canvas>
+    </div>
+    <div class="title-banner">
+      <span class="title-text">Good bye!</span>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const BOX_SIZE = 32;
+      const BOX_MASK_PADDING = 6;
+
+      class WorldFlightBackground {
+        constructor(options) {
+          const cfg = Object.assign(
+            {
+              container: null,
+              lang: 'en_us',
+              mapSrc: './world-dark-4k.webp',
+              boxSrc: './d.png',
+              flightCount: 4,
+              featherDensity: 16,
+              featherScale: 1.0,
+            },
+            options || {},
+          );
+          if (!cfg.container) {
+            throw new Error('WorldFlightBackground requires a container.');
+          }
+          this.container = cfg.container;
+          this.lang = cfg.lang;
+          this.mapSrc = cfg.mapSrc;
+          this.boxSrc = cfg.boxSrc;
+          this.flightCount = cfg.flightCount;
+          this.featherDensity = cfg.featherDensity;
+          this.featherScale = cfg.featherScale;
+
+          this.DPR = Math.max(1, window.devicePixelRatio || 1);
+          this.mapImg = null;
+          this.boxImg = null;
+          this.mapReady = false;
+          this.cover = { s: 1, offX: 0, offY: 0, iw: 4096, ih: 2048 };
+          this.cities = [];
+          this.flights = [];
+          this.routesDirty = true;
+          this.flightsNeedRouteRecalc = true;
+          this.rafId = null;
+          this.resizeHandler = null;
+          this.ro = null;
+          this.timeTimer = null;
+
+          this._init();
+        }
+
+        get citiesBase() {
+          return [
+            { en: 'Beijing', zh: '北京', lat: 39.9, lon: 116.4, tz: 'Asia/Shanghai' },
+            { en: 'Tokyo', zh: '东京', lat: 35.68, lon: 139.69, tz: 'Asia/Tokyo' },
+            { en: 'Seoul', zh: '首尔', lat: 37.57, lon: 126.98, tz: 'Asia/Seoul' },
+            { en: 'Singapore', zh: '新加坡', lat: 1.29, lon: 103.85, tz: 'Asia/Singapore' },
+            { en: 'Bangkok', zh: '曼谷', lat: 13.75, lon: 100.5, tz: 'Asia/Bangkok' },
+            { en: 'Delhi', zh: '德里', lat: 28.61, lon: 77.2, tz: 'Asia/Kolkata' },
+            { en: 'Dubai', zh: '迪拜', lat: 25.2, lon: 55.27, tz: 'Asia/Dubai' },
+            { en: 'Riyadh', zh: '利雅得', lat: 24.63, lon: 46.72, tz: 'Asia/Riyadh' },
+            { en: 'Istanbul', zh: '伊斯坦布尔', lat: 41.01, lon: 28.97, tz: 'Europe/Istanbul' },
+            { en: 'Moscow', zh: '莫斯科', lat: 55.75, lon: 37.62, tz: 'Europe/Moscow' },
+            { en: 'London', zh: '伦敦', lat: 51.5, lon: -0.12, tz: 'Europe/London' },
+            { en: 'Paris', zh: '巴黎', lat: 48.85, lon: 2.35, tz: 'Europe/Paris' },
+            { en: 'Berlin', zh: '柏林', lat: 52.52, lon: 13.4, tz: 'Europe/Berlin' },
+            { en: 'Madrid', zh: '马德里', lat: 40.42, lon: -3.7, tz: 'Europe/Madrid' },
+            { en: 'Rome', zh: '罗马', lat: 41.9, lon: 12.5, tz: 'Europe/Rome' },
+            { en: 'Cairo', zh: '开罗', lat: 30.04, lon: 31.24, tz: 'Africa/Cairo' },
+            { en: 'Nairobi', zh: '内罗毕', lat: -1.29, lon: 36.82, tz: 'Africa/Nairobi' },
+            { en: 'Johannesburg', zh: '约翰内斯堡', lat: -26.2, lon: 28.04, tz: 'Africa/Johannesburg' },
+            { en: 'Los Angeles', zh: '洛杉矶', lat: 34.05, lon: -118.25, tz: 'America/Los_Angeles' },
+            { en: 'New York', zh: '纽约', lat: 40.71, lon: -74, tz: 'America/New_York' },
+            { en: 'Washington DC', zh: '华盛顿', lat: 38.9, lon: -77.04, tz: 'America/New_York' },
+            { en: 'Mexico City', zh: '墨西哥城', lat: 19.43, lon: -99.13, tz: 'America/Mexico_City' },
+            { en: 'Rio de Janeiro', zh: '里约热内卢', lat: -22.91, lon: -43.17, tz: 'America/Sao_Paulo' },
+            { en: 'São Paulo', zh: '圣保罗', lat: -23.55, lon: -46.64, tz: 'America/Sao_Paulo' },
+            { en: 'Buenos Aires', zh: '布宜诺斯艾利斯', lat: -34.61, lon: -58.38, tz: 'America/Argentina/Buenos_Aires' },
+            { en: 'Sydney', zh: '悉尼', lat: -33.87, lon: 151.21, tz: 'Australia/Sydney' },
+            { en: 'Wellington', zh: '惠灵顿', lat: -41.29, lon: 174.78, tz: 'Pacific/Auckland' },
+          ];
+        }
+
+        _init() {
+          this.bg = this.container.querySelector('#bg');
+          this.rt = this.container.querySelector('#rt');
+          this.fx = this.container.querySelector('#fx');
+          this.bgCtx = this.bg.getContext('2d');
+          this.rtCtx = this.rt.getContext('2d');
+          this.fxCtx = this.fx.getContext('2d', { alpha: true });
+
+          this._buildCities();
+          this._resizeCanvases();
+          this._loadImages();
+          this._updateCityTimes();
+          this.timeTimer = setInterval(this._updateCityTimes.bind(this), 1000);
+
+          this.resizeHandler = () => {
+            this._resizeCanvases();
+            this._drawMapOnce();
+            this._reprojectAll();
+          };
+          window.addEventListener('resize', this.resizeHandler);
+
+          if (window.ResizeObserver) {
+            this.ro = new ResizeObserver(() => {
+              this._resizeCanvases();
+              this._drawMapOnce();
+              this._reprojectAll();
+            });
+            this.ro.observe(this.container);
+          }
+
+          const loop = (now) => {
+            const timestamp = typeof now === 'number' ? now : 0;
+            const W = this.fx.width / this.DPR;
+            const H = this.fx.height / this.DPR;
+            this.fxCtx.clearRect(0, 0, W, H);
+            if (this.mapReady && Array.isArray(this.flights) && this.flights.length) {
+              this.flights.forEach(function (f) {
+                f.update();
+              });
+              const holes = this.flights
+                .map(function (f) {
+                  return typeof f.getPoint === 'function' ? f.getPoint() : null;
+                })
+                .filter(Boolean);
+              this._redrawRoutesAndCutHoles(holes);
+              this.flights.forEach(function (f) {
+                f.drawPlane(this.fxCtx, timestamp);
+              }, this);
+            }
+            this._drawCityLabels(this.fxCtx);
+            this.rafId = requestAnimationFrame(loop);
+          };
+          this.rafId = requestAnimationFrame(loop);
+        }
+
+        _loadImages() {
+          this.mapImg = new Image();
+          this.mapImg.src = this.mapSrc;
+          this.mapImg.decoding = 'async';
+          this.mapImg.onload = () => {
+            this.mapReady = true;
+            this._drawMapOnce();
+            this._reprojectAll();
+            if (!Array.isArray(this.flights) || !this.flights.length) {
+              this._initFlights();
+            }
+          };
+
+          this.boxImg = new Image();
+          this.boxImg.src = this.boxSrc;
+          this.boxImg.decoding = 'async';
+        }
+
+        _buildCities() {
+          const useZh = this.lang === 'zh_cn';
+          this.cities = this.citiesBase.map(function (c) {
+            return {
+              n: useZh ? c.zh : c.en,
+              lat: c.lat,
+              lon: c.lon,
+              tz: c.tz,
+              p: { x: 0, y: 0 },
+              t: '--:--',
+            };
+          });
+          this._reprojectCities();
+        }
+
+        _resizeCanvases() {
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          [this.bg, this.rt, this.fx].forEach((c) => {
+            c.style.width = W + 'px';
+            c.style.height = H + 'px';
+            c.width = Math.round(W * this.DPR);
+            c.height = Math.round(H * this.DPR);
+          });
+          [this.bgCtx, this.rtCtx, this.fxCtx].forEach((ctx) => {
+            if (ctx) {
+              ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
+            }
+          });
+        }
+
+        _computeCover() {
+          const W = this.bg.width / this.DPR;
+          const H = this.bg.height / this.DPR;
+          const iw = this.mapImg.naturalWidth || 4096;
+          const ih = this.mapImg.naturalHeight || 2048;
+          const s = Math.max(W / iw, H / ih);
+          const offX = (W - iw * s) / 2;
+          const offY = (H - ih * s) / 2;
+          this.cover = { s: s, offX: offX, offY: offY, iw: iw, ih: ih };
+        }
+
+        _drawMapOnce() {
+          if (!this.mapImg || !this.mapImg.complete) {
+            return;
+          }
+          this._computeCover();
+          const W = this.bg.width / this.DPR;
+          const H = this.bg.height / this.DPR;
+          this.bgCtx.clearRect(0, 0, W, H);
+          this.bgCtx.fillStyle = '#0b0a0a';
+          this.bgCtx.fillRect(0, 0, W, H);
+          const cover = this.cover;
+          this.bgCtx.drawImage(this.mapImg, cover.offX, cover.offY, cover.iw * cover.s, cover.ih * cover.s);
+          const grad = this.bgCtx.createRadialGradient(
+            W * 0.5,
+            H * 0.58,
+            0,
+            W * 0.5,
+            H * 0.58,
+            Math.max(W, H) * 0.65,
+          );
+          grad.addColorStop(0, 'rgba(255,160,70,0.08)');
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          this.bgCtx.fillStyle = grad;
+          this.bgCtx.fillRect(0, 0, W, H);
+        }
+
+        _project(lon, lat) {
+          const xImg = ((lon + 180) / 360) * this.cover.iw;
+          const yImg = ((90 - lat) / 180) * this.cover.ih;
+          return {
+            x: this.cover.offX + xImg * this.cover.s,
+            y: this.cover.offY + yImg * this.cover.s,
+          };
+        }
+
+        _reprojectCities() {
+          this.cities.forEach((c) => {
+            c.p = this._project(c.lon, c.lat);
+          });
+        }
+
+        _updateCityTimes() {
+          const now = new Date();
+          this.cities.forEach((c) => {
+            try {
+              c.t = new Intl.DateTimeFormat('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: c.tz,
+              }).format(now);
+            } catch (e) {
+              c.t = '--:--';
+            }
+          });
+        }
+
+        _initFlights() {
+          const SPEED_MIN = 0.0016;
+          const SPEED_MAX = 0.0032;
+          const self = this;
+
+          function bezier(A, B, curviness) {
+            const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+            const vx = B.x - A.x;
+            const vy = B.y - A.y;
+            const d = Math.hypot(vx, vy) || 1;
+            const nx = -vy / d;
+            const ny = vx / d;
+            const arc = Math.min(300, d * (typeof curviness === 'number' ? curviness : 0.5));
+            return { x: mid.x + nx * arc, y: mid.y + ny * arc };
+          }
+
+          function pointOnQuad(A, B, C, t) {
+            const x = (1 - t) * (1 - t) * A.x + 2 * (1 - t) * t * C.x + t * t * B.x;
+            const y = (1 - t) * (1 - t) * A.y + 2 * (1 - t) * t * C.y + t * t * B.y;
+            const dx = 2 * (1 - t) * (C.x - A.x) + 2 * t * (B.x - C.x);
+            const dy = 2 * (1 - t) * (C.y - A.y) + 2 * t * (B.y - C.y);
+            return { x: x, y: y, ang: Math.atan2(dy, dx) };
+          }
+
+          function drawWing(ctx, side, phase) {
+            const direction = typeof side === 'number' ? side : 1;
+            const flap = Math.sin(phase || 0) * 5;
+            const lenScale = 2 / 3;
+            ctx.save();
+            ctx.strokeStyle = '#FFC86A';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < 5; i++) {
+              const base = (14 + i * 8) * lenScale;
+              const up = -6 - i * 4 + flap * 0.6;
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.quadraticCurveTo(direction * base * 0.45, up, direction * base, up + 8);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+
+          function Flight() {
+            this.speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
+            this.t = 0;
+            this.phaseOffset = Math.random() * Math.PI * 2;
+            this.curviness = 0.35 + Math.random() * 0.35;
+            this.route = null;
+            this.control = null;
+            this.tail = [];
+            this.pickRoute();
+          }
+
+          Flight.prototype.pickRoute = function () {
+            this.ca = self.cities[(Math.random() * self.cities.length) | 0];
+            do {
+              this.cb = self.cities[(Math.random() * self.cities.length) | 0];
+            } while (this.cb === this.ca);
+            this.route = null;
+            this.control = null;
+            this.tail.length = 0;
+            self.flightsNeedRouteRecalc = true;
+            self.routesDirty = true;
+            this.t = 0;
+          };
+
+          Flight.prototype.ensureRoute = function () {
+            const A = self._project(this.ca.lon, this.ca.lat);
+            const B = self._project(this.cb.lon, this.cb.lat);
+            this.control = bezier(A, B, this.curviness);
+            this.route = { A: A, B: B, C: this.control };
+          };
+
+          Flight.prototype.reproject = function () {
+            this.route = null;
+            this.control = null;
+            this.tail.length = 0;
+          };
+
+          Flight.prototype.update = function () {
+            this.t += this.speed;
+            if (this.t >= 1) {
+              this.pickRoute();
+            }
+          };
+
+          Flight.prototype.getPoint = function () {
+            if (!this.route) {
+              this.ensureRoute();
+            }
+            const seg = this.route;
+            return pointOnQuad(seg.A, seg.B, seg.C, this.t);
+          };
+
+          Flight.prototype.drawPlane = function (ctx, now) {
+            if (!this.route) {
+              this.ensureRoute();
+            }
+            const seg = this.route;
+            const p = pointOnQuad(seg.A, seg.B, seg.C, this.t);
+            this.tail = this.tail || [];
+            this.tail.push({ x: p.x, y: p.y });
+            const MAX_TAIL = 28;
+            if (this.tail.length > MAX_TAIL) {
+              this.tail.shift();
+            }
+            ctx.save();
+            ctx.lineWidth = 1;
+            for (let i = 1; i < this.tail.length; i++) {
+              const a = this.tail[i - 1];
+              const b = this.tail[i];
+              const t = i / this.tail.length;
+              const alpha = Math.min(0.45, t * 0.55);
+              ctx.strokeStyle = 'rgba(255, 175, 90, ' + alpha + ')';
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = '#000';
+            self._applyBoxMask(ctx, p, BOX_MASK_PADDING);
+            ctx.restore();
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.ang);
+            const phase = (now || 0) * 0.01 + this.phaseOffset;
+            ctx.save();
+            ctx.translate(-BOX_SIZE / 2, 0);
+            drawWing(ctx, -1, phase);
+            ctx.restore();
+            ctx.save();
+            ctx.translate(BOX_SIZE / 2, 0);
+            drawWing(ctx, 1, phase);
+            ctx.restore();
+            if (self.boxImg && self.boxImg.complete) {
+              ctx.drawImage(self.boxImg, -BOX_SIZE / 2, -BOX_SIZE / 2, BOX_SIZE, BOX_SIZE);
+            } else {
+              ctx.strokeStyle = '#FFC86A';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(-BOX_SIZE / 2, -BOX_SIZE / 2, BOX_SIZE, BOX_SIZE);
+            }
+            ctx.restore();
+          };
+
+          const count = Math.max(1, Math.min(8, Number(this.flightCount) || 4));
+          this.flights = Array.from({ length: count }, function () {
+            return new Flight();
+          });
+        }
+
+        _reprojectAll() {
+          this._reprojectCities();
+          if (Array.isArray(this.flights)) {
+            this.flights.forEach((f) => f.reproject());
+          }
+          this.flightsNeedRouteRecalc = true;
+          this.routesDirty = true;
+        }
+
+        _redrawRoutesAndCutHoles(holes) {
+          const holeList = Array.isArray(holes) ? holes : [];
+          const W = this.rt.width / this.DPR;
+          const H = this.rt.height / this.DPR;
+          this.rtCtx.clearRect(0, 0, W, H);
+          if (this.flightsNeedRouteRecalc) {
+            this.flights.forEach((f) => f.ensureRoute());
+            this.flightsNeedRouteRecalc = false;
+          }
+          this.rtCtx.strokeStyle = 'rgba(255,175,90,0.32)';
+          this.rtCtx.lineWidth = 0.9;
+          this.rtCtx.setLineDash([6, 6]);
+          for (const f of this.flights) {
+            const seg = f.route;
+            this.rtCtx.beginPath();
+            this.rtCtx.moveTo(seg.A.x, seg.A.y);
+            this.rtCtx.quadraticCurveTo(seg.C.x, seg.C.y, seg.B.x, seg.B.y);
+            this.rtCtx.stroke();
+            this.rtCtx.setLineDash([]);
+            this.rtCtx.fillStyle = 'rgba(255,175,90,0.28)';
+            this.rtCtx.beginPath();
+            this.rtCtx.arc(seg.A.x, seg.A.y, 2, 0, Math.PI * 2);
+            this.rtCtx.fill();
+            this.rtCtx.beginPath();
+            this.rtCtx.arc(seg.B.x, seg.B.y, 2, 0, Math.PI * 2);
+            this.rtCtx.fill();
+            this.rtCtx.setLineDash([6, 6]);
+          }
+          if (holeList.length) {
+            this.rtCtx.save();
+            this.rtCtx.globalCompositeOperation = 'destination-out';
+            this.rtCtx.fillStyle = '#000';
+            holeList.forEach((p) => {
+              this._applyBoxMask(this.rtCtx, p, BOX_MASK_PADDING);
+            });
+            this.rtCtx.restore();
+          }
+          this.routesDirty = false;
+        }
+
+        _drawCityLabels(ctx) {
+          ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+          ctx.textBaseline = 'middle';
+          for (const c of this.cities) {
+            const point = c.p || { x: 0, y: 0 };
+            ctx.fillStyle = '#FFD36A';
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+            const text = c.n + '  ' + c.t;
+            const padX = 6;
+            const h = 18;
+            const metrics = ctx.measureText(text);
+            const w = metrics.width + padX * 2;
+            const bx = point.x + 6;
+            const by = point.y - h / 2;
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            this._roundRect(ctx, bx, by, w, h, 8);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(240,240,240,0.95)';
+            ctx.fillText(text, bx + padX, point.y);
+            ctx.restore();
+          }
+        }
+
+        _roundRect(ctx, x, y, w, h, r) {
+          const radius = Math.min(r, w / 2, h / 2);
+          ctx.beginPath();
+          ctx.moveTo(x + radius, y);
+          ctx.arcTo(x + w, y, x + w, y + h, radius);
+          ctx.arcTo(x + w, y + h, x, y + h, radius);
+          ctx.arcTo(x, y + h, x, y, radius);
+          ctx.arcTo(x, y, x + w, y, radius);
+          ctx.closePath();
+        }
+
+        _applyBoxMask(ctx, point, padding) {
+          if (!ctx || !point) {
+            return;
+          }
+          const px = point.x;
+          const py = point.y;
+          if (!Number.isFinite(px) || !Number.isFinite(py)) {
+            return;
+          }
+          const half = BOX_SIZE / 2 + (padding || 0);
+          ctx.save();
+          ctx.translate(px, py);
+          if (typeof point.ang === 'number' && Number.isFinite(point.ang)) {
+            ctx.rotate(point.ang);
+          }
+          ctx.fillRect(-half, -half, half * 2, half * 2);
+          ctx.restore();
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('world-flight');
+        if (container) {
+          new WorldFlightBackground({ container: container });
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

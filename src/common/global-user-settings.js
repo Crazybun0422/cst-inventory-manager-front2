@@ -1,11 +1,47 @@
 import ajax from '@/api/ajax'
 import { config } from '@/common/commonconfig'
 
-// Simple in-memory cache for global user settings (keyed by role/provider)
-const memoryCache = {}
+function pickFirstString (...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
 
-function cacheKey ({ provider_uuid = '', roleType = '' } = {}) {
-  return provider_uuid ? `p:${provider_uuid}` : `ds:${roleType || 'default'}`
+function normalizeUpdatePayload (updates = {}) {
+  const normalized = { ...updates }
+  const language = pickFirstString(
+    normalized.language,
+    normalized.defaultLanguage,
+    normalized.default_language,
+    normalized.ui_language
+  )
+  const theme = pickFirstString(
+    normalized.theme,
+    normalized.defaultTheme,
+    normalized.default_theme,
+    normalized.ui_theme,
+    normalized.theme_preference
+  )
+
+  if (language) {
+    normalized.language = language
+  } else {
+    delete normalized.language
+  }
+  if (theme) {
+    normalized.theme = theme
+  } else {
+    delete normalized.theme
+  }
+
+  ;['defaultLanguage', 'default_language', 'ui_language'].forEach((key) => {
+    if (key in normalized) delete normalized[key]
+  })
+  ;['defaultTheme', 'default_theme', 'ui_theme', 'theme_preference'].forEach((key) => {
+    if (key in normalized) delete normalized[key]
+  })
+  return normalized
 }
 
 function resolveAccessTokenKey (roleType) {
@@ -45,12 +81,6 @@ export function hasGlobalSettingsToken (roleType) {
 }
 
 export async function loadGlobalSettings ({ roleType, provider_uuid } = {}) {
-  const key = cacheKey({ provider_uuid, roleType })
-  if (memoryCache[key]) return memoryCache[key]
-  if (!hasAuthToken(roleType)) {
-    memoryCache[key] = {}
-    return memoryCache[key]
-  }
   try {
     const params = {}
     if (provider_uuid) params.provider_uuid = provider_uuid
@@ -62,25 +92,21 @@ export async function loadGlobalSettings ({ roleType, provider_uuid } = {}) {
       skipErrorMessage: true
     })
     if (res && (res.code === 200 || res.code === 0 || res.code === undefined) && res.data) {
-      memoryCache[key] = res.data || {}
-      return memoryCache[key]
+      return res.data || {}
     }
   } catch (e) {}
-  memoryCache[key] = {}
-  return memoryCache[key]
+  return {}
 }
 
 export async function updateGlobalSettings ({ updates = {}, roleType, provider_uuid } = {}) {
-  const key = cacheKey({ provider_uuid, roleType })
-  // merge into cache first
-  memoryCache[key] = { ...(memoryCache[key] || {}), ...updates }
+  const normalizedUpdates = normalizeUpdatePayload(updates)
   if (!hasAuthToken(roleType)) {
-    return memoryCache[key]
+    return { ...normalizedUpdates }
   }
-  const data = { ...updates }
+  const data = { ...normalizedUpdates }
   if (provider_uuid) data.provider_uuid = provider_uuid
   try {
-    await ajax({
+    const res = await ajax({
       url: '/api-prefix/api/customer-settings/global-user-settings',
       method: 'post',
       data,
@@ -88,8 +114,11 @@ export async function updateGlobalSettings ({ updates = {}, roleType, provider_u
       roleType,
       skipErrorMessage: true
     })
+    if (res && res.data) {
+      return res.data
+    }
   } catch (e) {}
-  return memoryCache[key]
+  return { ...normalizedUpdates }
 }
 
 export function resolvePreferenceProviderUuid (store, roleType) {

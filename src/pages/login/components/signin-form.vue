@@ -46,6 +46,7 @@ import {
   getCsrfTokenFromServer,
   signIn
 } from '@/common/common-func'
+import { syncPreferencesAfterLogin } from '@/common/preference-sync'
 export default {
   name: 'signin-form',
   props: {
@@ -206,7 +207,7 @@ export default {
               if (!resData || !resData.user) {
                 throw new Error('home data invalid')
               }
-              const { user, user_avatar_url, shops, default_settings } = resData
+              const { user, user_avatar_url, shops, default_settings: defaultSettings } = resData
               // 可能需要将 角色信息存到cookie 或者localstorage
               localStorage.setItem(
                 this.config[this.roleType].userName,
@@ -226,18 +227,12 @@ export default {
                 JSON.stringify(shops)
               )
               this.$store.dispatch('tagsView/delAllPDSViews')
-
-              // 设置个人偏好的语言种类
-              const defaultLanguage =
-                default_settings?.defaultLanguage || 'en_us'
-              this.$store.dispatch('user/getDefaultLanguage', defaultLanguage)
-              this.$i18n.locale = defaultLanguage
-              // 设置主题
-              const defaultTheme = default_settings?.defaultTheme || 'defaultTheme'
-              this.$store.dispatch('user/changeSetting', {
-                key: 'theme',
-                value: defaultTheme,
-                persist: false
+              await syncPreferencesAfterLogin({
+                store: this.$store,
+                i18n: this.$i18n,
+                currentRoleType: this.roleType,
+                userRoleName: user.user_role,
+                defaultSettings
               })
               if (this.config.roleNames.includes(user.user_role)) {
                 return this.getRelatedInfo()

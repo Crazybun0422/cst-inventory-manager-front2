@@ -124,6 +124,7 @@
 <script>
 import { loadHomeData } from '@/common/common-func'
 import { dropShipper } from '@/common/commonconfig'
+import { syncPreferencesAfterLogin } from '@/common/preference-sync'
 export default {
   name: 'ds-home',
   data() {
@@ -407,19 +408,20 @@ export default {
     },
     loadAndSaveHomeData() {
       this.loadHomeData()
-        .then((resData) => {
-          const { user, user_avatar_url, shops, default_settings } = resData
+        .then(async (resData) => {
+          const { user, user_avatar_url, shops, default_settings: defaultSettings } = resData
           localStorage.setItem(this.config[this.roleType].userName, user.username)
           localStorage.setItem(this.config[this.roleType].userRole, user.user_role)
           localStorage.setItem(this.config[this.roleType].userRelatedId, user.user_related_id)
           localStorage.setItem(this.config[this.roleType].shopList, JSON.stringify(shops))
           this.$store.dispatch('tagsView/delAllPDSViews')
-
-          const defaultLanguage = default_settings?.defaultLanguage || 'en_us'
-          this.$store.dispatch('user/getDefaultLanguage', defaultLanguage)
-          this.$i18n.locale = defaultLanguage
-          const defaultTheme = default_settings?.defaultTheme || 'defaultTheme'
-          this.$store.dispatch('user/changeSetting', { key: 'theme', value: defaultTheme, persist: false })
+          await syncPreferencesAfterLogin({
+            store: this.$store,
+            i18n: this.$i18n,
+            currentRoleType: this.roleType,
+            userRoleName: user.user_role,
+            defaultSettings
+          })
         })
         .catch(() => { })
     }

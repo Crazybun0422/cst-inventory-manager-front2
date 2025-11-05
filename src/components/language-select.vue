@@ -51,10 +51,7 @@ export default {
       if (hasGlobalSettingsToken(role)) {
         const provider_uuid = resolvePreferenceProviderUuid(this.$store, role)
         const updates = {
-          default_language: newValue,
-          defaultLanguage: newValue,
-          language: newValue,
-          ui_language: newValue
+          language: newValue
         }
         try {
           await updateGlobalSettings({ updates, roleType: role, provider_uuid })

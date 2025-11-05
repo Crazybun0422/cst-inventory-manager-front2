@@ -200,7 +200,7 @@ export const addWarehouseStatusMap = [
   {
     value: 1,
     label: {
-      en_us: 'Not Received',
+      en_us: 'Awaiting Receipt',
       zh_cn: '未收货'
     }
   },
