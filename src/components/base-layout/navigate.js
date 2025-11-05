@@ -284,14 +284,14 @@ export const navigationDataDs = [
     icon: 'el-icon-s-data',
     role: ['Drop shipper']
   },
-  {
-    title: 'navigate.sourcing',
-    name: 'ds-sourcing',
-    path: '/ds/sourcing',
-    icon: 'el-icon-search',
-    role: ['Drop shipper'],
-    component: 'sourcing/ds-sourcing.vue'
-  },
+  // {
+  //   title: 'navigate.sourcing',
+  //   name: 'ds-sourcing',
+  //   path: '/ds/sourcing',
+  //   icon: 'el-icon-search',
+  //   role: ['Drop shipper'],
+  //   component: 'sourcing/ds-sourcing.vue'
+  // },
   {
     title: 'navigate.myInventory',
     name: 'myinventory',
