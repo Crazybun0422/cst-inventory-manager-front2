@@ -275,7 +275,8 @@
     <div v-show="listMode === 'standard'">
       <ProductStandardCards ref="standardCards" :items="tableData" :selectedProductIds="selectedProductIds"
         :cardsPerRow="cardsPerRow" :loading="scrollLoading" @toggle-select="onToggleCardSelection"
-        @open-edit="showModal" @open-detail="showDetail" @load-more="onStandardLoadMore" />
+        @open-edit="showModal" @open-detail="showDetail" @load-more="onStandardLoadMore"
+        @delete-product="onDeleteProduct" />
     </div>
 
     <!-- 新增,修改产品 -->
@@ -433,6 +434,29 @@ export default {
       this.curPage++
       this.queryProduct(true, { cur_page: this.curPage })
     },
+    async onDeleteProduct(product) {
+      const productId = product && product.product_uuid
+      if (!productId) return
+      try {
+        this.loading = true
+        const res = await this.$ajax({
+          url: '/api-prefix/api/product/delete-product-definition',
+          method: 'delete',
+          data: { product_uuid: productId },
+          headers: { 'Content-Type': 'application/json' }
+        })
+        if (this.$isRequestSuccessful(res.code)) {
+          this.$message.success(this.$t('common.deleteSuccessful'))
+          await this.queryProduct(false, { cur_page: this.curPage })
+        } else {
+          this.$message.error(this.$t('common.operationFailed'))
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        this.loading = false
+      }
+    },
     onToggleCardSelection(product) {
       const id = product && product.product_uuid
       if (!id) return
@@ -571,7 +595,7 @@ export default {
         this.curPage = 1
         queryParam.cur_page = this.curPage
       }
-      this.$ajax({
+      return this.$ajax({
         url: '/api-prefix/api/product/query-product',
         method: 'get',
         params: (queryParam = {
@@ -732,7 +756,7 @@ export default {
       if (this.queryData.category) {
         queryParam['category'] = this.queryData.category
       }
-      this.getProductList(queryParam, isScroll)
+      return this.getProductList(queryParam, isScroll)
     },
     // filterMethod (value) {
     //   // 自定义筛选逻辑

@@ -173,6 +173,29 @@
         </el-button>
       </span>
     </el-dialog>
+
+    <el-dialog
+      v-if="fulfillErrorDialogVisible"
+      class="fulfill-error-dialog"
+      :visible.sync="fulfillErrorDialogVisible"
+      width="420px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+    >
+      <div class="fulfill-error-body">
+        <div class="fulfill-error-head">
+          <i class="el-icon-warning-outline fulfill-error-icon"></i>
+          <div class="fulfill-error-title">{{ $t('common.operationFailed') }}</div>
+        </div>
+        <p class="fulfill-error-message">{{ fulfillErrorMessage }}</p>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="closeFulfillErrorDialog">
+          {{ $t('common.confirm') }}
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -265,6 +288,8 @@ export default {
       uploadDialogLoading: false,
       tableLoading: true,
       isFileProgressExist: false,
+      fulfillErrorDialogVisible: false,
+      fulfillErrorMessage: ''
     }
   },
   mounted() {
@@ -294,6 +319,84 @@ export default {
   },
   methods: {
     startSyncOrder,
+    getFulfillResponse(res) {
+      return res && res.data ? res.data : null
+    },
+    hasFulfillError(fulfillResult) {
+      const fulfillCode = fulfillResult && fulfillResult.code
+      if (fulfillCode !== undefined && fulfillCode !== 200) {
+        return true
+      }
+      const detailLists = fulfillResult && fulfillResult.data
+      if (Array.isArray(detailLists)) {
+        for (const detailList of detailLists) {
+          if (!Array.isArray(detailList)) continue
+          for (const item of detailList) {
+            if (item && item.code !== undefined && item.code !== 200) {
+              return true
+            }
+          }
+        }
+      }
+      return false
+    },
+    getLocalizedMessage(msgObj) {
+      if (!msgObj) {
+        return ''
+      }
+      if (typeof msgObj === 'string') {
+        return msgObj
+      }
+      return (
+        msgObj[this.$languageType] ||
+        msgObj.en_us ||
+        msgObj.zh_cn ||
+        ''
+      )
+    },
+    buildFulfillErrorMessage(fulfillResult) {
+      const messages = []
+
+      const topMessage = this.getLocalizedMessage(fulfillResult?.msg)
+      if (topMessage) {
+        messages.push(topMessage)
+      }
+
+      const detailLists = fulfillResult?.data
+      if (Array.isArray(detailLists)) {
+        detailLists.forEach((detailList) => {
+          if (!Array.isArray(detailList)) return
+          detailList.forEach((item) => {
+            const itemMessage = this.getLocalizedMessage(item?.msg)
+            const orderNames = item?.data?.orderNames
+            const missingLineItems = item?.data?.missingLineItems?.map((it) => it.title).filter(Boolean)
+
+            let detailMessage = itemMessage
+            if (missingLineItems?.length) {
+              const missingPart = missingLineItems.join(', ')
+              detailMessage = detailMessage ? `${detailMessage}: ${missingPart}` : missingPart
+            }
+            if (orderNames?.length) {
+              const orders = orderNames.join(', ')
+              detailMessage = detailMessage ? `[${orders}] ${detailMessage}` : `[${orders}]`
+            }
+            if (detailMessage) {
+              messages.push(detailMessage)
+            }
+          })
+        })
+      }
+
+      return messages.join('\n')
+    },
+    showFulfillErrorDialog(message) {
+      this.fulfillErrorMessage = message || this.$t('common.operationFailed')
+      this.fulfillErrorDialogVisible = true
+    },
+    closeFulfillErrorDialog() {
+      this.fulfillErrorDialogVisible = false
+      this.fulfillErrorMessage = ''
+    },
     uploadFile() {
       this.uploadDialogVisible = true
     },
@@ -394,7 +497,19 @@ export default {
         { orderNames: orderList }
       )
         .then((res) => {
-          this.$message.success(res.msg[this.$languageType])
+          const fulfillResult = this.getFulfillResponse(res)
+          const fulfillHasError = this.hasFulfillError(fulfillResult)
+          if (fulfillHasError) {
+            const errorMsg =
+              this.buildFulfillErrorMessage(fulfillResult) ||
+              this.$t('common.operationFailed')
+            this.showFulfillErrorDialog(errorMsg)
+            return
+          }
+          const successMsg = this.getLocalizedMessage(
+            (fulfillResult && fulfillResult.msg) || res.msg
+          ) || this.$t('common.operationSuccessful')
+          this.$message.success(successMsg)
           this.refresh()
         })
         .catch((err) => {
@@ -498,5 +613,52 @@ export default {
     margin-bottom: 0;
     width: 50%;
   }
+}
+
+.fulfill-error-dialog ::v-deep .el-dialog__body {
+  padding: 20px 24px 10px 24px;
+  background: #1d1f23;
+}
+
+.fulfill-error-dialog ::v-deep .el-dialog__footer {
+  padding: 10px 24px 20px 24px;
+}
+
+.fulfill-error-dialog ::v-deep .el-dialog {
+  background: #1d1f23;
+  color: #fff;
+  border-radius: 18px;
+  border: 1px solid #fff;
+}
+
+.fulfill-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fulfill-error-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fulfill-error-icon {
+  font-size: 20px;
+  color: #f56c6c;
+}
+
+.fulfill-error-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.fulfill-error-message {
+  margin: 0;
+  color: #e6e8eb;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-line;
 }
 </style>

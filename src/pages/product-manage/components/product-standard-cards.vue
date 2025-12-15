@@ -11,6 +11,11 @@
             <a class="icon-btn" :title="$t('common.check')" @click.prevent="$emit('open-detail', item)">
               <i class="el-icon-view"></i>
             </a>
+            <el-popconfirm :title="$t('common.confirmDelete')" @confirm="$emit('delete-product', item)">
+              <a slot="reference" class="icon-btn danger" :title="$t('common.delete')" @click.prevent>
+                <i class="el-icon-delete"></i>
+              </a>
+            </el-popconfirm>
           </div>
         </div>
         <div class="card-image">
@@ -172,6 +177,14 @@ export default {
 
 .header-actions .icon-btn:hover {
   filter: brightness(1.1);
+}
+
+.header-actions .icon-btn.danger {
+  color: var(--custom-color-danger, #f56c6c);
+}
+
+.header-actions .icon-btn.danger:hover {
+  filter: brightness(1.05);
 }
 
 .card-image {
